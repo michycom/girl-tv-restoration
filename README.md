@@ -41,4 +41,5 @@ We invite collaborators interested in **net-art history**, **skate culture**, an
 
 ---
 *Project Lead: **Michael Heering**, Artist & Early Internet Pioneer (Hamburg, Germany)*
-*Contact: [Ihre E-Mail einfügen] | Web: [girl.tv](https://girl.tv)*   
+*Contact: https://michy.com | Web: [girl.tv](https://girl.tv)*   
+
