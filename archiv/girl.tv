@@ -1,0 +1,316 @@
+<html>
+
+   <head>
+      <meta http-equiv="content-type" content="text/html;charset=iso-8859-1">
+      
+      <link rel="stylesheet" type="text/css"
+         href="/collections/web/styles/styles.css"
+         src="/collections/web/styles/styles.css">
+      <title>Internet Archive Wayback Machine</title>
+      <base target="_top">
+
+   </head>
+
+   <body bgcolor="white" alink="red" vlink="#0000aa" link="blue"
+      style="font-family: Arial; font-size: 10pt">
+
+<!-- CHOP_FILE_HERE -->
+
+      <table width="100%" border="0" cellpadding="0" cellspacing="5">
+		<!-- URL FORM -->
+		<form action="/archive_request_ng" method="post">
+		<input type="hidden" name="collection" value="web">
+              <!-- HEADER -->
+			  <tr>
+				<!-- WAYBACK LOGO -->
+				
+      <td width="26%"><a href="/"><img src="/images/wayback_logo_sm.gif" width="153" height="54" border="0"></a></td>
+				<!-- /WAYBACK LOGO -->
+				<!-- ALEXA LOGO -->
+				<td width="70%" align="right"></td>
+				<!-- /ALEXA LOGO -->
+			  </tr>
+			  <!-- /HEADER -->
+			  <!-- GREEN BANNER -->
+			  <tr> 
+				<td colspan="2" height="30" align="center" class="mainSecHeadW"> 
+					<table width="100%" border="0" cellspacing="0" cellpadding="0">
+						<!-- ACTUAL FORM -->
+						<tr class="mainBColor">
+							<td colspan="2">
+								<table border="0" width="80%" align="center">
+									<tr>
+									  <td nowrap align="center"><img src="/images/shim.gif" width="1" height="20"> 
+										<b class="mainBodyW"><font size="2" color="#FFFFFF" face="Arial, Helvetica, sans-serif">Enter 
+										Web Address:</font> 
+										<input type="text" name="url" value="http://" size="24" maxlength="256">&nbsp;</b> 
+											<select name="datespec" size="1">
+											<option selected>All</option>
+											<option>2005</option>
+											<option>2004</option>
+											<option>2003</option>
+											<option>2002</option>
+											<option>2001</option>
+											<option>2000</option>
+											<option>1999</option>
+											<option>1998</option>
+											<option>1997</option>
+											<option>1996</option>
+											</select>
+											&nbsp;<input type="Submit" name="Submit" value="Take Me Back" align="absMiddle">
+											&nbsp;<a href="/collections/web/advanced.html" style="color:white;font-size:11px">Adv. Search</a> <A style="color:white;font-size:11px" HREF="http://web.archive.org/web/*dc_/http://girl.tv">Compare Archive Pages</A>
+										</td>
+									  </tr>
+								</table>
+							</td>
+						</tr>
+						<!-- /ACTUAL FORM -->
+					</table>
+				</td>
+			  </tr>
+			  <!-- /GREEN BANNER -->
+		</form>
+		<!-- /URL FORM -->
+	  </table>
+<!--
+      <p class="mainSearchTitle">
+         79 pages found for
+            <a href="http://girl.tv">http://girl.tv</a>
+      </p>
+-->
+
+         <table border="0" cellpadding="5" width="100%" class="mainSearchBanner" 
+            cellspacing="0">
+            <tr>
+               <td><p>Searched for <a href="http://girl.tv"><b>http://girl.tv</b></a></p></td>
+               <td align=\"right\">
+                  <p align="right"><b>79</b> Results</p>
+               </td>
+            </tr>
+         </table>
+         <br>
+
+<!-- HIDE THE SEARCHING MESSAGE -->
+
+      <SCRIPT language="JavaScript">
+	function checksAreValid(oForm) {
+		var bValid = false;
+		var aElements = oForm.elements;
+		var nChecked = 0;
+		var bDebug = true;
+		for(var i=0; i<aElements.length; i++) {
+			if(aElements[i].type=="checkbox" && aElements[i].checked) {
+				nChecked++;
+			}
+	
+		}
+		if(nChecked == 2) {
+			bValid = true;
+		} else {
+			alert("Please specify exactly 2 checkboxes\nof the versions you'd like to compare");
+		}
+		return bValid;
+	}	
+
+         if (typeof(hideWaitMsg) == 'function') {
+            hideWaitMsg();
+         }
+
+      </SCRIPT>
+
+<!-- SEARCH RESULTS -->
+
+      <p class="mainBody">
+<span class="mainSmall">
+   Note some duplicates are not shown.       <a href="http://web.archive.org/web/*sa_/http://girl.tv">          See all.      </a><br>
+   * denotes when site was updated. <br> Material typically becomes available here 6 months after collection.
+  <a href="http://www.archive.org/about/faqs.php#103">See FAQ.</a>
+</span><br>
+<table border="0" width="100%">
+   <tr bgcolor="#CCCCCC">
+      <td colspan="12" align="center" class="mainCalendar">
+         Search Results for Jan 01, 1996 - Aug 15, 2007
+      </td>
+   </tr>
+   <tr bgcolor="#CCCCCC">
+      <td align="center" class="mainBigBody"> 1996 </td>
+      <td align="center" class="mainBigBody"> 1997 </td>
+      <td align="center" class="mainBigBody"> 1998 </td>
+      <td align="center" class="mainBigBody"> 1999 </td>
+      <td align="center" class="mainBigBody"> 2000 </td>
+      <td align="center" class="mainBigBody"> 2001 </td>
+      <td align="center" class="mainBigBody"> 2002 </td>
+      <td align="center" class="mainBigBody"> 2003 </td>
+      <td align="center" class="mainBigBody"> 2004 </td>
+      <td align="center" class="mainBigBody"> 2005 </td>
+      <td align="center" class="mainBigBody"> 2006 </td>
+      <td align="center" class="mainBigBody"> 2007 </td>
+   </tr>
+   <tr bgcolor="#CCCCCC">
+      <td align="center" class="mainBody"> 0 pages </td>
+      <td align="center" class="mainBody"> 0 pages </td>
+      <td align="center" class="mainBody"> 0 pages </td>
+      <td align="center" class="mainBody"> 0 pages </td>
+      <td align="center" class="mainBody"> 1 pages </td>
+      <td align="center" class="mainBody"> 8 pages </td>
+      <td align="center" class="mainBody"> 8 pages </td>
+      <td align="center" class="mainBody"> 14 pages </td>
+      <td align="center" class="mainBody"> 12 pages </td>
+      <td align="center" class="mainBody"> 10 pages </td>
+      <td align="center" class="mainBody"> 11 pages </td>
+      <td align="center" class="mainBody"> 13 pages </td>
+   </tr>
+   <tr bgcolor="#EBEBEB">
+      <td nowrap class="mainBody" valign="top">
+         &nbsp;
+      </td>
+      <td nowrap class="mainBody" valign="top">
+         &nbsp;
+      </td>
+      <td nowrap class="mainBody" valign="top">
+         &nbsp;
+      </td>
+      <td nowrap class="mainBody" valign="top">
+         &nbsp;
+      </td>
+      <td nowrap class="mainBody" valign="top">
+         <a href="http://web.archive.org/web/20001206213300/http://www.girl.tv/">Dec 06, 2000</a> *<br>
+
+      </td>
+      <td nowrap class="mainBody" valign="top">
+         <a href="http://web.archive.org/web/20010208195509/http://girl.tv/">Feb 08, 2001</a> *<br>
+<a href="http://web.archive.org/web/20010331122542/http://girl.tv/">Mar 31, 2001</a> *<br>
+<a href="http://web.archive.org/web/20010402023844/http://www.girl.tv/">Apr 02, 2001</a><br>
+<a href="http://web.archive.org/web/20010405023053/http://www.girl.tv/">Apr 05, 2001</a><br>
+<a href="http://web.archive.org/web/20010516043819/http://www.girl.tv/">May 16, 2001</a> *<br>
+<a href="http://web.archive.org/web/20010720150624/http://girl.tv/">Jul 20, 2001</a> *<br>
+<a href="http://web.archive.org/web/20010925144026/http://girl.tv/">Sep 25, 2001</a> *<br>
+<a href="http://web.archive.org/web/20011202210850/http://www.girl.tv/">Dec 02, 2001</a> *<br>
+
+      </td>
+      <td nowrap class="mainBody" valign="top">
+         <a href="http://web.archive.org/web/20020530205947/http://www.girl.tv/">May 30, 2002</a> *<br>
+<a href="http://web.archive.org/web/20020605140021/http://www.girl.tv/">Jun 05, 2002</a><br>
+<a href="http://web.archive.org/web/20020802032319/http://www.girl.tv/">Aug 02, 2002</a><br>
+<a href="http://web.archive.org/web/20020927054113/http://www.girl.tv/">Sep 27, 2002</a> *<br>
+<a href="http://web.archive.org/web/20020929053406/http://www.girl.tv/">Sep 29, 2002</a><br>
+<a href="http://web.archive.org/web/20021017122055/http://www.girl.tv/">Oct 17, 2002</a><br>
+<a href="http://web.archive.org/web/20021126022853/http://www.girl.tv/">Nov 26, 2002</a> *<br>
+<a href="http://web.archive.org/web/20021130105428/http://girl.tv/">Nov 30, 2002</a><br>
+
+      </td>
+      <td nowrap class="mainBody" valign="top">
+         <a href="http://web.archive.org/web/20030130091259/http://www.girl.tv/">Jan 30, 2003</a> *<br>
+<a href="http://web.archive.org/web/20030210164828/http://www.girl.tv/">Feb 10, 2003</a> *<br>
+<a href="http://web.archive.org/web/20030411045155/http://www.girl.tv/">Apr 11, 2003</a><br>
+<a href="http://web.archive.org/web/20030419091501/http://girl.tv/">Apr 19, 2003</a><br>
+<a href="http://web.archive.org/web/20030426082644/http://www.girl.tv/">Apr 26, 2003</a><br>
+<a href="http://web.archive.org/web/20030601100215/http://www.girl.tv/">Jun 01, 2003</a><br>
+<a href="http://web.archive.org/web/20030719211058/http://girl.tv/">Jul 19, 2003</a><br>
+<a href="http://web.archive.org/web/20030722210043/http://www.girl.tv/">Jul 22, 2003</a><br>
+<a href="http://web.archive.org/web/20030803234804/http://www.girl.tv/">Aug 03, 2003</a><br>
+<a href="http://web.archive.org/web/20031019093628/http://www.girl.tv/">Oct 19, 2003</a> *<br>
+<a href="http://web.archive.org/web/20031027070819/http://www.girl.tv/">Oct 27, 2003</a><br>
+<a href="http://web.archive.org/web/20031030044940/http://girl.tv/">Oct 30, 2003</a><br>
+<a href="http://web.archive.org/web/20031119031837/http://www.girl.tv/">Nov 19, 2003</a><br>
+<a href="http://web.archive.org/web/20031122201823/http://girl.tv/">Nov 22, 2003</a><br>
+
+      </td>
+      <td nowrap class="mainBody" valign="top">
+         <a href="http://web.archive.org/web/20040126022820/http://girl.tv/">Jan 26, 2004</a> *<br>
+<a href="http://web.archive.org/web/20040403062230/http://www.girl.tv/">Apr 03, 2004</a> *<br>
+<a href="http://web.archive.org/web/20040508014405/http://girl.tv/">May 08, 2004</a> *<br>
+<a href="http://web.archive.org/web/20040523054811/http://www.girl.tv/">May 23, 2004</a> *<br>
+<a href="http://web.archive.org/web/20040526174648/http://www.girl.tv/">May 26, 2004</a><br>
+<a href="http://web.archive.org/web/20040604030816/http://www.girl.tv/">Jun 04, 2004</a><br>
+<a href="http://web.archive.org/web/20040612143826/http://girl.tv/">Jun 12, 2004</a> *<br>
+<a href="http://web.archive.org/web/20040725020651/http://www.girl.tv/">Jul 25, 2004</a> *<br>
+<a href="http://web.archive.org/web/20040730033644/http://www.girl.tv/">Jul 30, 2004</a><br>
+<a href="http://web.archive.org/web/20040903160459/http://www.girl.tv/">Sep 03, 2004</a> *<br>
+<a href="http://web.archive.org/web/20040922150857/http://girl.tv/">Sep 22, 2004</a> *<br>
+<a href="http://web.archive.org/web/20040925073617/http://www.girl.tv/">Sep 25, 2004</a> *<br>
+
+      </td>
+      <td nowrap class="mainBody" valign="top">
+         <a href="http://web.archive.org/web/20050129222126/http://girl.tv/">Jan 29, 2005</a> *<br>
+<a href="http://web.archive.org/web/20050211104041/http://www.girl.tv/">Feb 11, 2005</a><br>
+<a href="http://web.archive.org/web/20050312022809/http://www.girl.tv/">Mar 12, 2005</a> *<br>
+<a href="http://web.archive.org/web/20050316004244/http://girl.tv/">Mar 16, 2005</a><br>
+<a href="http://web.archive.org/web/20050405045116/http://girl.tv/">Apr 05, 2005</a> *<br>
+<a href="http://web.archive.org/web/20050526080306/http://www.girl.tv/">May 26, 2005</a> *<br>
+<a href="http://web.archive.org/web/20050820132519/http://girl.tv/">Aug 20, 2005</a> *<br>
+<a href="http://web.archive.org/web/20051023194555/http://girl.tv/">Oct 23, 2005</a> *<br>
+<a href="http://web.archive.org/web/20051104143738/http://girl.tv/">Nov 04, 2005</a><br>
+<a href="http://web.archive.org/web/20051124191550/http://www.girl.tv/">Nov 24, 2005</a> *<br>
+
+      </td>
+      <td nowrap class="mainBody" valign="top">
+         <a href="http://web.archive.org/web/20060111092131/http://www.girl.tv/">Jan 11, 2006</a> *<br>
+<a href="http://web.archive.org/web/20060420091728/http://girl.tv/">Apr 20, 2006</a> *<br>
+<a href="http://web.archive.org/web/20060613054227/http://girl.tv/">Jun 13, 2006</a> *<br>
+<a href="http://web.archive.org/web/20060711084628/http://girl.tv/">Jul 11, 2006</a><br>
+<a href="http://web.archive.org/web/20060716104936/http://www.girl.tv/">Jul 16, 2006</a><br>
+<a href="http://web.archive.org/web/20060717004624/http://www.girl.tv/">Jul 17, 2006</a><br>
+<a href="http://web.archive.org/web/20060813141003/http://www.girl.tv/">Aug 13, 2006</a> *<br>
+<a href="http://web.archive.org/web/20060820204253/http://www.girl.tv/">Aug 20, 2006</a><br>
+<a href="http://web.archive.org/web/20060902124831/http://girl.tv/">Sep 02, 2006</a><br>
+<a href="http://web.archive.org/web/20061017064106/http://www.girl.tv/">Oct 17, 2006</a> *<br>
+<a href="http://web.archive.org/web/20061205033145/http://girl.tv/">Dec 05, 2006</a> *<br>
+
+      </td>
+      <td nowrap class="mainBody" valign="top">
+         <a href="http://web.archive.org/web/20070108200819/http://www.girl.tv/">Jan 08, 2007</a> *<br>
+<a href="http://web.archive.org/web/20070113164822/http://www.girl.tv/">Jan 13, 2007</a> *<br>
+<a href="http://web.archive.org/web/20070118160605/http://www.girl.tv/">Jan 18, 2007</a> *<br>
+<a href="http://web.archive.org/web/20070123151539/http://www.girl.tv/">Jan 23, 2007</a> *<br>
+<a href="http://web.archive.org/web/20070128172322/http://www.girl.tv/">Jan 28, 2007</a> *<br>
+<a href="http://web.archive.org/web/20070216051819/http://girl.tv/">Feb 16, 2007</a> *<br>
+<a href="http://web.archive.org/web/20070226141253/http://www.girl.tv/">Feb 26, 2007</a> *<br>
+<a href="http://web.archive.org/web/20070311093045/http://girl.tv/">Mar 11, 2007</a> *<br>
+<a href="http://web.archive.org/web/20070403060617/http://www.girl.tv/">Apr 03, 2007</a><br>
+<a href="http://web.archive.org/web/20070415123415/http://www.girl.tv/">Apr 15, 2007</a> *<br>
+<a href="http://web.archive.org/web/20070628213121/http://www.girl.tv/">Jun 28, 2007</a> *<br>
+<a href="http://web.archive.org/web/20070630013421/http://www.girl.tv/">Jun 30, 2007</a><br>
+<a href="http://web.archive.org/web/20070812070400/http://www.girl.tv/">Aug 12, 2007</a> *<br>
+
+      </td>
+   </tr>
+</table>
+      </p>
+
+
+<!-- <p class="mainSearchUrls">
+	URL<br>
+	<span class="mainSearchText">TEXT FOLLOWING URL</span>
+</p> -->
+
+<!-- /SEARCH RESULTS -->
+
+<!-- SEARCH FOOTER -->
+
+<!-- FOOTER_TO_SUBSTITUTE -->
+
+<!-- /SEARCH FOOTER -->
+
+		<div align="center">
+			<!-- FOOTER -->
+				<hr noshade size="1" align="center">
+				 <p>
+                                                <a href="/">Home</a> |
+                                                <a href="http://www.archive.org/about/faqs.php#The_Wayback_Machine">Help</a>
+                                        </p><p>
+                                                <a href="http://www.archive.org">Internet Archive</a> |
+                                                <a href="http://www.archive.org/about/terms.php">Terms of Use</a> |
+                                                <a href="http://www.archive.org/about/terms.php#privacy">Privacy Policy</a>
+
+                                        </p>
+
+			<!-- /FOOTER -->
+			<!-- #EndLibraryItem -->
+			<!-- /FOOTER -->
+		</div>
+      
+
+   </body>
+
+</html>

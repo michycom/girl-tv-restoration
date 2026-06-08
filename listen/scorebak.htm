@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Musical Notes</title>
+    <style>
+        .note-container {
+            border: 1px solid #ccc;
+            display: inline-block;
+            margin: 5px;
+        }
+        svg {
+            overflow: visible;
+        }
+    </style>
+</head>
+<body>
+    <h1>Musical Notes</h1>
+    <div id="notes"></div>
+
+    <script>
+       class MusicalNote {
+            constructor(note, octave) {
+            this.note = note;
+            this.octave = octave;
+            this.svgNS = "http://www.w3.org/2000/svg";
+            this.lineSpacing = 20;
+            this.baseY = 100; // Basislinie Y-Position
+            
+            this.width = 150;
+            this.startY = 100;
+            this.height = 300;
+            this.C4ref = this.baseY + this.startY (this.lineSpacing * 5); // Berechnung der Y-Position für C4
+            this.createNoteContainer();
+        }
+
+            isBassClef() {
+                // Bestimmen, ob die Note im F-Schlüssel angezeigt werden sollte
+                return this.octave < 4 || (this.octave === 4 && ['A', 'B', 'C'].includes(this.note));
+            }
+
+            createNoteContainer() {
+            const container = document.createElement('div');
+            container.className = 'note-container';
+            const svg = document.createElementNS(this.svgNS, 'svg');
+            svg.setAttribute('width', this.width);
+            svg.setAttribute('height',this.height);
+            const baseY = this.C4ref - (this.octave - 4) * this.lineSpacing * 3.5 - this.getNoteIndex(this.note);
+            this.drawStaffLines(svg, baseY);
+            this.drawClef(svg, baseY - 10, this.isBassClef() ? 'F' : 'G');
+            this.drawNoteCircle(svg, 82, baseY);
+
+            container.appendChild(svg);
+            document.getElementById('notes').appendChild(container);
+    }
+
+            drawStaffLines(svg) {
+                for (let i = 0; i < 5; i++) {
+                    const y = this.startY + i * this.lineSpacing;
+                    const line = document.createElementNS(this.svgNS, "line");
+                    line.setAttribute("x1", "0");
+                    line.setAttribute("y1", y);
+                    line.setAttribute("x2", "150");
+                    line.setAttribute("y2", y);
+                    line.setAttribute("stroke", "black");
+                    svg.appendChild(line);
+                }
+            }
+
+            drawClef(svg, yPosition, clefType) {
+                const clef = document.createElementNS(this.svgNS, "text");
+                clef.setAttribute("x", "5");
+                clef.setAttribute("y", clefType === 'G' ? "175" : "156");
+                clef.setAttribute("font-size", clefType === 'G' ? "130" : "80");
+                clef.textContent = clefType === 'G' ? "\uD834\uDD1E" : "\uD834\uDD22";
+                svg.appendChild(clef);
+            }
+
+            drawNoteCircle(svg, xPosition, yPosition) {
+                const circle = document.createElementNS(this.svgNS, "circle");
+                circle.setAttribute("cx", xPosition);
+                circle.setAttribute("cy", yPosition);
+                circle.setAttribute("r", 5);
+                circle.setAttribute("fill", "black");
+                svg.appendChild(circle);
+            }
+            getNoteIndex(note) {
+            const notesInOrder = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+            return notesInOrder.indexOf(note);
+    }
+
+        }
+
+        new MusicalNote('C', 4);
+        //new MusicalNote('E', 4);
+        //new MusicalNote('A', 3);
+        //new MusicalNote('F', 2);
+    </script>
+</body>
+</html>

@@ -1,0 +1,963 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Tonal Geo Game — 3D-ish Composer</title>
+<style>
+  :root{
+    --bg:#070912;
+    --panel:rgba(14,18,34,.78);
+    --line:rgba(255,255,255,.12);
+    --line2:rgba(255,255,255,.18);
+    --text:#e9eefc;
+    --muted:#a9b3cf;
+    --shadow: 0 10px 30px rgba(0,0,0,.45);
+    --r:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1100px 800px at 25% 15%, rgba(122,162,255,.16), transparent 55%),
+      radial-gradient(1100px 800px at 75% 75%, rgba(255,122,162,.10), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font: 14px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial;
+    overflow:hidden;
+  }
+  .hudTop{
+    position:fixed; top:14px; left:14px; right:14px;
+    display:flex; gap:12px; justify-content:space-between; align-items:flex-start;
+    pointer-events:none;
+  }
+  .card{
+    pointer-events:auto;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    backdrop-filter: blur(12px);
+    padding:10px 12px;
+    max-width: 70ch;
+  }
+  .title{font-weight:750; letter-spacing:.2px; margin-bottom:4px}
+  .mini{color:var(--muted); font-size:12px}
+  .controls{
+    display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:flex-end;
+  }
+  button{
+    appearance:none;
+    border:1px solid var(--line2);
+    background:rgba(255,255,255,.05);
+    color:var(--text);
+    padding:8px 10px;
+    border-radius:12px;
+    cursor:pointer;
+    transition: transform .06s ease, background .12s ease, border-color .12s ease;
+    user-select:none;
+  }
+  button:hover{background:rgba(255,255,255,.07); border-color:rgba(255,255,255,.28)}
+  button:active{transform:translateY(1px)}
+  button.primary{border-color:rgba(122,162,255,.45); background:rgba(122,162,255,.14)}
+  button.good{border-color:rgba(98,230,165,.45); background:rgba(98,230,165,.12)}
+  button.danger{border-color:rgba(255,122,162,.45); background:rgba(255,122,162,.11)}
+  .pill{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:8px 10px;
+    border:1px solid var(--line);
+    border-radius:999px;
+    color:var(--muted);
+    background:rgba(0,0,0,.18);
+    white-space:nowrap;
+  }
+  .kbd{
+    font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+    border:1px solid var(--line);
+    background:rgba(0,0,0,.22);
+    padding:2px 6px;
+    border-radius:8px;
+    color:#d9e6ff;
+  }
+
+  canvas{display:block; width:100vw; height:100vh}
+  .hudBottom{
+    position:fixed; left:14px; right:14px; bottom:14px;
+    display:flex; gap:12px; justify-content:space-between; align-items:flex-end;
+    pointer-events:none;
+  }
+  .log{
+    pointer-events:auto;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    backdrop-filter: blur(12px);
+    padding:10px 12px;
+    width:min(520px, 60vw);
+    max-height:180px;
+    overflow:auto;
+    font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+    font-size:12px;
+    white-space:pre-wrap;
+    color:#cfe1ff;
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="hudTop">
+  <div class="card">
+    <div class="title">🎮 Tonal Geo Game (3D-ish)</div>
+    <div class="mini">
+      Klick auf Formen = Pattern aktivieren/deaktivieren. Wheel = Zoom, Right-Drag oder <span class="kbd">Space</span>+Drag = Pan.
+      <span class="kbd">1..6</span> Presets. Ziel: “wenig Effort” → “viel Spektrum”.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="controls">
+      <button class="good" id="audioBtn">Audio On</button>
+      <button class="primary" id="playBtn">Play</button>
+      <button id="contBtn">Continue</button>
+      <button id="repeatBtn">Repeat</button>
+      <button id="addBtn">Add</button>
+      <button class="danger" id="removeBtn">Remove</button>
+      <span class="pill" id="statePill">state: idle</span>
+      <span class="pill" id="presetPill">preset: 1</span>
+    </div>
+  </div>
+</div>
+
+<div class="hudBottom">
+  <div class="log" id="log"></div>
+  <div class="card" style="pointer-events:auto; max-width: 44ch;">
+    <div class="mini" id="info">select: —</div>
+    <div class="mini" style="margin-top:6px">
+      Tip: Du kannst das als “impro-game” spielen: Add → klick 2–4 Steps → Play → Repeat → Add…
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   Tonal Geo Game — single-file, pseudo-3D + sequencer + sound
+   ============================================================ */
+
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
+const logEl = document.getElementById("log");
+const infoEl = document.getElementById("info");
+const statePill = document.getElementById("statePill");
+const presetPill = document.getElementById("presetPill");
+
+const audioBtn = document.getElementById("audioBtn");
+const playBtn  = document.getElementById("playBtn");
+const contBtn  = document.getElementById("contBtn");
+const repeatBtn= document.getElementById("repeatBtn");
+const addBtn   = document.getElementById("addBtn");
+const removeBtn= document.getElementById("removeBtn");
+
+function log(msg){
+  const t = new Date().toLocaleTimeString();
+  logEl.textContent = `[${t}] ${msg}\n` + logEl.textContent;
+}
+
+// --------- Resize / DPR
+function resize(){
+  const dpr = devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.floor(innerWidth * dpr));
+  canvas.height= Math.max(1, Math.floor(innerHeight * dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+addEventListener("resize", resize);
+resize();
+
+// --------- “3D” camera + projection
+const cam = {
+  x: 0, y: 0, z: 0,
+  zoom: 1.0,
+  yaw: 0.0,     // rotate around Y
+  pitch: 0.35,  // tilt
+};
+function project(p){
+  // World -> camera space
+  const x = p.x - cam.x;
+  const y = p.y - cam.y;
+  const z = p.z - cam.z;
+
+  // yaw rotate (around Y): affects x,z
+  const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);
+  let x1 = x*cy - z*sy;
+  let z1 = x*sy + z*cy;
+
+  // pitch rotate (around X): affects y,z
+  const cx = Math.cos(cam.pitch), sx = Math.sin(cam.pitch);
+  let y2 = y*cx - z1*sx;
+  let z2 = y*sx + z1*cx;
+
+  // perspective-ish
+  const persp = 1 / (1 + (z2*0.0022)); // soft perspective
+  const s = cam.zoom * persp;
+
+  const sxp = innerWidth/2 + x1*s;
+  const syp = innerHeight/2 + y2*s;
+
+  return {sx:sxp, sy:syp, s, z:z2};
+}
+
+// --------- Music theory minimal: pitch classes + scale mask
+const NOTE = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const SCALES = {
+  ionian:[0,2,4,5,7,9,11],
+  aeolian:[0,2,3,5,7,8,10],
+  dorian:[0,2,3,5,7,9,10],
+  phrygian:[0,1,3,5,7,8,10],
+  lydian:[0,2,4,6,7,9,11],
+  mixo:[0,2,4,5,7,9,10],
+  blues:[0,3,5,6,7,10],
+  chromatic:[0,1,2,3,4,5,6,7,8,9,10,11],
+};
+let rootPC = 0;
+let scaleName = "ionian";
+function inScale(pc){
+  const st = SCALES[scaleName] || SCALES.ionian;
+  const rel = (pc - rootPC + 12) % 12;
+  return st.includes(rel);
+}
+function hueForPC(pc){ return (pc*360/12); }
+function col(pc,a=1){ return `hsla(${hueForPC(pc)}, 85%, 62%, ${a})`; }
+
+// --------- Game objects: “glyphs” in space, each is a step in a loop
+let glyphId = 0;
+function rnd(a,b){ return a + Math.random()*(b-a); }
+
+function makeGlyph(opts={}){
+  const pc = opts.pc ?? ((Math.random()*12)|0);
+  const depthBand = opts.depthBand ?? rnd(-220, 220);
+  const orbit = opts.orbit ?? rnd(120, 520);
+  const angle = opts.angle ?? rnd(0, Math.PI*2);
+  const z = depthBand;
+
+  const shapeRoll = opts.shape ?? ["circle","tri","oct","poly"][ (Math.random()*4)|0 ];
+  const polySides = opts.polySides ?? (5 + ((Math.random()*5)|0));
+
+  return {
+    id: ++glyphId,
+    pc,
+    active: opts.active ?? (Math.random()<0.40),
+    shape: shapeRoll,
+    polySides,
+    orbit,
+    angle,
+    speed: rnd(0.15, 0.55) * (Math.random()<0.5?-1:1),
+    z,
+    r: rnd(18, 42),
+    pulse: rnd(0, 2),
+    energy: 0,
+    stepIndex: 0,  // assigned later
+    role: opts.role ?? (Math.random()<0.18 ? "kick" : Math.random()<0.26 ? "snare" : "tone"),
+  };
+}
+
+let glyphs = [];
+function seedWorld(){
+  glyphs = [];
+  for(let i=0;i<18;i++) glyphs.push(makeGlyph());
+  assignSteps();
+}
+seedWorld();
+
+function assignSteps(){
+  // map glyphs to steps around a “loop”
+  glyphs.forEach((g,i)=>g.stepIndex=i);
+}
+
+// --------- Sequencer state
+let state = "idle"; // idle | playing | paused
+let step = 0;
+let bpm = 118;
+let stepDiv = 4; // 16th grid
+let nextTickAt = 0;
+let loopLen = 16; // will be derived from glyph count patterns
+let lastLoop = []; // remembers a loop snapshot for Repeat
+
+function setState(s){
+  state = s;
+  statePill.textContent = `state: ${s}`;
+}
+
+// --------- WebAudio synth engine (wide but simple)
+let audio = {
+  ctx:null,
+  master:null,
+  delay:null,
+  delayFB:null,
+  delayMix:null,
+  hp:null,
+  lp:null,
+  comp:null,
+  reverb:null, // pseudo by small multi-delays
+  running:false,
+  preset:1,
+};
+
+function ensureAudio(){
+  if(audio.ctx) return;
+  const A = window.AudioContext || window.webkitAudioContext;
+  audio.ctx = new A();
+
+  // master chain
+  audio.master = audio.ctx.createGain();
+  audio.master.gain.value = 0.55;
+
+  audio.comp = audio.ctx.createDynamicsCompressor();
+  audio.comp.threshold.value = -18;
+  audio.comp.ratio.value = 4;
+
+  audio.hp = audio.ctx.createBiquadFilter();
+  audio.hp.type="highpass";
+  audio.hp.frequency.value = 40;
+
+  audio.lp = audio.ctx.createBiquadFilter();
+  audio.lp.type="lowpass";
+  audio.lp.frequency.value = 15000;
+
+  // delay
+  audio.delay = audio.ctx.createDelay(1.0);
+  audio.delay.delayTime.value = 0.24;
+  audio.delayFB = audio.ctx.createGain();
+  audio.delayFB.gain.value = 0.33;
+  audio.delayMix = audio.ctx.createGain();
+  audio.delayMix.gain.value = 0.18;
+
+  // pseudo "reverb": 3 short delays in parallel
+  const r1 = audio.ctx.createDelay(0.30); r1.delayTime.value = 0.085;
+  const r2 = audio.ctx.createDelay(0.30); r2.delayTime.value = 0.121;
+  const r3 = audio.ctx.createDelay(0.30); r3.delayTime.value = 0.168;
+  const rg = audio.ctx.createGain(); rg.gain.value = 0.11;
+  audio.reverb = {r1,r2,r3,rg};
+
+  // routing
+  // dry -> filters -> comp -> master -> out
+  audio.lp.connect(audio.comp);
+  audio.comp.connect(audio.master);
+  audio.master.connect(audio.ctx.destination);
+
+  // delay loop
+  audio.delay.connect(audio.delayFB);
+  audio.delayFB.connect(audio.delay);
+  audio.delay.connect(audio.delayMix);
+  audio.delayMix.connect(audio.lp);
+
+  // reverb parallel
+  audio.reverb.r1.connect(audio.reverb.rg);
+  audio.reverb.r2.connect(audio.reverb.rg);
+  audio.reverb.r3.connect(audio.reverb.rg);
+  audio.reverb.rg.connect(audio.lp);
+
+  // input entry
+  audio.hp.connect(audio.lp);
+
+  audioBtn.textContent = "Audio Ready";
+  log("AudioContext created");
+}
+
+async function resumeAudio(){
+  ensureAudio();
+  if(audio.ctx.state !== "running") await audio.ctx.resume();
+  audio.running = true;
+  log(`AudioContext state=${audio.ctx.state}`);
+}
+
+function mtof(m){ return 440*Math.pow(2,(m-69)/12); }
+
+function envGain(g, t0, a=0.005, d=0.12, s=0.0){
+  g.gain.cancelScheduledValues(t0);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(1.0, t0+a);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.0001, s+0.0001), t0+a+d);
+}
+
+function hitKick(t0, amp=0.9){
+  const osc = audio.ctx.createOscillator();
+  const g = audio.ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.setValueAtTime(120, t0);
+  osc.frequency.exponentialRampToValueAtTime(44, t0+0.12);
+  g.gain.setValueAtTime(amp, t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0+0.18);
+  osc.connect(g);
+  g.connect(audio.hp);
+  osc.start(t0); osc.stop(t0+0.22);
+}
+
+function hitSnare(t0, amp=0.45){
+  // noise via buffer
+  const len = audio.ctx.sampleRate * 0.20;
+  const buf = audio.ctx.createBuffer(1, len, audio.ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for(let i=0;i<len;i++) data[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 2.0);
+
+  const src = audio.ctx.createBufferSource();
+  src.buffer = buf;
+
+  const bp = audio.ctx.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.value = 1800;
+  bp.Q.value = 0.8;
+
+  const g = audio.ctx.createGain();
+  g.gain.setValueAtTime(amp, t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0+0.16);
+
+  src.connect(bp);
+  bp.connect(g);
+  g.connect(audio.hp);
+  src.start(t0);
+  src.stop(t0+0.22);
+}
+
+function hitHat(t0, amp=0.14){
+  const len = audio.ctx.sampleRate * 0.06;
+  const buf = audio.ctx.createBuffer(1, len, audio.ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for(let i=0;i<len;i++) data[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 1.6);
+
+  const src = audio.ctx.createBufferSource();
+  src.buffer = buf;
+
+  const hp = audio.ctx.createBiquadFilter();
+  hp.type="highpass";
+  hp.frequency.value = 7000;
+
+  const g = audio.ctx.createGain();
+  g.gain.setValueAtTime(amp, t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0+0.06);
+
+  src.connect(hp);
+  hp.connect(g);
+  g.connect(audio.hp);
+  src.start(t0);
+  src.stop(t0+0.10);
+}
+
+function playTonePC(t0, pc, dur=0.18, amp=0.20){
+  const preset = audio.preset;
+
+  // map pc -> midi around a base
+  const base = 48 + rootPC; // ~C3-ish
+  let midi = base + ((pc - rootPC + 12) % 12);
+  // bias to scale: if out-of-scale, push up an octave for tension
+  if(!inScale(pc)) midi += 12;
+
+  const osc = audio.ctx.createOscillator();
+  const g = audio.ctx.createGain();
+  const f = audio.ctx.createBiquadFilter();
+  f.type="lowpass";
+
+  // presets
+  if(preset===1){ osc.type="sawtooth"; f.frequency.value=2200; f.Q.value=0.6; }
+  if(preset===2){ osc.type="triangle"; f.frequency.value=1600; f.Q.value=1.2; }
+  if(preset===3){ osc.type="square";   f.frequency.value=900;  f.Q.value=0.9; }
+  if(preset===4){ osc.type="sine";     f.frequency.value=4200; f.Q.value=0.4; }
+  if(preset===5){ osc.type="sawtooth"; f.frequency.value=1200; f.Q.value=2.2; } // acid-ish
+  if(preset===6){ osc.type="triangle"; f.frequency.value=2600; f.Q.value=0.5; }
+
+  osc.frequency.setValueAtTime(mtof(midi), t0);
+
+  const a = 0.006;
+  const d = Math.max(0.03, dur*0.75);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.0001, amp), t0+a);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0+a+d);
+
+  osc.connect(f);
+  f.connect(g);
+  g.connect(audio.hp);
+
+  // send to delay + reverb
+  const send = audio.ctx.createGain();
+  send.gain.value = 0.35;
+  g.connect(send);
+  send.connect(audio.delay);
+  send.connect(audio.reverb.r1);
+  send.connect(audio.reverb.r2);
+  send.connect(audio.reverb.r3);
+
+  osc.start(t0);
+  osc.stop(t0+dur+0.08);
+}
+
+// --------- “Game logic”: pattern generation via Add/Remove/Repeat
+function snapshotLoop(){
+  return glyphs.map(g => ({pc:g.pc, active:g.active, shape:g.shape, polySides:g.polySides, orbit:g.orbit, angle:g.angle, speed:g.speed, z:g.z, r:g.r, role:g.role}));
+}
+function restoreLoop(snap){
+  glyphs = snap.map(o => makeGlyph(o));
+  assignSteps();
+  step = 0;
+}
+function quantizeToScale(pc){
+  if(inScale(pc)) return pc;
+  // snap to nearest in-scale pc
+  let best=pc, bestD=99;
+  for(let i=0;i<12;i++){
+    if(inScale(i)){
+      const d = Math.min((i-pc+12)%12, (pc-i+12)%12);
+      if(d<bestD){ bestD=d; best=i; }
+    }
+  }
+  return best;
+}
+
+function addGlyph(){
+  // add a glyph that “makes sense”: biased to scale, and placed near current step orbit
+  const pc = quantizeToScale((Math.random()*12)|0);
+  const g = makeGlyph({pc, active:true});
+  // place in a “spiral lane”
+  g.orbit = rnd(160, 620);
+  g.z = rnd(-260, 260);
+  g.shape = (Math.random()<0.34) ? "oct" : (Math.random()<0.45 ? "tri" : "circle");
+  g.role = (Math.random()<0.22) ? "hat" : "tone";
+  glyphs.push(g);
+  assignSteps();
+  lastLoop = snapshotLoop();
+  log(`Add: glyph#${g.id} (${NOTE[pc]})`);
+}
+
+function removeGlyph(){
+  // remove least energetic inactive glyph if possible
+  const idx = glyphs.findIndex(g=>!g.active);
+  if(idx>=0){
+    const rem = glyphs.splice(idx,1)[0];
+    assignSteps();
+    lastLoop = snapshotLoop();
+    log(`Remove: glyph#${rem.id}`);
+    return;
+  }
+  // else remove last
+  if(glyphs.length>6){
+    const rem = glyphs.pop();
+    assignSteps();
+    lastLoop = snapshotLoop();
+    log(`Remove: glyph#${rem.id}`);
+  } else {
+    log("Remove: blocked (too few glyphs)");
+  }
+}
+
+function repeatLoop(){
+  if(lastLoop && lastLoop.length){
+    restoreLoop(lastLoop);
+    log("Repeat: restored last snapshot");
+  } else {
+    lastLoop = snapshotLoop();
+    log("Repeat: snapshot saved");
+  }
+}
+
+// --------- Scheduler (tight + simple)
+function stepIntervalSec(){
+  return (60/bpm) / stepDiv; // 16ths if stepDiv=4
+}
+
+function triggerStep(t0, stepIndex){
+  // “beat logic”: pick all glyphs mapped to this step modulo loopLen
+  const active = glyphs.filter(g => g.active && (g.stepIndex % loopLen) === stepIndex);
+  // also add subtle hats on offbeats
+  const isHat = (stepIndex % 2) === 1;
+
+  for(const g of active){
+    g.energy = 1.0;
+    if(g.role==="kick") hitKick(t0, 0.92);
+    else if(g.role==="snare") hitSnare(t0, 0.42);
+    else if(g.role==="hat") hitHat(t0, 0.12);
+    else playTonePC(t0, g.pc, 0.16 + (Math.random()*0.08), 0.18 + (inScale(g.pc)?0.04:0.00));
+  }
+  if(isHat && Math.random()<0.55){
+    hitHat(t0, 0.08);
+  }
+}
+
+function updateLoopLen(){
+  // make loopLen feel game-ish: 8 / 12 / 16 / 24 based on count
+  const n = glyphs.length;
+  if(n<=10) loopLen=8;
+  else if(n<=14) loopLen=12;
+  else if(n<=22) loopLen=16;
+  else loopLen=24;
+}
+
+function tickAudio(){
+  if(!audio.running || state!=="playing") return;
+  const t = audio.ctx.currentTime;
+  const ahead = 0.10; // schedule ahead
+  updateLoopLen();
+  const dt = stepIntervalSec();
+
+  if(nextTickAt === 0) nextTickAt = t;
+
+  while(nextTickAt < t + ahead){
+    const s = step % loopLen;
+    triggerStep(nextTickAt, s);
+    nextTickAt += dt;
+    step++;
+    if(step % loopLen === 0){
+      // end loop: keep snapshot for Repeat mechanics
+      lastLoop = snapshotLoop();
+    }
+  }
+}
+
+// --------- Input (mouse / zoom / pan / click toggle)
+let mouse = {x:0,y:0, down:false, button:0};
+let pan = {active:false, lx:0, ly:0};
+let spaceDown=false;
+
+canvas.addEventListener("contextmenu", e=>e.preventDefault());
+
+canvas.addEventListener("mousemove", (e)=>{
+  mouse.x = e.clientX; mouse.y = e.clientY;
+  if(pan.active){
+    const dx = e.clientX - pan.lx;
+    const dy = e.clientY - pan.ly;
+    cam.x -= dx / cam.zoom;
+    cam.y -= dy / cam.zoom;
+    pan.lx = e.clientX; pan.ly = e.clientY;
+  }
+});
+
+canvas.addEventListener("mousedown", (e)=>{
+  mouse.down=true; mouse.button=e.button;
+  if(e.button===2 || spaceDown){
+    pan.active=true; pan.lx=e.clientX; pan.ly=e.clientY;
+    return;
+  }
+  // left click: pick nearest glyph (in screen space)
+  const hit = pickGlyph(e.clientX, e.clientY);
+  if(hit){
+    // toggle activation by clicking body; click center repeatedly to cycle role
+    if(e.shiftKey){
+      // cycle role
+      const roles = ["tone","kick","snare","hat"];
+      const i = roles.indexOf(hit.role);
+      hit.role = roles[(i+1)%roles.length];
+      log(`Role: glyph#${hit.id} → ${hit.role}`);
+    } else {
+      hit.active = !hit.active;
+      log(`${hit.active?"On":"Off"}: glyph#${hit.id} (${NOTE[hit.pc]})`);
+      // click also triggers immediate sound preview
+      if(audio.running){
+        const t0 = audio.ctx.currentTime;
+        if(hit.role==="kick") hitKick(t0, 0.85);
+        else if(hit.role==="snare") hitSnare(t0, 0.32);
+        else if(hit.role==="hat") hitHat(t0, 0.10);
+        else playTonePC(t0, hit.pc, 0.18, 0.22);
+      }
+    }
+  } else {
+    // click empty: “sprout” a new glyph at cursor (gamey)
+    const g = makeGlyph({pc: quantizeToScale((Math.random()*12)|0), active:true});
+    // place in world using inverse-ish: map screen delta to world delta
+    const dx = (e.clientX - innerWidth/2) / cam.zoom;
+    const dy = (e.clientY - innerHeight/2) / cam.zoom;
+    g.orbit = Math.min(720, Math.max(140, Math.hypot(dx,dy)));
+    g.angle = Math.atan2(dy, dx);
+    g.z = rnd(-260,260);
+    glyphs.push(g);
+    assignSteps();
+    lastLoop = snapshotLoop();
+    log(`Spawn: glyph#${g.id} (${NOTE[g.pc]})`);
+  }
+});
+
+canvas.addEventListener("mouseup", ()=>{
+  mouse.down=false;
+  pan.active=false;
+});
+
+canvas.addEventListener("wheel", (e)=>{
+  // zoom around cursor (simple)
+  const z = Math.exp(-e.deltaY * 0.0012);
+  cam.zoom = Math.min(3.0, Math.max(0.35, cam.zoom * z));
+},{passive:true});
+
+addEventListener("keydown", (e)=>{
+  if(e.code==="Space") spaceDown=true;
+  // preset switching
+  const k = e.key;
+  if(k>="1" && k<="6"){
+    audio.preset = Number(k);
+    presetPill.textContent = `preset: ${audio.preset}`;
+    log(`Preset → ${audio.preset}`);
+  }
+  // quick scale switch for game-feel
+  if(e.key.toLowerCase()==="m"){
+    const list = Object.keys(SCALES);
+    const i = list.indexOf(scaleName);
+    scaleName = list[(i+1)%list.length];
+    log(`Scale → ${scaleName}`);
+  }
+});
+addEventListener("keyup", (e)=>{
+  if(e.code==="Space") spaceDown=false;
+});
+
+// --------- Picking
+function pickGlyph(sx,sy){
+  // find nearest projected with radius
+  let best=null, bestD=1e9;
+  for(const g of glyphs){
+    const p = glyphWorldPos(g);
+    const pr = project(p);
+    const r = g.r * pr.s * 0.9;
+    const d = Math.hypot(sx-pr.sx, sy-pr.sy);
+    if(d < r+10 && d < bestD){
+      bestD=d; best=g;
+    }
+  }
+  if(best){
+    infoEl.textContent = `select: #${best.id} ${NOTE[best.pc]} • role=${best.role} • ${best.active?"active":"off"} • scale=${scaleName} (M to cycle)`;
+  }
+  return best;
+}
+
+// --------- World positions / animation
+function glyphWorldPos(g){
+  // “orbit around center” + slow drift in z + wave
+  const a = g.angle;
+  const x = Math.cos(a) * g.orbit;
+  const y = Math.sin(a) * g.orbit;
+  const z = g.z + Math.sin(g.pulse)*48;
+  return {x,y,z};
+}
+
+// --------- Drawing
+function drawBackground(){
+  ctx.clearRect(0,0,innerWidth,innerHeight);
+
+  // starfield-ish
+  ctx.save();
+  ctx.globalAlpha = 0.55;
+  for(let i=0;i<80;i++){
+    const x = (i*977.7 % 1000)/1000 * innerWidth;
+    const y = (i*733.3 % 1000)/1000 * innerHeight;
+    const r = (i%3===0)?1.4:0.9;
+    ctx.fillStyle = "rgba(255,255,255,0.06)";
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawCompassHint(){
+  // subtle HUD rings in the world center (game arena)
+  ctx.save();
+  ctx.translate(innerWidth/2, innerHeight/2);
+  ctx.strokeStyle = "rgba(255,255,255,0.10)";
+  ctx.lineWidth = 2;
+  for(const rr of [160,260,380,520]){
+    ctx.beginPath(); ctx.arc(0,0, rr*cam.zoom*0.18, 0, Math.PI*2); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawGlyph(g, isCurrentStep=false){
+  const p = glyphWorldPos(g);
+  const pr = project(p);
+
+  // depth fade
+  const depth = Math.max(-600, Math.min(600, pr.z));
+  const depthA = 0.92 - Math.abs(depth)/900;
+
+  const baseA = g.active ? 0.28 : 0.10;
+  const scaleBoost = inScale(g.pc) ? 0.06 : 0.00;
+
+  const pulse = 0.5 + 0.5*Math.sin(g.pulse*1.7);
+  const energy = g.energy;
+
+  const r = g.r * pr.s * (1 + (energy*0.28) + (isCurrentStep?0.18:0));
+  const strokeA = (g.active?0.75:0.35) * depthA;
+
+  // glow
+  ctx.save();
+  ctx.globalAlpha = 1;
+  ctx.shadowColor = col(g.pc, 0.55*depthA);
+  ctx.shadowBlur = (g.active? 18: 10) * (1 + energy);
+
+  // fill & stroke
+  ctx.fillStyle = col(g.pc, (baseA + scaleBoost + 0.06*pulse + (isCurrentStep?0.08:0))*depthA);
+  ctx.strokeStyle = col(g.pc, strokeA);
+  ctx.lineWidth = (g.active?2.6:2.0);
+
+  // shape
+  if(g.shape==="circle"){
+    ctx.beginPath(); ctx.arc(pr.sx, pr.sy, r, 0, Math.PI*2); ctx.closePath();
+  } else if(g.shape==="tri"){
+    polygon(pr.sx, pr.sy, r, 3, -Math.PI/2);
+  } else if(g.shape==="oct"){
+    polygon(pr.sx, pr.sy, r, 8, Math.PI/8);
+  } else {
+    polygon(pr.sx, pr.sy, r, g.polySides, -Math.PI/2);
+  }
+  ctx.fill();
+  ctx.stroke();
+
+  // role icon (tiny)
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = `rgba(233,238,252,${0.85*depthA})`;
+  ctx.font = `600 ${Math.max(10, 12*pr.s)}px -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial`;
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  const tag = g.role==="kick"?"K":g.role==="snare"?"S":g.role==="hat"?"H":"•";
+  ctx.fillText(tag, pr.sx, pr.sy - r*0.10);
+
+  // note label
+  ctx.fillStyle = `rgba(233,238,252,${0.90*depthA})`;
+  ctx.font = `700 ${Math.max(11, 13*pr.s)}px -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial`;
+  ctx.fillText(NOTE[g.pc], pr.sx, pr.sy + r*0.18);
+
+  ctx.restore();
+}
+
+function polygon(x,y,r,n,rot){
+  ctx.beginPath();
+  for(let i=0;i<n;i++){
+    const a = rot + i*(Math.PI*2/n);
+    const px = x + Math.cos(a)*r;
+    const py = y + Math.sin(a)*r;
+    if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.closePath();
+}
+
+function drawConnections(){
+  // connect glyphs that are “neighbors” in step order to show implied voice-leading path
+  ctx.save();
+  ctx.lineWidth = 2;
+  for(let i=0;i<glyphs.length-1;i++){
+    const a = glyphWorldPos(glyphs[i]);
+    const b = glyphWorldPos(glyphs[i+1]);
+    const pa = project(a), pb = project(b);
+    const pc = glyphs[i].pc;
+    const alpha = 0.08 + (glyphs[i].active?0.08:0) + (inScale(pc)?0.05:0);
+    ctx.strokeStyle = col(pc, alpha);
+    ctx.beginPath();
+    ctx.moveTo(pa.sx, pa.sy);
+    ctx.lineTo(pb.sx, pb.sy);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function draw(){
+  drawBackground();
+  drawCompassHint();
+
+  // animate camera yaw slowly for game feel
+  cam.yaw += 0.0008;
+  if(cam.yaw > Math.PI*2) cam.yaw -= Math.PI*2;
+
+  // sort by depth (far -> near)
+  const withDepth = glyphs.map(g=>{
+    const pr = project(glyphWorldPos(g));
+    return {g, z: pr.z};
+  }).sort((a,b)=>a.z-b.z);
+
+  drawConnections();
+
+  const current = step % loopLen;
+  for(const it of withDepth){
+    const isCurrentStep = ((it.g.stepIndex % loopLen) === current);
+    drawGlyph(it.g, isCurrentStep);
+  }
+}
+
+// --------- Update loop
+let lastT = performance.now();
+function update(){
+  const t = performance.now();
+  const dt = Math.min(0.05, (t-lastT)/1000);
+  lastT = t;
+
+  // spin glyphs, energy decay
+  for(const g of glyphs){
+    g.angle += g.speed * dt;
+    g.pulse += dt * (0.9 + Math.random()*0.1);
+    g.energy *= Math.pow(0.02, dt); // fast-ish decay
+    // slight “rule”: non-scale notes drift outward (visual tension)
+    if(!inScale(g.pc)) g.orbit = Math.min(760, g.orbit + 18*dt);
+    else g.orbit = Math.max(120, g.orbit - 10*dt*(g.active?0.4:0.15));
+  }
+
+  tickAudio();
+  draw();
+  requestAnimationFrame(update);
+}
+requestAnimationFrame(update);
+
+// --------- Buttons
+audioBtn.addEventListener("click", async ()=>{
+  await resumeAudio();
+  audioBtn.classList.add("good");
+});
+
+playBtn.addEventListener("click", async ()=>{
+  await resumeAudio();
+  // Save snapshot for repeat & start playing
+  lastLoop = snapshotLoop();
+  setState("playing");
+  step = 0;
+  nextTickAt = 0;
+  log(`Play: bpm=${bpm} loopLen≈${loopLen} scale=${scaleName}`);
+});
+
+contBtn.addEventListener("click", async ()=>{
+  await resumeAudio();
+  if(state!=="playing"){
+    setState("playing");
+    nextTickAt = 0;
+    log("Continue: playing");
+  } else {
+    setState("paused");
+    log("Paused");
+  }
+});
+
+repeatBtn.addEventListener("click", ()=>{
+  repeatLoop();
+});
+
+addBtn.addEventListener("click", ()=>{
+  addGlyph();
+});
+
+removeBtn.addEventListener("click", ()=>{
+  removeGlyph();
+});
+
+// --------- Tiny “make sense” defaults: set some drums
+(function primeRoles(){
+  // pick a few glyphs and make them drum-ish, so it immediately grooves
+  if(glyphs.length<8) return;
+  glyphs[0].role="kick"; glyphs[0].active=true; glyphs[0].pc=rootPC;
+  glyphs[4].role="snare"; glyphs[4].active=true;
+  glyphs[2].role="hat"; glyphs[2].active=true;
+  glyphs[6].role="hat"; glyphs[6].active=Math.random()<0.65;
+  log("Primed roles: kick/snare/hat ready (Shift-click glyph to cycle role).");
+})();
+
+// --------- Safety: keep log short
+setInterval(()=>{
+  const lines = logEl.textContent.split("\n");
+  if(lines.length>140) logEl.textContent = lines.slice(0,120).join("\n");
+}, 1200);
+
+setState("idle");
+log("Ready. Click shapes to toggle. Click empty space to spawn glyphs. M cycles scale. 1..6 presets.");
+presetPill.textContent = `preset: ${audio.preset}`;
+</script>
+</body>
+</html>

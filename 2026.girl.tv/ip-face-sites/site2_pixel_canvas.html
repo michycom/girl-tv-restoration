@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>IP Face — Pixel (Canvas)</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#06080c; color:#eaf0f8; }
+    header { padding: 18px 16px 10px; border-bottom: 1px solid rgba(255,255,255,.08); }
+    h1 { margin: 0 0 8px; font-size: 16px; font-weight: 650; letter-spacing:.2px; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    input { background:#0f1620; border:1px solid rgba(255,255,255,.12); color:#e6eef7; padding:10px 12px; border-radius:10px; min-width: 210px; outline:none; }
+    button { background:#132235; border:1px solid rgba(255,255,255,.14); color:#e6eef7; padding:10px 12px; border-radius:10px; cursor:pointer; }
+    button:hover { background:#17304d; }
+    main { padding:16px; display:grid; gap:14px; grid-template-columns: 1fr; }
+    .wrap { display:grid; gap:14px; grid-template-columns: minmax(260px, 520px) 1fr; align-items:start; }
+    @media (max-width: 860px){ .wrap{ grid-template-columns: 1fr; } }
+    .card { background:#0c111a; border:1px solid rgba(255,255,255,.10); border-radius:14px; padding:14px; }
+    canvas { width:min(520px, 92vw); height:auto; image-rendering: pixelated; border-radius: 12px; background:#06080c; border:1px solid rgba(255,255,255,.08); }
+    .meta { font-size:12px; opacity:.85; line-height:1.5; }
+    .tiny { font-size:11px; opacity:.7; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>IP Face — Pixel (Canvas)</h1>
+    <div class="row">
+      <input id="ip" placeholder="z.B. 198.51.100.7" inputmode="numeric" />
+      <button id="rnd">Random IP</button>
+      <button id="render">Render</button>
+      <span class="tiny">8-bit-ish pixel mask + dithering</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+      <div class="card" style="display:flex;justify-content:center;">
+        <canvas id="c" width="256" height="256"></canvas>
+      </div>
+      <div class="card">
+        <div class="meta" id="meta"></div>
+      </div>
+    </div>
+  </main>
+
+<script>
+function u32(n){ return n>>>0; }
+function ipToU32(ip){
+  const p = ip.trim().split(".");
+  if(p.length !== 4) return null;
+  const a = Number(p[0]), b = Number(p[1]), c = Number(p[2]), d = Number(p[3]);
+  if([a,b,c,d].some(x => !Number.isInteger(x) || x<0 || x>255)) return null;
+  return u32((a<<24) | (b<<16) | (c<<8) | d);
+}
+function mix32(x){
+  x = u32(x + 0x9e3779b9);
+  x ^= x >>> 16; x = u32(Math.imul(x, 0x85ebca6b));
+  x ^= x >>> 13; x = u32(Math.imul(x, 0xc2b2ae35));
+  x ^= x >>> 16;
+  return u32(x);
+}
+function bits(x, start, len){
+  return (x >>> start) & ((1<<len)-1);
+}
+function decode(ip){
+  const raw = ipToU32(ip);
+  if(raw === null) return null;
+  const x = mix32(raw);
+  return {
+    ip, raw, x,
+    nose: bits(x,0,6),
+    eyesBrows: bits(x,6,5),
+    mouth: bits(x,11,5),
+    jaw: bits(x,16,4),
+    face: bits(x,20,3),
+    hairline: bits(x,23,3),
+    ears: bits(x,26,3),
+    cheeks: bits(x,29,2),
+    forehead: bits(x,31,1),
+  };
+}
+function randIP(){
+  return [0,0,0,0].map(_ => Math.floor(Math.random()*256)).join(".");
+}
+function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
+function lerp(a,b,t){ return a+(b-a)*t; }
+
+// small palette derived from raw ip (stable)
+function paletteFrom(raw){
+  const r = (raw>>>24)&255, g = (raw>>>16)&255, b = (raw>>>8)&255, d = raw&255;
+  const skin = [clamp(180 + (r-128)*0.25, 120, 230), clamp(150 + (g-128)*0.18, 90, 210), clamp(130 + (b-128)*0.15, 70, 200)];
+  const hair = [clamp(40 + (d-128)*0.10, 10, 90), clamp(30 + (r-128)*0.08, 8, 70), clamp(25 + (g-128)*0.07, 6, 65)];
+  const accent = [clamp(80 + (b-128)*0.20, 20, 180), clamp(110 + (d-128)*0.22, 30, 220), clamp(120 + (r-128)*0.18, 30, 220)];
+  return { skin, hair, accent };
+}
+function rgb(a){ return `rgb(${a.map(x=>Math.round(x)).join(",")})`; }
+
+function draw(ip){
+  const d = decode(ip);
+  if(!d){ alert("Ungültige IP. Format: a.b.c.d (0..255)"); return; }
+
+  const c = document.getElementById("c");
+  const ctx = c.getContext("2d", { alpha: false });
+
+  // clear
+  ctx.fillStyle = "#06080c";
+  ctx.fillRect(0,0,c.width,c.height);
+
+  const pal = paletteFrom(d.raw);
+
+  // derive pixel-face params
+  const faceR = lerp(74, 92, d.face/7);
+  const jaw = d.jaw/15;
+  const chin = lerp(16, 30, jaw);
+  const cheeks = d.cheeks/3;
+  const forehead = d.forehead ? 1 : 0;
+
+  const cx = 128, cy = 132;
+
+  // helper: draw filled circle with dithering
+  function ditherFillRect(x,y,w,h, baseRgb, noiseSeed){
+    // ordered-ish dithering using bit tricks (fast)
+    for(let yy=y; yy<y+h; yy++){
+      for(let xx=x; xx<x+w; xx++){
+        const n = ((xx*73856093) ^ (yy*19349663) ^ noiseSeed) >>> 0;
+        const t = (n & 255)/255;
+        const shade = lerp(-18, 18, t);
+        ctx.fillStyle = `rgb(${clamp(baseRgb[0]+shade,0,255)},${clamp(baseRgb[1]+shade,0,255)},${clamp(baseRgb[2]+shade,0,255)})`;
+        ctx.fillRect(xx,yy,1,1);
+      }
+    }
+  }
+
+  // face mask by scanline fill
+  const seed = d.x;
+  const skin = pal.skin;
+  for(let y=0; y<c.height; y++){
+    const dy = y - cy;
+    // ellipse-ish radius with jaw/chin modulation
+    const rx = faceR * (1 - 0.0025*Math.abs(dy));
+    const ry = faceR * 1.12;
+    let k = 1 - (dy*dy)/(ry*ry);
+    if(k <= 0) continue;
+    let half = Math.sqrt(k) * rx;
+
+    // jaw tighten lower half
+    if(dy > 20){
+      const t = clamp((dy-20)/90, 0, 1);
+      half *= lerp(1.0, 0.76 + 0.10*cheeks, t);
+      // chin
+      if(dy > 70) half *= lerp(1.0, 0.80, clamp((dy-70)/30,0,1));
+    }
+    // forehead
+    if(dy < -65){
+      half *= lerp(1.0, 0.86, forehead);
+    }
+
+    const x0 = Math.round(cx - half);
+    const x1 = Math.round(cx + half);
+    if(x1<=x0) continue;
+
+    // dither per scanline chunk
+    ditherFillRect(x0, y, x1-x0, 1, skin, seed ^ (y*2654435761));
+  }
+
+  // hairline
+  const hairH = Math.round(lerp(26, 54, d.hairline/7));
+  const hairW = Math.round(lerp(140, 186, d.face/7));
+  const hx0 = cx - hairW/2, hy0 = cy - faceR - 10;
+  ditherFillRect(Math.round(hx0), Math.round(hy0), hairW, hairH, pal.hair, seed ^ 0xA11CE);
+
+  // eyes + brows block (eyesBrows)
+  const eyesType = d.eyesBrows >>> 2; // 0..7
+  const eyesVar = d.eyesBrows & 3;    // 0..3
+  const spacing = Math.round(lerp(48, 62, eyesType/7));
+  const eyeY = Math.round(cy - 26 + lerp(-6, 8, eyesVar/3));
+  const eyeW = Math.round(lerp(18, 26, (7-eyesType)/7));
+  const eyeH = Math.round(lerp(7, 10, eyesType/7));
+  const tilt = lerp(-1, 1, eyesVar/3);
+
+  function drawEye(ex){
+    // white
+    ctx.fillStyle = "rgb(235,238,244)";
+    ctx.fillRect(ex-eyeW/2, eyeY-eyeH/2, eyeW, eyeH);
+    // lid pixel line
+    ctx.fillStyle = "rgba(0,0,0,.55)";
+    ctx.fillRect(ex-eyeW/2, eyeY-eyeH/2, eyeW, 1);
+    // iris
+    ctx.fillStyle = rgb(pal.accent);
+    ctx.fillRect(ex-2, eyeY-1, 4, 3);
+    // pupil
+    ctx.fillStyle = "rgb(12,12,14)";
+    ctx.fillRect(ex-1, eyeY, 2, 2);
+    // subtle tilt (one pixel corner)
+    if(tilt > 0){
+      ctx.fillStyle = "rgba(0,0,0,.45)";
+      ctx.fillRect(ex+eyeW/2-1, eyeY-eyeH/2, 1, 1);
+    } else {
+      ctx.fillStyle = "rgba(0,0,0,.45)";
+      ctx.fillRect(ex-eyeW/2, eyeY-eyeH/2, 1, 1);
+    }
+  }
+  drawEye(cx - spacing/2);
+  drawEye(cx + spacing/2);
+
+  // brows
+  const browY = eyeY - 12;
+  const browLen = Math.round(lerp(20, 34, (7-eyesType)/7));
+  const browTh = 2 + (eyesVar===3 ? 1 : 0);
+  ctx.fillStyle = "rgb(18,18,20)";
+  ctx.fillRect(cx - spacing/2 - browLen/2, browY, browLen, browTh);
+  ctx.fillRect(cx + spacing/2 - browLen/2, browY, browLen, browTh);
+
+  // nose
+  const noseType = d.nose >>> 3; // 0..7
+  const noseVar = d.nose & 7;    // 0..7
+  const noseY0 = cy - 8;
+  const noseLen = Math.round(lerp(18, 34, noseType/7));
+  const noseW = Math.round(lerp(6, 12, noseVar/7));
+  const nx = cx + Math.round(lerp(-3, 3, noseVar/7));
+  ctx.fillStyle = "rgba(0,0,0,.40)";
+  ctx.fillRect(nx, noseY0, 1, noseLen);
+  ctx.fillRect(nx - noseW/2, noseY0 + noseLen, noseW, 2);
+
+  // mouth
+  const mouthType = d.mouth >>> 2; // 0..7
+  const mouthVar = d.mouth & 3;    // 0..3
+  const my = Math.round(cy + 48 + lerp(-4, 6, mouthVar/3));
+  const mw = Math.round(lerp(28, 56, mouthType/7));
+  const smile = Math.round(lerp(-2, 3, mouthVar/3));
+  ctx.fillStyle = "rgb(110,46,46)";
+  // arc-ish: 3 segments
+  const x0 = cx - mw/2, x1 = cx + mw/2;
+  ctx.fillRect(x0, my, mw, 1);
+  ctx.fillRect(x0+3, my+smile, mw-6, 1);
+  ctx.fillRect(x0+7, my+smile*2, mw-14, 1);
+
+  // ears (simple)
+  const ear = d.ears/7;
+  const ew = Math.round(lerp(10, 16, ear));
+  const eh = Math.round(lerp(18, 26, ear));
+  const ex = Math.round(cx - faceR - 10);
+  const ey = Math.round(cy - 8);
+  ctx.fillStyle = rgb([skin[0]-10, skin[1]-10, skin[2]-10]);
+  ctx.fillRect(ex, ey, ew, eh);
+  ctx.fillRect(256-ex-ew, ey, ew, eh);
+
+  // meta
+  document.getElementById("meta").innerHTML = `
+    <div><b>IP:</b> <code>${d.ip}</code></div>
+    <div><b>raw u32:</b> <code>${d.raw>>>0}</code> · <b>mixed:</b> <code>${d.x>>>0}</code></div>
+    <div style="margin-top:10px"><b>Discrete:</b></div>
+    <div class="tiny">nose=${d.nose} · eyes+brows=${d.eyesBrows} · mouth=${d.mouth} · jaw=${d.jaw} · face=${d.face} · hairline=${d.hairline} · ears=${d.ears} · cheeks=${d.cheeks} · forehead=${d.forehead}</div>
+  `;
+}
+
+document.getElementById("rnd").addEventListener("click", () => {
+  const ip = randIP();
+  document.getElementById("ip").value = ip;
+  draw(ip);
+});
+document.getElementById("render").addEventListener("click", () => draw(document.getElementById("ip").value));
+document.getElementById("ip").addEventListener("keydown", (e) => { if(e.key==="Enter") draw(e.target.value); });
+
+const init = "198.51.100.7";
+document.getElementById("ip").value = init;
+draw(init);
+</script>
+</body>
+</html>

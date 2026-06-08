@@ -1,0 +1,1625 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>girl.tv – Live 2P WebRTC (QR Offer/Answer) – Offline Single-File</title>
+  <meta name="theme-color" content="#0b0b0b"/>
+  <style>
+    :root{
+      --bg:#0b0b0b; --fg:#e8e8e8; --muted:#9aa0a6;
+      --panel:#141414; --line:#2a2a2a; --btn:#202124;
+      --accent:#4ee1a0; --danger:#ff5c5c;
+      --radius:16px;
+    }
+    html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;}
+    *{box-sizing:border-box}
+    .wrap{max-width:980px;margin:0 auto;padding:16px;}
+    .toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 12px;border:1px solid var(--line);background:var(--panel);border-radius:var(--radius);}
+    .group{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+    button{
+      border:1px solid var(--line);background:var(--btn);color:var(--fg);
+      padding:10px 12px;border-radius:12px;cursor:pointer;font-size:14px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button.primary{border-color:rgba(78,225,160,.35);background:rgba(78,225,160,.10)}
+    button.danger{border-color:rgba(255,92,92,.35);background:rgba(255,92,92,.10)}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#0b0b0b;color:var(--muted);font-size:12px}
+    .status{font-size:14px;color:var(--muted);text-align:right}
+    .status strong{color:var(--fg)}
+    .card{margin-top:14px;border:1px solid var(--line);background:var(--panel);border-radius:var(--radius);padding:12px;}
+    .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+    .hint{font-size:13px;color:var(--muted);line-height:1.35;margin:10px 0 0}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .mono{
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+      font-size:12px;white-space:pre-wrap;word-break:break-word;
+      background:#0f0f0f;border:1px solid var(--line);padding:10px;border-radius:12px;
+    }
+    .overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.82);
+      display:none;align-items:center;justify-content:center;padding:16px;z-index:9999;
+    }
+    .overlay.show{display:flex}
+    .dialog{
+      width:min(740px,100%);background:#0f0f0f;border:1px solid var(--line);
+      border-radius:20px;overflow:hidden;
+      box-shadow:0 18px 70px rgba(0,0,0,.55);
+    }
+    .dialogHeader{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:12px 14px;border-bottom:1px solid var(--line);background:#101010;
+    }
+    .dialogTitle{display:flex;gap:10px;align-items:center;font-weight:800}
+    .xbtn{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center}
+    .dialogBody{padding:14px;display:grid;gap:12px}
+    .qrCanvasWrap{
+      display:flex;align-items:center;justify-content:center;
+      background:#fff;border-radius:18px;padding:12px;
+      border:1px solid rgba(255,255,255,.10);
+    }
+    canvas{display:block;max-width:100%;height:auto}
+    .bigBtn{width:100%;padding:14px 12px;border-radius:16px;font-weight:800;font-size:15px}
+    textarea,input[type="text"]{
+      width:100%;min-height:120px;background:#0b0b0b;color:var(--fg);
+      border:1px solid var(--line);border-radius:14px;padding:10px;font-size:12px;
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+    }
+    .miniRow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .camBox{
+      border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#070707;
+      min-height:260px;display:flex;align-items:center;justify-content:center;color:var(--muted);
+      position:relative;
+    }
+    video{width:100%;height:auto;display:block}
+    .camHud{
+      position:absolute;left:10px;right:10px;bottom:10px;
+      display:flex;gap:10px;justify-content:space-between;align-items:center;
+      pointer-events:none;
+    }
+    .camHud .pill{pointer-events:none;background:rgba(0,0,0,.45);border-color:rgba(255,255,255,.12)}
+    .small{font-size:12px;color:var(--muted)}
+    .hide{display:none !important}
+    .dangerText{color:var(--danger)}
+    a{color:var(--accent)}
+    .fullscreenQrContainer{
+      position:fixed;inset:0;background:var(--bg);display:none;
+      flex-direction:column;align-items:center;justify-content:center;
+      z-index:10000;padding:20px;gap:20px;
+    }
+    .fullscreenQrContainer.show{display:flex}
+    .fullscreenQrContent{
+      display:flex;flex-direction:column;align-items:center;gap:20px;
+      max-width:90vw;
+    }
+    .fullscreenQrCanvas{
+      border:3px solid var(--line);border-radius:24px;padding:20px;
+      background:white;max-width:90vmin;max-height:90vmin;width:auto;height:auto;
+    }
+    .fullscreenQrTitle{
+      font-size:24px;font-weight:800;text-align:center;color:var(--accent);
+    }
+    .fullscreenQrHint{
+      font-size:16px;color:var(--muted);text-align:center;max-width:500px;
+      line-height:1.5;
+    }
+    .fullscreenQrActions{
+      display:flex;gap:12px;flex-wrap:wrap;justify-content:center;
+    }
+    .fullscreenQrActions button{
+      padding:14px 20px;font-size:15px;font-weight:700;border-radius:14px;
+    }
+    .miniChat{
+      position:fixed;bottom:20px;right:20px;
+      width:320px;max-height:400px;background:var(--panel);
+      border:1px solid var(--line);border-radius:16px;
+      display:flex;flex-direction:column;z-index:9998;box-shadow:0 8px 32px rgba(0,0,0,.4);
+    }
+    .miniChat.hide{display:none}
+    .miniChatHeader{
+      padding:12px 14px;border-bottom:1px solid var(--line);
+      font-weight:700;display:flex;justify-content:space-between;align-items:center;
+    }
+    .miniChatBody{
+      flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px;
+      max-height:300px;
+    }
+    .msgIn,.msgOut{
+      padding:8px 10px;border-radius:10px;font-size:12px;word-break:break-word;
+      max-width:280px;
+    }
+    .msgIn{
+      background:rgba(78,225,160,.15);color:var(--fg);border-left:3px solid var(--accent);
+      align-self:flex-start;
+    }
+    .msgOut{
+      background:rgba(100,100,100,.2);color:var(--muted);align-self:flex-end;
+    }
+    .miniChatStatus{
+      padding:8px 12px;font-size:11px;color:var(--muted);text-align:center;
+      border-top:1px solid var(--line);font-weight:600;
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="toolbar">
+    <div class="group">
+      <!-- Dummy icons / Buttons -->
+      <button id="twoPlayerBtn" type="button" title="Two Player" aria-label="Two Player"><span>🤖</span></button>
+      <button id="soundBtn" type="button" title="Sound" aria-label="Sound"><span>🔇</span></button>
+      <button id="preferencesBtn" type="button" title="Preferences" aria-label="Preferences"><span>⚙️</span></button>
+      <span class="pill"><span>📡</span><span id="liveModeText">idle</span></span>
+    </div>
+    <div class="status">
+      <div><strong id="liveStatusText">—</strong></div>
+      <div style="margin-top:3px">Session: <span id="liveSessionText" class="mono" style="display:inline-block;padding:4px 8px;white-space:nowrap">—</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label">Quick Start</div>
+    <div class="row" style="margin-top:10px">
+      <button id="btnCreateOffer" class="primary" type="button">Create Offer (Player 1)</button>
+      <button id="btnScanAnswer" type="button" disabled>Scan Player 2 (Answer)</button>
+      <button id="btnReset" class="danger" type="button">Reset</button>
+    </div>
+    <p class="hint">
+      ✔️ Keine externen Services. ✔️ Keine STUN/TURN (nur LAN / gleiche WLAN / lokale ICE).<br>
+      Ablauf: Player 1 erzeugt Offer → zeigt QR. Player 2 öffnet App (normal) → „Join via Offer“ → scannt Offer QR → erzeugt Answer → zeigt QR. Player 1 scannt Answer QR → Verbindung steht.
+    </p>
+    <p class="hint">
+      Tipp iPhone-Test: Diese Datei als <b>Download</b> auf dem iPhone öffnen (Files-App) und im Browser laden.
+      Für WebRTC muss es i.d.R. über <b>https</b> oder <b>localhost</b> laufen (iOS Safari ist da streng).
+      Wenn du es wirklich „production-ready“ testen willst: die Datei kurz auf deinem HTTPS-Host (girl.tv) ablegen.
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="label">Tokens (Debug)</div>
+    <div class="row" style="margin-top:10px">
+      <div style="flex:1 1 460px">
+        <div class="label" style="margin-bottom:6px">Offer token</div>
+        <div id="offerOut" class="mono">—</div>
+      </div>
+      <div style="flex:1 1 460px">
+        <div class="label" style="margin-bottom:6px">Answer token</div>
+        <div id="answerOut" class="mono">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Offer dialog -->
+<div id="offerOverlay" class="overlay" aria-hidden="true">
+  <div class="dialog" role="dialog" aria-modal="true" aria-label="Offer QR">
+    <div class="dialogHeader">
+      <div class="dialogTitle">QR Code – player 2 scan</div>
+      <button class="xbtn" id="offerCloseBtn" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="dialogBody">
+      <div class="qrCanvasWrap"><canvas id="offerQrCanvas" width="320" height="320"></canvas></div>
+      <div class="small">Falls Scannen nicht geht: <b>Share</b> oder <b>Copy</b> nutzen.</div>
+      <div id="offerTokenText" class="mono">—</div>
+      <button id="offerDoneScanBtn" class="bigBtn primary" type="button">Done &amp; scan player 2</button>
+      <div class="miniRow">
+        <button id="offerShareBtn" type="button">Share</button>
+        <button id="offerCopyBtn" type="button">Copy code</button>
+        <button id="offerRenewBtn" class="danger" type="button">Renew</button>
+      </div>
+      <div class="hint">
+        „Share“ nutzt (wenn verfügbar) <code>navigator.share</code>. „Copy“ nutzt Clipboard (kann auf iOS eingeschränkt sein).
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scan dialog -->
+<div id="scanOverlay" class="overlay" aria-hidden="true">
+  <div class="dialog" role="dialog" aria-modal="true" aria-label="Scan">
+    <div class="dialogHeader">
+      <div class="dialogTitle" id="scanTitle">Scan QR</div>
+      <button class="xbtn" id="scanCloseBtn" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="dialogBody">
+      <div class="camBox" id="camBox">
+        <video id="camVideo" playsinline muted></video>
+        <div class="camHud">
+          <span class="pill" id="camHintPill">📷 Point at QR</span>
+          <span class="pill" id="camStatePill">idle</span>
+        </div>
+      </div>
+
+      <button id="manualUploadBtn" class="bigBtn" type="button">manual upload</button>
+
+      <div id="manualArea" class="hide">
+        <div class="label">Paste token / link</div>
+        <textarea id="manualText" placeholder="Paste offer/answer token or link here…"></textarea>
+        <div class="miniRow">
+          <button id="manualImportBtn" class="primary" type="button">Import</button>
+          <input id="qrImageInput" type="file" accept="image/*"/>
+        </div>
+        <div class="hint">
+          Image-Upload decode (QR aus Bild) ist optional und nutzt nur lokalen Code (kein Upload).
+        </div>
+      </div>
+
+      <div class="hint">
+        Wenn Kamera-Scan nicht verfügbar ist (Browser unterstützt es nicht), nutze „manual upload“.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Answer dialog -->
+<div id="answerOverlay" class="overlay" aria-hidden="true">
+  <div class="dialog" role="dialog" aria-modal="true" aria-label="Answer QR">
+    <div class="dialogHeader">
+      <div class="dialogTitle">Scan this with Player 1</div>
+      <button class="xbtn" id="answerCloseBtn" type="button" aria-label="Close">✕</button>
+    </div>
+    <div class="dialogBody">
+      <div class="qrCanvasWrap"><canvas id="answerQrCanvas" width="320" height="320"></canvas></div>
+      <div class="small">Oder: Share/Copy senden (Message/Email).</div>
+      <div id="answerTokenText" class="mono">—</div>
+      <div class="miniRow">
+        <button id="answerShareBtn" type="button">Share</button>
+        <button id="answerCopyBtn" type="button">Copy code</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Fullscreen QR Containers -->
+<div id="fullscreenOfferContainer" class="fullscreenQrContainer" aria-hidden="true">
+  <div class="fullscreenQrContent">
+    <div class="fullscreenQrTitle">📱 Player 1 – Scan or Share</div>
+    <canvas id="fullscreenOfferCanvas" class="fullscreenQrCanvas" width="420" height="420"></canvas>
+    <div class="fullscreenQrHint">
+      Player 2 scans this code with their device or you share the link
+    </div>
+    <div id="fullscreenOfferToken" class="mono" style="max-width:100%;padding:10px;border:1px solid var(--line);border-radius:12px;font-size:11px;"></div>
+    <div class="fullscreenQrActions">
+      <button id="fullscreenOfferShareBtn" class="primary" type="button">Share Link</button>
+      <button id="fullscreenOfferCopyBtn" type="button">Copy Code</button>
+      <button id="fullscreenOfferDoneBtn" class="primary" type="button">Both Ready → Scan</button>
+    </div>
+  </div>
+</div>
+
+<div id="fullscreenAnswerContainer" class="fullscreenQrContainer" aria-hidden="true">
+  <div class="fullscreenQrContent">
+    <div class="fullscreenQrTitle">✨ Player 2 – Scan or Share</div>
+    <canvas id="fullscreenAnswerCanvas" class="fullscreenQrCanvas" width="420" height="420"></canvas>
+    <div class="fullscreenQrHint">
+      Player 1 scans this code or you send the link back
+    </div>
+    <div id="fullscreenAnswerToken" class="mono" style="max-width:100%;padding:10px;border:1px solid var(--line);border-radius:12px;font-size:11px;"></div>
+    <div class="fullscreenQrActions">
+      <button id="fullscreenAnswerShareBtn" class="primary" type="button">Share Link</button>
+      <button id="fullscreenAnswerCopyBtn" type="button">Copy Code</button>
+      <button id="fullscreenAnswerDoneBtn" type="button">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mini Chat -->
+<div id="miniChat" class="miniChat hide" role="region" aria-label="Connection Status">
+  <div class="miniChatHeader">
+    <span>💬 Connection Status</span>
+    <button id="miniChatCloseBtn" style="width:32px;height:32px;padding:0;border-radius:8px;margin:-2px;" type="button">×</button>
+  </div>
+  <div class="miniChatBody" id="miniChatBody"></div>
+  <div class="miniChatStatus" id="miniChatStatus">Waiting for connection…</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  // ---------- Basic UI helpers ----------
+  const $ = (id)=>document.getElementById(id);
+  const show = (id)=>{ $(id).classList.add('show'); $(id).setAttribute('aria-hidden','false'); };
+  const hide = (id)=>{ $(id).classList.remove('show'); $(id).setAttribute('aria-hidden','true'); };
+
+  function setStatus(t){ $('liveStatusText').textContent = String(t||'—'); }
+  function setMode(m){
+    $('liveModeText').textContent = String(m||'idle');
+    // Hide/disable 🤖 while user is in connect flow OR connected (your requirement)
+    const active = (m && m !== 'idle');
+    const btn = $('twoPlayerBtn');
+    if(btn){
+      btn.hidden = active;
+      btn.disabled = active;
+    }
+    const sess = readLS(KEYS.sessionId) || '';
+    $('liveSessionText').textContent = sess || '—';
+  }
+
+  // ---------- Local-only storage ----------
+  const KEYS = Object.freeze({
+    offer: 'live.offer.v1',
+    answer:'live.answer.v1',
+    sessionId:'live.session.v1',
+    peer:'live.peer.v1',
+    ui:'live.ui.v1'
+  });
+  function readLS(k){ try{ const r=localStorage.getItem(k); return r?JSON.parse(r):null; }catch(_e){ return null; } }
+  function writeLS(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(_e){ return false; } }
+  function clearLS(){ for(const k of Object.values(KEYS)) try{ localStorage.removeItem(k); }catch(_e){} }
+
+  // ---------- Minimal token format (SDP only + tiny meta) ----------
+  // We store ONLY: {v,t,g,s} where t='o'|'a', g=sessionId, s=sdp
+  const LIVE_V = 1;
+  const PREFIX = 'l1';
+
+  function b64urlEncodeBytes(u8){
+    let bin=''; const chunk=0x8000;
+    for(let i=0;i<u8.length;i+=chunk){
+      bin += String.fromCharCode.apply(null, u8.subarray(i,i+chunk));
+    }
+    return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }
+  function b64urlDecodeToBytes(b64url){
+    const b64 = String(b64url||'').replace(/-/g,'+').replace(/_/g,'/');
+    const pad = b64.length%4 ? '='.repeat(4-(b64.length%4)) : '';
+    const bin = atob(b64+pad);
+    const u8 = new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++) u8[i]=bin.charCodeAt(i);
+    return u8;
+  }
+  async function deflateRaw(u8){
+    if(typeof CompressionStream==='undefined') return null;
+    const cs = new CompressionStream('deflate-raw');
+    const w = cs.writable.getWriter();
+    await w.write(u8); await w.close();
+    const ab = await new Response(cs.readable).arrayBuffer();
+    return new Uint8Array(ab);
+  }
+  async function inflateRaw(u8){
+    if(typeof DecompressionStream==='undefined') return null;
+    const ds = new DecompressionStream('deflate-raw');
+    const w = ds.writable.getWriter();
+    await w.write(u8); await w.close();
+    const ab = await new Response(ds.readable).arrayBuffer();
+    return new Uint8Array(ab);
+  }
+  async function encodeToken(obj){
+    const json = JSON.stringify(obj);
+    const u8 = new TextEncoder().encode(json);
+    let flag='n', bytes=u8;
+    const def = await deflateRaw(u8);
+    if(def && def.length>0 && def.length < u8.length*0.92){
+      flag='z'; bytes=def;
+    }
+    return `${PREFIX}.${flag}.${b64urlEncodeBytes(bytes)}`;
+  }
+  async function decodeToken(textOrLink){
+    const raw = String(textOrLink||'').trim();
+    const m = raw.match(/[#?&]l=([^&#]+)/);
+    const token = m ? decodeURIComponent(m[1]) : raw;
+
+    const parts = token.split('.');
+    if(parts.length!==3) throw new Error('Token format invalid');
+    const [p, flag, b64] = parts;
+    if(p!==PREFIX) throw new Error('Token prefix invalid');
+
+    let bytes = b64urlDecodeToBytes(b64);
+    if(flag==='z'){
+      const inf = await inflateRaw(bytes);
+      if(!inf) throw new Error('Compressed token not supported in this browser');
+      bytes = inf;
+    } else if(flag!=='n'){
+      throw new Error('Token flag invalid');
+    }
+
+    const json = new TextDecoder().decode(bytes);
+    const obj = JSON.parse(json);
+
+    if(!obj || typeof obj!=='object') throw new Error('Payload invalid');
+    if(obj.v!==LIVE_V) throw new Error('Payload version mismatch');
+    if(obj.t!=='o' && obj.t!=='a') throw new Error('Payload type invalid');
+    if(typeof obj.g!=='string' || obj.g.length<4) throw new Error('Session invalid');
+    if(typeof obj.s!=='string' || obj.s.length<20) throw new Error('SDP missing');
+
+    return obj;
+  }
+
+  function makeSessionId(len=6){
+    const chars='23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    let out=''; for(let i=0;i<len;i++) out += chars[Math.floor(Math.random()*chars.length)];
+    return out;
+  }
+
+  // ---------- WebRTC core (local ICE only, no STUN/TURN) ----------
+  const ICE_SERVERS = Object.freeze([]); // local only
+  let pc = null;
+  let dc = null;
+
+  function closePc(){
+    try{ if(dc){ dc.close(); } }catch(_e){}
+    try{ if(pc){ pc.close(); } }catch(_e){}
+    pc=null; dc=null;
+  }
+
+  function wirePcDiagnostics(){
+    if(!pc) return;
+    pc.onconnectionstatechange = ()=>{
+      const st = pc.connectionState;
+      if(st==='connected'){
+        setStatus('✅ Connected');
+        setMode('connected');
+      } else if(st==='connecting'){
+        setStatus('⏳ Connecting…');
+        setMode('connecting');
+      } else if(st==='failed'){
+        setStatus('❌ Connection failed (try renew)');
+        setMode('failed');
+      } else if(st==='disconnected'){
+        setStatus('⚠️ Disconnected');
+        setMode('idle');
+      } else if(st==='closed'){
+        setStatus('—');
+        setMode('idle');
+      }
+    };
+  }
+
+  function waitForIceGatheringComplete(timeoutMs=5000){
+    return new Promise((resolve)=>{
+      if(!pc) return resolve(false);
+      if(pc.iceGatheringState==='complete') return resolve(true);
+
+      let done=false;
+      const finish=(ok)=>{
+        if(done) return;
+        done=true;
+        try{ pc.removeEventListener('icegatheringstatechange', onChange); }catch(_e){}
+        resolve(!!ok);
+      };
+      const onChange=()=>{ if(pc && pc.iceGatheringState==='complete') finish(true); };
+      try{ pc.addEventListener('icegatheringstatechange', onChange); }catch(_e){}
+      setTimeout(()=>finish(pc && pc.iceGatheringState==='complete'), Math.max(500, timeoutMs|0));
+    });
+  }
+
+  function sendHello(){
+    if(!dc || dc.readyState!=='open') return;
+    const name = (typeof window.userName==='string' && window.userName.trim()) ? window.userName.trim() : 'Player';
+    const uid = (typeof window.localLiveUserId==='string' && window.localLiveUserId.trim())
+      ? window.localLiveUserId.trim()
+      : 'u_' + Math.random().toString(36).slice(2,9);
+
+    const msg = { t:'hello', uid, name, at: Date.now() };
+    try{ dc.send(JSON.stringify(msg)); }catch(_e){}
+  }
+
+  function onMessage(raw){
+    const s = String(raw||'');
+    if(!s) return;
+
+    if(s==='ping'){ 
+      addMiniChatMsg('in', '📡 ping received');
+      try{ dc && dc.readyState==='open' && dc.send('pong'); }catch(_e){}; 
+      return; 
+    }
+    if(s==='pong'){ 
+      addMiniChatMsg('in', '✅ pong received');
+      return; 
+    }
+
+    if(s[0]!=='{') return;
+    let msg=null; try{ msg=JSON.parse(s); }catch(_e){ return; }
+    if(!msg || typeof msg!=='object') return;
+
+    if(msg.t==='hello'){
+      writeLS(KEYS.peer, { uid:String(msg.uid||''), name:String(msg.name||'') });
+      const peerName = String(msg.name||'Player');
+      addMiniChatMsg('in', `👋 ${peerName} connected`);
+    }
+  }
+
+  // ---------- Mini Chat ----------
+  function addMiniChatMsg(dir, text){
+    const body = $('miniChatBody');
+    if(!body) return;
+    const div = document.createElement('div');
+    div.className = dir==='in' ? 'msgIn' : 'msgOut';
+    div.textContent = text;
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+  }
+
+  function showMiniChat(){
+    const chat = $('miniChat');
+    if(chat) chat.classList.remove('hide');
+  }
+
+  function hideMiniChat(){
+    const chat = $('miniChat');
+    if(chat) chat.classList.add('hide');
+  }
+
+  function clearMiniChat(){
+    const body = $('miniChatBody');
+    if(body) body.innerHTML = '';
+  }
+
+  function updateMiniChatStatus(text){
+    const status = $('miniChatStatus');
+    if(status) status.textContent = text;
+  }
+
+  function startPing(){
+    const tick=()=>{
+      if(!dc || dc.readyState!=='open') return;
+      try{ dc.send('ping'); }catch(_e){}
+      setTimeout(tick, 2000);
+    };
+    setTimeout(tick, 2000);
+  }
+
+  async function hostCreateOffer(){
+    setMode('offer_dialog');
+    setStatus('📨 Creating offer…');
+
+    closePc();
+    pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    console.log('PeerConnection created');
+    wirePcDiagnostics();
+
+    dc = pc.createDataChannel('live', { ordered:true });
+    console.log('DataChannel created');
+    
+    dc.onopen = ()=>{
+      console.log('DataChannel opened');
+      setStatus('✅ Connected');
+      setMode('connected');
+      showMiniChat();
+      addMiniChatMsg('out', '👋 Hello, I\'m connected!');
+      sendHello(); 
+      startPing();
+      $('btnScanAnswer').disabled = true;
+    };
+    dc.onmessage = (e)=>onMessage(e && e.data);
+    dc.onclose = ()=>{ 
+      console.log('DataChannel closed');
+      setStatus('⚠️ Disconnected'); 
+      setMode('idle'); 
+      hideMiniChat(); 
+    };
+    dc.onerror = (err)=>{ 
+      console.error('DataChannel error:', err);
+      setStatus('⚠️ DataChannel error'); 
+      setMode('failed'); 
+    };
+
+    const sessionId = readLS(KEYS.sessionId) || makeSessionId(6);
+    writeLS(KEYS.sessionId, sessionId);
+
+    const offer = await pc.createOffer();
+    console.log('Offer created');
+    await pc.setLocalDescription(offer);
+    console.log('Local description set');
+    
+    await waitForIceGatheringComplete(5000);
+    console.log('ICE gathering complete');
+
+    const sdp = pc.localDescription && pc.localDescription.sdp ? pc.localDescription.sdp : '';
+    if(!sdp) throw new Error('Offer SDP missing');
+
+    const payload = { v: LIVE_V, t:'o', g: sessionId, s: sdp };
+    writeLS(KEYS.offer, payload);
+
+    const token = await encodeToken(payload);
+
+    console.log('✅ Token encoded:', token.substring(0, 80) + '...');
+    
+    $('offerOut').textContent = token;
+    $('fullscreenOfferToken').textContent = token;
+    
+    console.log('📧 About to render QR...');
+    const canvas = $('fullscreenOfferCanvas');
+    const link = makeLinkFromToken(token);
+    console.log('📧 Canvas:', canvas ? 'FOUND' : 'NULL', 'Link length:', link.length);
+    
+    try {
+      renderQrToCanvas(canvas, link);
+    } catch(e) {
+      console.error('❌ renderQrToCanvas crashed:', e);
+      setStatus('❌ QR render error: ' + e.message);
+    }
+    
+    const fsContainer = $('fullscreenOfferContainer');
+    if(fsContainer){
+      fsContainer.classList.add('show');
+      fsContainer.setAttribute('aria-hidden', 'false');
+    }
+
+    $('btnScanAnswer').disabled = false;
+    setStatus('✅ Offer ready – share QR code or wait for Player 2');
+    return token;
+  }
+
+  async function joinFromOfferToken(offerTokenOrLink){
+    setMode('scan_offer');
+    setStatus('📥 Joining from offer…');
+
+    const offerPayload = await decodeToken(offerTokenOrLink);
+    if(offerPayload.t!=='o') throw new Error('Not an offer token');
+    
+    console.log('Joining with session:', offerPayload.g);
+
+    closePc();
+    pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    console.log('PeerConnection created (joiner)');
+    wirePcDiagnostics();
+
+    pc.ondatachannel = (ev)=>{
+      console.log('DataChannel received');
+      dc = ev.channel;
+      dc.onopen = ()=>{
+        console.log('DataChannel opened (joiner)');
+        setStatus('✅ Connected');
+        setMode('connected');
+        showMiniChat();
+        addMiniChatMsg('out', '👋 Hello, I\'m connected!');
+        sendHello(); 
+        startPing();
+      };
+      dc.onmessage = (e)=>onMessage(e && e.data);
+      dc.onclose = ()=>{ 
+        console.log('DataChannel closed (joiner)');
+        setStatus('⚠️ Disconnected'); 
+        setMode('idle'); 
+        hideMiniChat(); 
+      };
+      dc.onerror = (err)=>{ 
+        console.error('DataChannel error (joiner):', err);
+        setStatus('⚠️ DataChannel error'); 
+        setMode('failed'); 
+      };
+    };
+
+    console.log('Setting remote description (offer)');
+    await pc.setRemoteDescription({ type:'offer', sdp: offerPayload.s });
+
+    console.log('Creating answer');
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    console.log('Local description set (answer)');
+    
+    await waitForIceGatheringComplete(5000);
+    console.log('ICE gathering complete (answer)');
+
+    const sdp = pc.localDescription && pc.localDescription.sdp ? pc.localDescription.sdp : '';
+    if(!sdp) throw new Error('Answer SDP missing');
+
+    const payload = { v: LIVE_V, t:'a', g: offerPayload.g, s: sdp };
+    writeLS(KEYS.answer, payload);
+    writeLS(KEYS.sessionId, offerPayload.g);
+
+    const token = await encodeToken(payload);
+
+    console.log('✅ Answer token encoded:', token.substring(0, 80) + '...');
+    
+    $('answerOut').textContent = token;
+    $('fullscreenAnswerToken').textContent = token;
+    
+    console.log('📧 About to render Answer QR...');
+    const canvas2 = $('fullscreenAnswerCanvas');
+    const link2 = makeLinkFromToken(token);
+    console.log('📧 Answer Canvas:', canvas2 ? 'FOUND' : 'NULL', 'Link length:', link2.length);
+    
+    try {
+      renderQrToCanvas(canvas2, link2);
+    } catch(e) {
+      console.error('❌ renderQrToCanvas crashed:', e);
+      setStatus('❌ QR render error: ' + e.message);
+    }
+    
+    const fsContainer = $('fullscreenAnswerContainer');
+    if(fsContainer){
+      fsContainer.classList.add('show');
+      fsContainer.setAttribute('aria-hidden', 'false');
+    }
+
+    setStatus('✅ Answer ready – Player 1 scans this QR');
+    return token;
+  }
+
+  async function hostApplyAnswer(answerTokenOrLink){
+    if(!pc) throw new Error('No host connection. Create offer first.');
+    setMode('connecting');
+    setStatus('⏳ Connecting…');
+
+    console.log('Applying answer');
+    const answerPayload = await decodeToken(answerTokenOrLink);
+    if(answerPayload.t!=='a') throw new Error('Not an answer token');
+
+    const offerPayload = readLS(KEYS.offer);
+    if(offerPayload && offerPayload.g && answerPayload.g !== offerPayload.g){
+      throw new Error('Answer belongs to different session');
+    }
+
+    console.log('Setting remote description (answer)');
+    await pc.setRemoteDescription({ type:'answer', sdp: answerPayload.s });
+    console.log('Remote description set, connection should establish');
+    
+    writeLS(KEYS.answer, answerPayload);
+    setStatus('✅ Answer applied – waiting for connection…');
+    return true;
+  }
+
+  // ---------- Links ----------
+  function makeLinkFromToken(token){
+    const base = location.href.split('#')[0];
+    return base + '#l=' + encodeURIComponent(token);
+  }
+
+  // ---------- QR Render (local) ----------
+  function renderQrToCanvas(canvas, text){
+    console.log('🔄 renderQrToCanvas START');
+    
+    if(!canvas) {
+      console.error('❌ Canvas element not found');
+      setStatus('⚠️ Canvas element not found');
+      return;
+    }
+    
+    console.log('✅ Canvas element found:', canvas.id);
+    console.log('🔄 Text length:', text ? text.length : 'NULL');
+    
+    try{
+      // Ensure canvas is visible and has correct size
+      canvas.style.display = 'block';
+      canvas.width = 420;
+      canvas.height = 420;
+      
+      // Get context FIRST
+      const ctx = canvas.getContext('2d', { alpha: false });
+      if(!ctx) throw new Error('Cannot get canvas 2D context');
+      
+      console.log('✅ Canvas context obtained');
+      
+      // Fill white background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      console.log('✅ White background drawn');
+      
+      // Check if qrcodegen exists
+      if(!window.qrcodegen) {
+        console.error('❌ window.qrcodegen NOT FOUND');
+        throw new Error('qrcodegen library not loaded - window.qrcodegen is undefined');
+      }
+      
+      if(!window.qrcodegen.QrCode) {
+        console.error('❌ window.qrcodegen.QrCode NOT FOUND');
+        throw new Error('qrcodegen.QrCode not available');
+      }
+      
+      console.log('✅ qrcodegen library OK');
+      
+      // USE EMBEDDED QRCODEGEN (Most Reliable)
+      const qr = window.qrcodegen.QrCode.encodeText(String(text), window.qrcodegen.QrCode.Ecc.MEDIUM);
+      console.log('✅ QR code encoded, size:', qr.size);
+      
+      const border = 1;
+      const moduleCount = qr.size;
+      const scale = Math.floor((canvas.width - border * 2 * 2) / (moduleCount + border * 2));
+      const actualSize = (moduleCount + border * 2) * scale;
+      
+      canvas.width = Math.min(actualSize + 40, 600);
+      canvas.height = canvas.width;
+      
+      console.log('✅ Canvas resized to:', canvas.width);
+      
+      // Clear again after resize
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw QR code
+      ctx.fillStyle = '#000000';
+      let dotsDrawn = 0;
+      for(let y = 0; y < moduleCount; y++){
+        for(let x = 0; x < moduleCount; x++){
+          if(qr.getModule(x, y)){
+            const posX = (x + border) * scale + 20;
+            const posY = (y + border) * scale + 20;
+            ctx.fillRect(posX, posY, scale, scale);
+            dotsDrawn++;
+          }
+        }
+      }
+      
+      console.log('✅ QR Code drawn with', dotsDrawn, 'black dots | Final size:', canvas.width + 'x' + canvas.height);
+      setStatus('✅ QR code generated');
+      // Add visible debug image preview of the generated QR (helpful if canvas not visible)
+      try{
+        if(typeof document !== 'undefined'){
+          let dbg = canvas.parentElement.querySelector('.qr-debug-img');
+          if(!dbg){
+            dbg = document.createElement('img');
+            dbg.className = 'qr-debug-img';
+            dbg.style.maxWidth = '200px';
+            dbg.style.marginTop = '12px';
+            dbg.style.border = '3px solid rgba(78,225,160,.25)';
+            dbg.alt = 'QR preview';
+            canvas.parentElement.appendChild(dbg);
+          }
+          try{ dbg.src = canvas.toDataURL('image/png'); console.log('📷 Debug preview set (dataURL length):', dbg.src && dbg.src.length); }catch(_e){ console.warn('Could not set debug preview:', _e); }
+        }
+      }catch(_e){ /* ignore */ }
+      
+    }catch(e){
+      console.error('❌ QR render failed:', e.message, e.stack);
+      setStatus('⚠️ QR Error: ' + e.message);
+      
+      // FALLBACK: Draw the text on canvas
+      try{
+        console.log('📝 Rendering fallback text');
+        canvas.width = 420;
+        canvas.height = 420;
+        const ctx = canvas.getContext('2d', { alpha: false });
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 12px monospace';
+        ctx.textAlign = 'left';
+        
+        const lines = text.split('\n');
+        let y = 30;
+        for(const line of lines){
+          ctx.fillText(line, 15, y);
+          y += 18;
+        }
+        console.log('✅ Fallback text rendered');
+      }catch(fallbackErr){
+        console.error('❌ Fallback also failed:', fallbackErr);
+      }
+    }
+  }
+
+  function wrapText(ctx, text, x, y, maxWidth, lineHeight){
+    const words = text.split(/\s+/);
+    let line = '';
+    for(let i=0;i<words.length;i++){
+      const test = line + words[i] + ' ';
+      const w = ctx.measureText(test).width;
+      if(w > maxWidth && i>0){
+        ctx.fillText(line, x, y);
+        line = words[i] + ' ';
+        y += lineHeight;
+      } else line = test;
+    }
+    ctx.fillText(line, x, y);
+  }
+
+  // ---------- QR Scan (camera) ----------
+  let scanMode = null; // 'offer' | 'answer'
+  let mediaStream = null;
+  let scanLoopTimer = null;
+
+  async function startCameraScan(mode){
+    scanMode = mode;
+    $('scanTitle').textContent = mode==='offer' ? "Scan Player 1's Offer" : "Scan Player 2's Answer";
+    $('camStatePill').textContent = 'starting…';
+    $('camHintPill').textContent = '📷 Point at QR';
+    show('scanOverlay');
+
+    setMode('scan_' + mode);
+    setStatus('📹 Requesting camera access…');
+
+    stopCameraScan();
+
+    const video = $('camVideo');
+    const constraints = {
+      audio:false,
+      video:{
+        facingMode:{ ideal:'environment' },
+        width:{ ideal:1280 },
+        height:{ ideal:720 }
+      }
+    };
+
+    try{
+      console.log('Requesting camera...');
+      mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log('Camera granted, setting up video...');
+      video.srcObject = mediaStream;
+      
+      // Ensure video plays
+      try{
+        await video.play();
+      }catch(playErr){
+        console.warn('Video play error:', playErr);
+      }
+      
+      $('camStatePill').textContent = 'live';
+      setStatus('✅ Camera active - scan QR code');
+      beginDecodeLoop();
+    }catch(e){
+      console.error('Camera error:', e);
+      $('camStatePill').textContent = '❌ no camera';
+      setStatus('⚠️ Camera access denied or not available. Paste code below:');
+      $('manualArea').classList.remove('hide');
+      $('manualText').focus();
+      $('manualText').placeholder = mode === 'offer' ? 'Paste the offer token/link here' : 'Paste the answer token/link here';
+    }
+  }
+
+  function stopCameraScan(){
+    if(scanLoopTimer){ clearTimeout(scanLoopTimer); scanLoopTimer=null; }
+    const video = $('camVideo');
+    try{ video.pause(); }catch(_e){}
+    if(mediaStream){
+      try{ mediaStream.getTracks().forEach(t=>t.stop()); }catch(_e){}
+      mediaStream=null;
+    }
+    try{ video.srcObject = null; }catch(_e){}
+  }
+
+  async function beginDecodeLoop(){
+    const video = $('camVideo');
+    
+    // Check if jsQR is available
+    const hasJsQR = (typeof jsQR !== 'undefined');
+    const hasBarcodeDetector = (typeof BarcodeDetector !== 'undefined');
+    
+    if(!hasJsQR && !hasBarcodeDetector){
+      $('camStatePill').textContent = 'no QR lib';
+      setStatus('⚠️ QR decoding not supported. Paste code manually below.');
+      $('manualArea').classList.remove('hide');
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently:true });
+    let decodeAttempts = 0;
+    const maxAttempts = 300; // ~45 seconds at 150ms intervals
+
+    const tick = async ()=>{
+      decodeAttempts++;
+      
+      if(!video || video.readyState < 2){
+        if(decodeAttempts < maxAttempts){
+          scanLoopTimer = setTimeout(tick, 150);
+        } else {
+          $('camStatePill').textContent = 'timeout';
+          setStatus('⏱️ QR scan timeout. Use manual code input.');
+          $('manualArea').classList.remove('hide');
+        }
+        return;
+      }
+      
+      const w = video.videoWidth || 0;
+      const h = video.videoHeight || 0;
+      if(!w || !h){
+        if(decodeAttempts < maxAttempts){
+          scanLoopTimer = setTimeout(tick, 150);
+        }
+        return;
+      }
+
+      canvas.width = w;
+      canvas.height = h;
+      ctx.drawImage(video, 0, 0, w, h);
+
+      let found = false;
+      
+      // Try jsQR first (most compatible)
+      if(hasJsQR && typeof jsQR !== 'undefined'){
+        try{
+          const imageData = ctx.getImageData(0, 0, w, h);
+          const qrCode = jsQR(imageData.data, w, h, { inversionAttempts: 'dontInvert' });
+          if(qrCode && qrCode.data){
+            const val = String(qrCode.data || '').trim();
+            if(val){
+              $('camStatePill').textContent = '✅ found';
+              found = true;
+              await handleScannedValue(val);
+              return;
+            }
+          }
+        }catch(_e){
+          // jsQR failed, try BarcodeDetector
+        }
+      }
+      
+      // Fallback to BarcodeDetector if jsQR failed
+      if(!found && hasBarcodeDetector && typeof BarcodeDetector !== 'undefined'){
+        try{
+          const detector = new BarcodeDetector({ formats:['qr_code'] });
+          const bitmap = await createImageBitmap(canvas);
+          const codes = await detector.detect(bitmap);
+          bitmap.close && bitmap.close();
+          if(codes && codes.length){
+            const val = String(codes[0].rawValue || '').trim();
+            if(val){
+              $('camStatePill').textContent = '✅ found';
+              found = true;
+              await handleScannedValue(val);
+              return;
+            }
+          }
+        }catch(_e){}
+      }
+
+      if(decodeAttempts < maxAttempts){
+        scanLoopTimer = setTimeout(tick, 150);
+      } else {
+        $('camStatePill').textContent = 'timeout';
+        setStatus('⏱️ QR scan timeout. Use manual code input.');
+        $('manualArea').classList.remove('hide');
+      }
+    };
+
+    scanLoopTimer = setTimeout(tick, 100);
+  }
+
+  async function handleScannedValue(val){
+    try{
+      if(scanMode==='offer'){
+        hide('scanOverlay');
+        stopCameraScan();
+        await joinFromOfferToken(val);
+      } else if(scanMode==='answer'){
+        hide('scanOverlay');
+        stopCameraScan();
+        await hostApplyAnswer(val);
+      }
+    }catch(e){
+      setStatus('❌ ' + (e && e.message ? e.message : String(e)));
+      $('camStatePill').textContent = 'error';
+      $('manualArea').classList.remove('hide');
+      $('manualText').value = val;
+    }
+  }
+
+  // ---------- Manual import ----------
+  async function manualImport(){
+    const txt = $('manualText').value.trim();
+    if(!txt) return;
+
+    try{
+      if(scanMode==='offer'){
+        hide('scanOverlay');
+        stopCameraScan();
+        await joinFromOfferToken(txt);
+      } else if(scanMode==='answer'){
+        hide('scanOverlay');
+        stopCameraScan();
+        await hostApplyAnswer(txt);
+      } else {
+        const payload = await decodeToken(txt);
+        if(payload.t==='o'){ await joinFromOfferToken(txt); }
+        else await hostApplyAnswer(txt);
+      }
+    }catch(e){
+      setStatus('❌ ' + (e && e.message ? e.message : String(e)));
+    }
+  }
+
+  // Optional: decode QR from uploaded image using BarcodeDetector (local, no upload)
+  async function decodeFromImageFile(file){
+    if(!file) return;
+    
+    const hasJsQR = (typeof jsQR !== 'undefined');
+    const hasBarcodeDetector = (typeof BarcodeDetector !== 'undefined');
+    
+    if(!hasJsQR && !hasBarcodeDetector){
+      setStatus('⚠️ No QR decoder available');
+      return;
+    }
+    
+    try{
+      const img = await loadImageFromFile(file);
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      
+      let found = false;
+      
+      // Try jsQR first
+      if(hasJsQR && typeof jsQR !== 'undefined'){
+        try{
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const qrCode = jsQR(imageData.data, canvas.width, canvas.height, { inversionAttempts: 'dontInvert' });
+          if(qrCode && qrCode.data){
+            const val = String(qrCode.data || '').trim();
+            if(val){
+              $('manualText').value = val;
+              await manualImport();
+              return;
+            }
+          }
+        }catch(_e){}
+      }
+      
+      // Fallback to BarcodeDetector
+      if(!found && hasBarcodeDetector && typeof BarcodeDetector !== 'undefined'){
+        try{
+          const detector = new BarcodeDetector({ formats:['qr_code'] });
+          const bitmap = await createImageBitmap(canvas);
+          const codes = await detector.detect(bitmap);
+          bitmap.close && bitmap.close();
+          if(codes && codes.length){
+            const val = String(codes[0].rawValue || '').trim();
+            if(val){
+              $('manualText').value = val;
+              await manualImport();
+              return;
+            }
+          }
+        }catch(_e){}
+      }
+      
+      setStatus('⚠️ No QR code found in image');
+    }catch(e){
+      setStatus('⚠️ Image decode error: ' + (e.message || 'unknown'));
+    }
+  }
+  function loadImageFromFile(file){
+    return new Promise((resolve,reject)=>{
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = ()=>{ URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = ()=>{ URL.revokeObjectURL(url); reject(new Error('img load failed')); };
+      img.src = url;
+    });
+  }
+
+  // ---------- Share/Copy ----------
+  async function shareText(token){
+    const t = String(token||'').trim();
+    if(!t) return;
+    const url = makeLinkFromToken(t);
+    try{
+      if(navigator.share){
+        await navigator.share({ title:'Live 2P', text:'Open this link in the game', url });
+        setStatus('✅ Shared');
+        return;
+      }
+    }catch(_e){}
+    try{
+      window.open(url, '_blank', 'noopener');
+      setStatus('ℹ️ Opened link (share fallback)');
+    }catch(_e){
+      setStatus('⚠️ Share not available');
+    }
+  }
+  async function copyText(text){
+    const t = String(text||'').trim();
+    if(!t) return;
+    try{
+      await navigator.clipboard.writeText(t);
+      setStatus('✅ Copied');
+    }catch(_e){
+      setStatus('⚠️ Clipboard blocked on this device');
+    }
+  }
+
+  // ---------- Bind UI ----------
+  $('btnCreateOffer').addEventListener('click', async ()=>{
+    try{
+      await hostCreateOffer();
+    }catch(e){
+      setStatus('❌ ' + (e && e.message ? e.message : String(e)));
+      setMode('idle');
+    }
+  });
+
+  $('btnScanAnswer').addEventListener('click', async ()=>{
+    await startCameraScan('answer');
+  });
+
+  $('btnReset').addEventListener('click', ()=>{
+    stopCameraScan();
+    hide('offerOverlay'); hide('scanOverlay'); hide('answerOverlay');
+    
+    const fs1 = $('fullscreenOfferContainer');
+    const fs2 = $('fullscreenAnswerContainer');
+    if(fs1){ fs1.classList.remove('show'); fs1.setAttribute('aria-hidden', 'true'); }
+    if(fs2){ fs2.classList.remove('show'); fs2.setAttribute('aria-hidden', 'true'); }
+    
+    closePc();
+    clearLS();
+    clearMiniChat();
+    hideMiniChat();
+    
+    $('offerOut').textContent='—';
+    $('answerOut').textContent='—';
+    $('offerTokenText').textContent='—';
+    $('answerTokenText').textContent='—';
+    $('btnScanAnswer').disabled = true;
+    setStatus('—');
+    setMode('idle');
+  });
+
+  $('twoPlayerBtn').addEventListener('click', async ()=>{
+    await hostCreateOffer();
+  });
+
+  $('offerCloseBtn').addEventListener('click', ()=>{ hide('offerOverlay'); setMode('idle'); });
+  $('offerDoneScanBtn').addEventListener('click', async ()=>{
+    hide('offerOverlay');
+    await startCameraScan('answer');
+  });
+  $('offerShareBtn').addEventListener('click', ()=>shareText($('offerTokenText').textContent));
+  $('offerCopyBtn').addEventListener('click', ()=>copyText($('offerTokenText').textContent));
+  $('offerRenewBtn').addEventListener('click', async ()=>{
+    try{
+      closePc();
+      writeLS(KEYS.sessionId, makeSessionId(6));
+      await hostCreateOffer();
+    }catch(e){
+      setStatus('❌ ' + (e && e.message ? e.message : String(e)));
+    }
+  });
+
+  $('scanCloseBtn').addEventListener('click', ()=>{
+    stopCameraScan();
+    hide('scanOverlay');
+    setMode('idle');
+  });
+  $('manualUploadBtn').addEventListener('click', ()=>{
+    $('manualArea').classList.toggle('hide');
+    if(!$('manualArea').classList.contains('hide')) $('manualText').focus();
+  });
+  $('manualImportBtn').addEventListener('click', manualImport);
+  $('qrImageInput').addEventListener('change', (e)=>decodeFromImageFile(e.target.files && e.target.files[0]));
+
+  $('answerCloseBtn').addEventListener('click', ()=>{ hide('answerOverlay'); setMode('idle'); });
+  $('answerShareBtn').addEventListener('click', ()=>shareText($('answerTokenText').textContent));
+  $('answerCopyBtn').addEventListener('click', ()=>copyText($('answerTokenText').textContent));
+
+  // Fullscreen QR buttons
+  $('fullscreenOfferShareBtn').addEventListener('click', ()=>shareText($('fullscreenOfferToken').textContent));
+  $('fullscreenOfferCopyBtn').addEventListener('click', ()=>copyText($('fullscreenOfferToken').textContent));
+  $('fullscreenOfferDoneBtn').addEventListener('click', async ()=>{
+    const fs = $('fullscreenOfferContainer');
+    if(fs){ fs.classList.remove('show'); fs.setAttribute('aria-hidden', 'true'); }
+    await startCameraScan('answer');
+  });
+
+  $('fullscreenAnswerShareBtn').addEventListener('click', ()=>shareText($('fullscreenAnswerToken').textContent));
+  $('fullscreenAnswerCopyBtn').addEventListener('click', ()=>copyText($('fullscreenAnswerToken').textContent));
+  $('fullscreenAnswerDoneBtn').addEventListener('click', ()=>{
+    const fs = $('fullscreenAnswerContainer');
+    if(fs){ fs.classList.remove('show'); fs.setAttribute('aria-hidden', 'true'); }
+  });
+
+  // Mini Chat
+  $('miniChatCloseBtn').addEventListener('click', ()=>hideMiniChat());
+
+  // ---------- Auto-start from deep link ----------
+  async function autoStartFromUrl(){
+    try{
+      const m = location.href.match(/[#?&]l=([^&#]+)/);
+      if(!m) return false;
+      
+      console.log('Auto-starting from URL...');
+      const token = decodeURIComponent(m[1]);
+      
+      const payload = await decodeToken(token);
+      console.log('Token decoded, type:', payload.t);
+
+      if(payload.t==='o'){
+        console.log('Joining from offer');
+        setStatus('📥 Auto-joining from Offer...');
+        await joinFromOfferToken(token);
+        return true;
+      }
+      if(payload.t==='a'){
+        console.log('Applying answer');
+        setStatus('🔗 Applying Answer...');
+        await hostApplyAnswer(token);
+        return true;
+      }
+      
+      console.warn('Unknown token type:', payload.t);
+      setStatus('⚠️ Unknown token type');
+      return false;
+    }catch(e){
+      console.error('Auto-start error:', e);
+      setStatus('⚠️ Connection error: ' + (e && e.message ? e.message : 'unknown'));
+      return false;
+    }
+  }
+
+  (async ()=>{
+    window.userName = window.userName || 'Player';
+    window.localLiveUserId = window.localLiveUserId || ('u_' + Math.random().toString(36).slice(2,9));
+    try{
+      setMode(readLS(KEYS.ui) || 'idle');
+      const autoStarted = await autoStartFromUrl();
+      if(!autoStarted){
+        console.log('No auto-start URL found or it failed');
+      }
+    }catch(e){
+      console.error('Init error:', e);
+      setStatus('⚠️ Init error');
+    }
+  })();
+
+  // ---------- Embedded QR Code generator (Nayuki, MIT) ----------
+  /*! QR Code generator library (c) Project Nayuki. MIT License. Embedded locally. */
+  window.qrcodegen = (function() {
+    "use strict";
+    function QrCode(typeNumber, errorCorrectionLevel, dataCodewords, mask) {
+      this.typeNumber = typeNumber;
+      this.errorCorrectionLevel = errorCorrectionLevel;
+      this.mask = mask;
+      const size = typeNumber * 4 + 17;
+      this.size = size;
+      const modules = [];
+      for (let y = 0; y < size; y++) {
+        const row = [];
+        for (let x = 0; x < size; x++) row.push(null);
+        modules.push(row);
+      }
+      this.modules = modules;
+      this.drawFunctionPatterns();
+      const allCodewords = this.addEccAndInterleave(dataCodewords);
+      this.drawCodewords(allCodewords);
+      this.applyMask(mask);
+      this.drawFormatBits(mask);
+      if (typeNumber >= 7) this.drawVersion();
+    }
+    QrCode.prototype.getModule = function(x, y) { const m = this.modules[y][x]; return m !== null ? m : false; };
+    QrCode.prototype.drawFunctionPatterns = function() {
+      const size = this.size;
+      for (let i = 0; i < size; i++) { this.setFunctionModule(6, i, i % 2 === 0); this.setFunctionModule(i, 6, i % 2 === 0); }
+      this.drawFinderPattern(3, 3);
+      this.drawFinderPattern(size - 4, 3);
+      this.drawFinderPattern(3, size - 4);
+      this.drawAlignmentPatterns();
+      this.setFunctionModule(size - 8, 8, true);
+      this.drawVersion = this.drawVersion.bind(this);
+    };
+    QrCode.prototype.drawAlignmentPatterns = function() {
+      const pos = QrCode.getAlignmentPatternPositions(this.typeNumber);
+      const numAlign = pos.length;
+      for (let i = 0; i < numAlign; i++) for (let j = 0; j < numAlign; j++) {
+        if ((i === 0 && j === 0) || (i === 0 && j === numAlign - 1) || (i === numAlign - 1 && j === 0)) continue;
+        this.drawAlignmentPattern(pos[i], pos[j]);
+      }
+    };
+    QrCode.prototype.drawFinderPattern = function(x, y) {
+      for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
+        const dist = Math.max(Math.abs(dx), Math.abs(dy));
+        const xx = x + dx, yy = y + dy;
+        if (0 <= xx && xx < this.size && 0 <= yy && yy < this.size) this.setFunctionModule(xx, yy, dist !== 2 && dist !== 4);
+      }
+    };
+    QrCode.prototype.drawAlignmentPattern = function(x, y) { for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) this.setFunctionModule(x + dx, y + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1); };
+    QrCode.prototype.setFunctionModule = function(x, y, isBlack) { this.modules[y][x] = isBlack; };
+    QrCode.prototype.addEccAndInterleave = function(data) {
+      const ver = this.typeNumber, ecl = this.errorCorrectionLevel;
+      const numBlocks = QrCode.NUM_ERROR_CORRECTION_BLOCKS[ecl][ver];
+      const blockEccLen = QrCode.ECC_CODEWORDS_PER_BLOCK[ecl][ver];
+      const rawCodewords = QrCode.getNumRawDataModules(ver) / 8;
+      const numShortBlocks = numBlocks - rawCodewords % numBlocks;
+      const shortBlockLen = Math.floor(rawCodewords / numBlocks);
+      const blocks = [];
+      const rsDiv = QrCode.reedSolomonComputeDivisor(blockEccLen);
+      let k = 0;
+      for (let i = 0; i < numBlocks; i++) {
+        const datLen = shortBlockLen - blockEccLen + (i < numShortBlocks ? 0 : 1);
+        const dat = data.slice(k, k + datLen);
+        k += datLen;
+        const ecc = QrCode.reedSolomonComputeRemainder(dat, rsDiv);
+        blocks.push(dat.concat(ecc));
+      }
+      const result = [];
+      for (let i = 0; i < blocks[0].length; i++) for (let j = 0; j < blocks.length; j++) if (i !== shortBlockLen - blockEccLen || j >= numShortBlocks) result.push(blocks[j][i]);
+      return result;
+    };
+    QrCode.prototype.drawCodewords = function(data) {
+      let i = 0;
+      for (let right = this.size - 1; right >= 1; right -= 2) {
+        if (right === 6) right = 5;
+        for (let vert = 0; vert < this.size; vert++) for (let j = 0; j < 2; j++) {
+          const x = right - j;
+          const y = ((right + 1) & 2) === 0 ? this.size - 1 - vert : vert;
+          if (this.modules[y][x] !== null) continue;
+          let bit = false;
+          if (i < data.length * 8) bit = ((data[i >>> 3] >>> (7 - (i & 7))) & 1) !== 0;
+          this.modules[y][x] = bit; i++;
+        }
+      }
+    };
+    QrCode.prototype.applyMask = function(mask) {
+      for (let y = 0; y < this.size; y++) for (let x = 0; x < this.size; x++) {
+        if (this.modules[y][x] === null) continue;
+        let invert = false;
+        switch (mask) {
+          case 0: invert = (x + y) % 2 === 0; break;
+          case 1: invert = y % 2 === 0; break;
+          case 2: invert = x % 3 === 0; break;
+          case 3: invert = (x + y) % 3 === 0; break;
+          case 4: invert = (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0; break;
+          case 5: invert = x * y % 2 + x * y % 3 === 0; break;
+          case 6: invert = (x * y % 2 + x * y % 3) % 2 === 0; break;
+          case 7: invert = ((x + y) % 2 + x * y % 3) % 2 === 0; break;
+          default: throw "Assertion error";
+        }
+        if (invert) this.modules[y][x] = !this.modules[y][x];
+      }
+    };
+    QrCode.prototype.drawFormatBits = function(mask) {
+      const data = this.errorCorrectionLevel.formatBits << 3 | mask;
+      let rem = data;
+      for (let i = 0; i < 10; i++) rem = (rem << 1) ^ ((rem >>> 9) * 0x537);
+      const bits = (data << 10 | rem) ^ 0x5412;
+      for (let i = 0; i <= 5; i++) this.setFunctionModule(8, i, ((bits >>> i) & 1) !== 0);
+      this.setFunctionModule(8, 7, ((bits >>> 6) & 1) !== 0);
+      this.setFunctionModule(8, 8, ((bits >>> 7) & 1) !== 0);
+      this.setFunctionModule(7, 8, ((bits >>> 8) & 1) !== 0);
+      for (let i = 9; i < 15; i++) this.setFunctionModule(14 - i, 8, ((bits >>> i) & 1) !== 0);
+      for (let i = 0; i < 8; i++) this.setFunctionModule(this.size - 1 - i, 8, ((bits >>> i) & 1) !== 0);
+      for (let i = 8; i < 15; i++) this.setFunctionModule(8, this.size - 15 + i, ((bits >>> i) & 1) !== 0);
+      this.setFunctionModule(8, this.size - 8, true);
+    };
+    QrCode.prototype.drawVersion = function() {
+      const ver = this.typeNumber;
+      let rem = ver;
+      for (let i = 0; i < 12; i++) rem = (rem << 1) ^ ((rem >>> 11) * 0x1F25);
+      const bits = ver << 12 | rem;
+      for (let i = 0; i < 18; i++) {
+        const bit = ((bits >>> i) & 1) !== 0;
+        const a = this.size - 11 + (i % 3);
+        const b = Math.floor(i / 3);
+        this.setFunctionModule(a, b, bit);
+        this.setFunctionModule(b, a, bit);
+      }
+    };
+    QrCode.encodeText = function(text, ecl) { const segs = QrSegment.makeSegments(text); return QrCode.encodeSegments(segs, ecl); };
+    QrCode.encodeSegments = function(segs, ecl) {
+      let bestVer = 1;
+      for (let ver = 1; ver <= 40; ver++) {
+        const cap = QrCode.getNumDataCodewords(ver, ecl) * 8;
+        const used = QrSegment.getTotalBits(segs, ver);
+        if (used !== null && used <= cap) { bestVer = ver; break; }
+      }
+      const ver = bestVer;
+      const cap = QrCode.getNumDataCodewords(ver, ecl) * 8;
+      const bb = [];
+      for (const seg of segs) {
+        QrCode.appendBits(seg.mode.modeBits, 4, bb);
+        QrCode.appendBits(seg.numChars, seg.mode.numCharCountBits(ver), bb);
+        for (const b of seg.data) bb.push(b);
+      }
+      if (bb.length > cap) throw "Data too long";
+      QrCode.appendBits(0, Math.min(4, cap - bb.length), bb);
+      while (bb.length % 8 !== 0) bb.push(false);
+      const dataCodewords = [];
+      for (let i = 0; i < bb.length; i += 8) {
+        let x = 0; for (let j = 0; j < 8; j++) x = x << 1 | (bb[i + j] ? 1 : 0);
+        dataCodewords.push(x);
+      }
+      for (let pad = 0xEC; dataCodewords.length < QrCode.getNumDataCodewords(ver, ecl); pad ^= 0xEC ^ 0x11) dataCodewords.push(pad);
+      let best = null, minPenalty = Infinity;
+      for (let mask = 0; mask < 8; mask++) {
+        const qr = new QrCode(ver, ecl.ordinal, dataCodewords, mask);
+        const pen = qr.getPenaltyScore();
+        if (pen < minPenalty) { minPenalty = pen; best = qr; }
+      }
+      return best;
+    };
+    QrCode.prototype.getPenaltyScore = function() {
+      let res = 0, size = this.size;
+      for (let y = 0; y < size; y++) {
+        let runColor = false, runX = 0;
+        const hist = [0,0,0,0,0,0,0];
+        for (let x = 0; x < size; x++) {
+          const color = this.modules[y][x];
+          if (x === 0) { runColor = color; runX = 1; }
+          else if (color === runColor) { runX++; if (runX === 5) res += 3; else if (runX > 5) res++; }
+          else { QrCode.addRunToHistory(runX, hist); if (!runColor) res += QrCode.findPattern(hist) * 40; runColor = color; runX = 1; }
+        }
+        QrCode.addRunToHistory(runX, hist);
+        res += QrCode.findPattern(hist) * 40;
+      }
+      for (let x = 0; x < size; x++) {
+        let runColor = false, runY = 0;
+        const hist = [0,0,0,0,0,0,0];
+        for (let y = 0; y < size; y++) {
+          const color = this.modules[y][x];
+          if (y === 0) { runColor = color; runY = 1; }
+          else if (color === runColor) { runY++; if (runY === 5) res += 3; else if (runY > 5) res++; }
+          else { QrCode.addRunToHistory(runY, hist); if (!runColor) res += QrCode.findPattern(hist) * 40; runColor = color; runY = 1; }
+        }
+        QrCode.addRunToHistory(runY, hist);
+        res += QrCode.findPattern(hist) * 40;
+      }
+      for (let y = 0; y < size - 1; y++) for (let x = 0; x < size - 1; x++) {
+        const c = this.modules[y][x];
+        if (c === this.modules[y][x + 1] && c === this.modules[y + 1][x] && c === this.modules[y + 1][x + 1]) res += 3;
+      }
+      let black = 0;
+      for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) if (this.modules[y][x]) black++;
+      const total = size * size;
+      res += Math.floor(Math.abs(black * 20 - total * 10) / total) * 10;
+      return res;
+    };
+    QrCode.addRunToHistory = function(run, hist) { if (hist[0] === 0) run++; hist.pop(); hist.unshift(run); };
+    QrCode.findPattern = function(hist) {
+      const n = hist[1]; if (n === 0) return 0;
+      const core = hist[2] === n && hist[3] === n * 3 && hist[4] === n && hist[5] === n;
+      return core && (hist[0] >= n * 4 || hist[6] >= n * 4) ? 1 : 0;
+    };
+    QrCode.appendBits = function(val, len, bb) { for (let i = len - 1; i >= 0; i--) bb.push(((val >>> i) & 1) !== 0); };
+    QrCode.getNumRawDataModules = function(ver) {
+      let res = (16 * ver + 128) * ver + 64;
+      if (ver >= 2) {
+        const numAlign = Math.floor(ver / 7) + 2;
+        res -= (25 * numAlign - 10) * numAlign - 55;
+        if (ver >= 7) res -= 36;
+      }
+      return res;
+    };
+    QrCode.getNumDataCodewords = function(ver, ecl) { return QrCode.getNumRawDataModules(ver) / 8 - QrCode.ECC_CODEWORDS_PER_BLOCK[ecl.ordinal][ver] * QrCode.NUM_ERROR_CORRECTION_BLOCKS[ecl.ordinal][ver]; };
+    QrCode.getAlignmentPatternPositions = function(ver) {
+      if (ver === 1) return [];
+      const numAlign = Math.floor(ver / 7) + 2;
+      const step = ver === 32 ? 26 : Math.ceil((ver * 4 + numAlign * 2 + 1) / (numAlign * 2 - 2)) * 2;
+      const res = [6];
+      for (let pos = ver * 4 + 10; res.length < numAlign; pos -= step) res.splice(1, 0, pos);
+      return res;
+    };
+    QrCode.reedSolomonComputeDivisor = function(degree) {
+      const res = []; for (let i = 0; i < degree - 1; i++) res.push(0); res.push(1);
+      let root = 1;
+      for (let i = 0; i < degree; i++) {
+        for (let j = 0; j < res.length; j++) { res[j] = QrCode.reedSolomonMultiply(res[j], root); if (j + 1 < res.length) res[j] ^= res[j + 1]; }
+        root = QrCode.reedSolomonMultiply(root, 0x02);
+      }
+      return res;
+    };
+    QrCode.reedSolomonComputeRemainder = function(data, divisor) {
+      const res = divisor.map(_ => 0);
+      for (const b of data) {
+        const factor = b ^ res.shift();
+        res.push(0);
+        for (let i = 0; i < res.length; i++) res[i] ^= QrCode.reedSolomonMultiply(divisor[i], factor);
+      }
+      return res;
+    };
+    QrCode.reedSolomonMultiply = function(x, y) {
+      let z = 0;
+      for (let i = 7; i >= 0; i--) { z = (z << 1) ^ ((z >>> 7) * 0x11D); if (((y >>> i) & 1) !== 0) z ^= x; }
+      return z;
+    };
+    function QrSegment(mode, numChars, data) { this.mode = mode; this.numChars = numChars; this.data = data; }
+    QrSegment.makeSegments = function(text) { if (text === "") return []; return [QrSegment.makeBytes(new TextEncoder().encode(text))]; };
+    QrSegment.makeBytes = function(data) { const bb = []; for (const b of data) for (let i = 7; i >= 0; i--) bb.push(((b >>> i) & 1) !== 0); return new QrSegment(QrSegment.Mode.BYTE, data.length, bb); };
+    QrSegment.getTotalBits = function(segs, ver) { let res = 0; for (const seg of segs) { const ccb = seg.mode.numCharCountBits(ver); if (seg.numChars >= (1 << ccb)) return null; res += 4 + ccb + seg.data.length; } return res; };
+    QrSegment.Mode = { BYTE: { modeBits: 0x4, numCharCountBits: (ver) => ver < 10 ? 8 : 16 } };
+    function Ecc(ordinal, formatBits) { this.ordinal = ordinal; this.formatBits = formatBits; }
+    Ecc.LOW = new Ecc(0, 1); Ecc.MEDIUM = new Ecc(1, 0); Ecc.QUARTILE = new Ecc(2, 3); Ecc.HIGH = new Ecc(3, 2);
+    QrCode.Ecc = Ecc;
+    QrCode.NUM_ERROR_CORRECTION_BLOCKS = [
+      [0,1,1,1,1,1,2,2,2,2,4,4,4,4,4,6,6,6,6,7,8,8,9,9,10,12,12,12,13,14,15,16,17,18,19,19,20,21,22,24,25],
+      [0,1,1,1,2,2,4,4,4,5,5,5,8,9,9,10,10,11,13,14,16,17,17,18,20,21,23,25,26,28,29,31,33,35,37,38,40,43,45,47,49],
+      [0,1,1,2,2,4,4,6,6,8,8,8,11,12,16,12,17,16,18,21,20,23,23,25,27,29,34,34,35,38,40,43,45,48,51,53,56,59,62,65,68],
+      [0,1,1,2,4,4,4,5,6,8,8,11,11,16,16,18,16,19,21,25,25,25,34,30,32,35,37,40,42,45,48,51,54,57,60,63,66,70,74,77,81]
+    ];
+    QrCode.ECC_CODEWORDS_PER_BLOCK = [
+      [0,7,10,15,20,26,18,20,24,30,18,20,24,26,30,22,24,28,30,28,28,28,28,30,30,26,28,30,30,30,30,30,30,30,30,30,30,30,30,30,30],
+      [0,10,16,26,18,24,16,18,22,22,26,30,22,22,24,24,28,28,26,26,26,26,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28],
+      [0,13,22,18,26,18,24,18,22,20,24,28,26,24,20,30,24,28,28,26,30,28,30,30,30,30,28,30,30,30,30,30,30,30,30,30,30,30,30,30,30],
+      [0,17,28,22,16,22,28,26,26,24,28,24,28,22,24,24,30,28,28,26,28,30,24,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30,30]
+    ];
+    return { QrCode: QrCode, QrSegment: QrSegment };
+  })();
+
+})();
+</script>
+</body>
+</html>

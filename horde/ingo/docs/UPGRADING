@@ -1,0 +1,21 @@
+================
+ Upgrading Ingo
+================
+
+:Last update:   $Date: 2006/02/28 16:38:36 $
+:Revision:      $Revision: 1.1.2.1 $
+:Contact:       ingo@lists.horde.org
+
+
+Upgrading Ingo From 1.0.x To 1.1.x
+==================================
+
+This is a non-exhaustive, quick explanation of what has changed between Ingo
+version 1.0.x and 1.1.x.
+
+Backends parameter changes - procmail driver
+--------------------------------------------
+
+In ``config/backends.php``, the ``procmailrc`` parameter in the procmail
+entry has been deprecated.  It has been replaced by the ``filename``
+parameter.

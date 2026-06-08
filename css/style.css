@@ -1,0 +1,32 @@
+body {
+margin-left: 0px;
+margin-top: 0px;
+margin-right: 0px;
+margin-bottom: 0px;
+}
+ * {
+                position: absolute;
+            } body{font-size: 120px;}
+                    tv{    
+                            font-size: 18px;
+                           position: absolute;
+                          margin-top: -124px;
+                         background: white;
+                        margin-left: 242px;
+                    }
+                    hello {margin-left: -200px;margin-top: -142px;}
+                    world {
+                    border          : 100%;
+                    background      : silver;
+                    height          : 10000px;
+                    position        : absolute;
+                    top             : -200px;
+                    opacity         : 0.6;
+                    left            : -5000px;
+                    width           : 9000px;
+                    border-radius : 100%;
+                    }
+                    pre * { border-bottom: 1px sold black;}
+                    html  { filter  : invert(100%);
+                            opacity : 0.8;
+                    }

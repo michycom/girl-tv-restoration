@@ -1,0 +1,260 @@
+------
+v1.0.5
+------
+
+Address Book Changes
+--------------------
+[cjh] SECURITY: Fix unchecked access to contacts in the same SQL table
+      (Bug #6208).
+
+
+------
+v1.0.4
+------
+
+[jan] SECURITY: Fix privilege escalation in Horde API.
+[cjh] SECURITY: Fix missing ownership validation on share changes.
+
+Horde Changes
+-------------
+[jan] SECURITY: Filter out FRAME tags from HTML messages (CVE-2007-6018).
+[jan] SECURITY: The XSS filter passes the complete XSS cheat sheet
+      (http://ha.ckers.org/xss.html) now.
+[jan] Apply user name hooks when editing share permissions
+      (steinkel@ctinetworks.com, Bug #5844).
+[jan] Fix fixed portal blocks (Bug #5853).
+
+Mail Changes
+------------
+[jan] Fix sentmail folder not being updated in the preference interface
+      (Bug #5842).
+[jan] Fix broken <area> tags in HTML messages.
+
+Filters Changes
+---------------
+[jan] Add Japanese translation (Hiromi Kimura <hiromi@tac.tsukuba.ac.jp>).
+[jan] Improve forward rule generation with sieve scripts (Request #5746).
+
+Calendar Changes
+----------------
+[jan] Set the user's timezone in the free/busy information.
+[jan] Fix redirection after editing an event from the sidebar menu (Bug #5769).
+
+Tasks Changes
+-------------
+[cjh] Send iCalendar data as UTF-8.
+
+
+------
+v1.0.3
+------
+
+[jan] Add missing Mail_mimeDecode PEAR package.
+
+
+------
+v1.0.2
+------
+
+Horde Changes
+-------------
+[cjh] Fix identity javascript when some fields are disabled
+      (veikko@immonen@otaverkko.fi, Bug #5595).
+[cjh] Disable the Turkish locale if using PHP 5 (see
+      http://bugs.php.net/bug.php?id=35050).
+[jan] Improved webroot detection (Request #4126).
+[jan] Fix selecting the language on the login screen (Bug #5098).
+[jan] Fix searching for single quotes in email headers (qa@cpanel.net, Bug
+      #4854).
+[jan] Fix portal layouts with more than one horizontally expanded block per
+      row.
+
+Mail Changes
+------------
+[cjh] Lower memory usage when downloading folders (Andrew Morgan
+      <morgan@orst.edu>).
+[mms] Fix detection of default namespace information when no namespaces are
+      defined on the server (Bug #5538).
+[mms] Don't lose message bodies when moving messages to trash when over quota
+      (Bug #5470).
+[cjh] Remove unused defaults in Fetchmail_imap (Bug #2799).
+[jan] Fix empty folder name appearing on Cyrus and servers with similar
+      namespaces (Bug #5138).
+[jan] Only show reply options in iCalendar viewer if a reply is requested.
+[cjh] Remove non-responsive www.keyserver.net and wwwkeys.pgp.net from
+      PGP options (Bug #5323).
+[jan] Fix moving messages when over quota on Dovecot servers (Bug #5270).
+[jan] Fix parsing of certain distribution lists (Bug #5134).
+[mms] Fix rare occurrence where an action perfomed on the mailbox screen would
+      instead be performed on the INBOX (Bug #5202).
+[mms] Don't show save attachments prompt in compose screen if configured to
+      automatically link all attachments (Request #5189).
+
+Address Book Changes
+--------------------
+[mjr] Fix some fatal errors caused by the IMSP driver when deleting certain
+      contacts and while adding contacts to lists in certain cases.
+[mjr] Fix adding contacts to a new contact list in a source other than the
+      source the contacts being added are from.
+[jan] Fix paging through search results from another than the default address
+      book (Bug #5137).
+[cjh] Fix copy/moving contacts to a new contact list (Bug #5144).
+
+Filters Changes
+---------------
+[jan] Add Simplified Chinese translation (Anna Chen
+      <annachen2008@yahoo.com.cn>).
+[cjh] Fix check for bulk or list precedence in Sieve vacation (Bug #5543).
+[jan] Add additional checks to avoid adding empty test values (Bug #5392).
+[jan] Fix multiline vacation messages with procmail driver (Bug #5273).
+
+Calendar Changes
+----------------
+[cjh] Display attendees list correctly without a mail/compose method (Bug
+      #5127).
+[cjh] Send iCalendar data as UTF-8 (Bug #5427).
+[jan] Fix duration of remote and imported full-day events (Bugs #4617, #4794).
+[jan] Fix recurring multiday events crossing a month border (Bug #5205).
+[jan] Fix duration calculation in edit form for events covering more than a
+      month (Bug #5120).
+
+
+------
+v1.0.1
+------
+
+[jan] Add instructions for manually installing database tables.
+[jan] Add IMAP requirements to the documentation.
+
+Horde Changes
+-------------
+[jan] SECURITY: Correctly quote file names in cleanup script for temporary
+      files.
+[jan] SECURITY: Fix an XSS vulnerability in the language selection.
+[jan] Fix RPC authentication on CGI SAPIs.
+[jan] Detect unencrypted PGP messages.
+[jan] Complete Cyrus virtual domain support in cyrsql driver (Vilius Sumskas
+      <vilius@lnk.lt>, Request #4967).
+[jan] Add option whether to strip domains from usernames in the account block
+      (Request #4955).
+[jan] Fix email lists not being validated under certain conditions (Bug #4834).
+[cjh] Add a REST-ful preferences interface.
+[cjh] Faster DataTree-to-SQL History migration script
+      (josh@endries.org, Request #4732).
+[cjh] Improved automatic webroot detection (Ben Klang, Request #4126).
+[cjh] Rewrite and fix the OCI8 SessionHandler (Bug #3452).
+[cjh] Allow signup hooks to override the user_name and password fields
+      (thomas@gelf.net, Request #2904).
+[cjh] Fix creation of mailbox quotas by the Auth_cyrus driver
+      (pascal@vmfacility.fr, Bug #4678).
+[cjh] Add "Save and Finish" to the share edit window (webmgr@muskingum.edu,
+      Request #4307).
+[cjh] Let mailto: and anchor (#) links through Horde::externalUrl (Bug #3079).
+[cjh] Add smbclient version of the SMB Auth class (larry@wimble.biz,
+      Request #4338).
+[cjh] Remove problematic "data descriptor" segment from generated ZIP files
+      (reitsma@denison.edu, Bug #4670).
+[cjh] Strip accesskeys from menu tooltips when only showing icons (Bug #4667).
+[jan] Fix saving files in the root directory of an SQL VFS backend (Bug #4652,
+      Ben Klang <ben@alkaloid.net>).
+[jan] Fix displaying all maintenance tasks to be confirmed at once (Bug #4377).
+[cjh] Fix return format of DataTree_null::getByAttributes()
+      (thomas.jarosch@intra2net.com, Bug #4651).
+[jan] Support departments in vCard's ORG properties (martin@matuska.org,
+      Request #4285).
+[cjh] Rename Auth_sasl backend to Auth_peclsasl to avoid conflicts with PEAR's
+      Auth_SASL (Bug #4547).
+[cjh] Implement handling of vTimezones in iCalendar data
+      (Carl Thompson <lists-horde@carlthompson.net>, Bug #4399).
+[cjh] keybindings.js now works with Safari/KHTML.
+[jan] Avoid recursive folder creation when sharing Kolab folders
+      (michael.sheldon@credativ.de, Bug #4325).
+[jan] Add Kolab specific account block driver to support special Kolab users
+      (mzizka@hotmail.com, Request: #4119).
+[mms] Only dim below the last signature line of input text in the dimsignature
+      Text_Filter driver.
+
+Mail Changes
+------------
+[jan] SECURITY: Fix XSS vulnerabilities in the search screen and thread view.
+[jan] Improve displaying of PGP messages (requires Horde 3.1.4 partially).
+[mms] Make sure we pass a read/write IMAP stream to the filters API (Bug
+      #5054).
+[mms] Do not allow move to trash unless trash folder is defined (Bug #5012).
+[jan] Fix an encoding issue with the address book popup (Bug #5050).
+[cjh] Ignore All spellchecking fixes (technology@pmi-portland.org, Bug #4922).
+[cjh] Absolute restriction on the width of the contacts window select elements
+      (Request #1985).
+[cjh] Send lowercase mailto: attributes in iCalendar replies (Bug #4872).
+[cjh] Don't improperly increment iCalendar SEQUENCE values (Bug #4863).
+[mms] Always subscribe to created folders.
+[mms] Don't allow both trash folder and Virtual Trash to be selected in the
+      options (Bug #4698).
+[cjh] Turn mailto: links in HTML emails into IMP compose links (Bug #3079).
+[cjh] Attempt to calculate the actual filesystem block size in the
+      IMP_Quota_command driver (Eric Rostetter
+      <eric.rostetter@physics.utexas.edu>, Request #4360).
+[cjh] Make sure to honor user date format preferences in iTip viewer
+      (Bug #4635).
+[cjh] Fix message list header underflow in IE7 (Bug #4608).
+[cjh] Don't return empty sent-mail folders from the identity (Bug #4380).
+[cjh] Don't rename folders from or to an empty string (Bug #4380).
+[mas] Don't replace spaces with '.' when expanding addresses. (Bug #4236)
+
+Address Book Changes
+--------------------
+[jan] Fix character set encoding of exported vCards.
+[mjr] Fix fatal error when exporting to vCard.
+[cjh] Organize basic search form from left to right (Request #4914).
+[jan] Fix links to only show contacts or lists, or both.
+[mjr] Don't remember the lastly selected address book in the session, if it
+      was not browseable.
+[mjr] Fix bug that caused counting the number of contacts in a shared SQL
+      source to return the count of the user's default address book instead.
+[mjr] Fix bug that caused the wrong address book to be deleted when replacing
+      an address book during import.
+
+Filters Changes
+---------------
+[jan] Fix blacklists and whitelists in the IMAP driver.
+
+Calendar Changes
+----------------
+[jan] Fix character set encoding of exported vCalendar/iCalendar data.
+[jan] Fixed MS-SQL driver (Bug #5088).
+[jan] Add Catalan translation (Jordi Giralt <projecte.k2@upcnet.es>).
+[jan] Fix searching for non-ascii strings (Bug #4773).
+[cjh] Display partial hours in free/busy view (cbs@cts.ucla.edu,
+      Request #4755).
+[cjh] Honor date_format preference in reminders and notifications (Bug #4726).
+
+Tasks Changes
+-------------
+[jan] Show alarms for overdue tasks too.
+[jan] Add Catalan translation (Jordi Giralt <projecte.k2@upcnet.es>).
+
+
+----
+v1.0
+----
+
+[jan] Fix problems with CGI versions of PHP and the setup script.
+[jan] Fix email lists not being validated under certain conditions (Bug #4834).
+
+Calendar Changes
+----------------
+[cjh] SECURITY: Close arbitrary file inclusion in free/busy views.
+
+
+--------
+v1.0-RC2
+--------
+
+[jan] Remove duplicate directories.
+
+
+--------
+v1.0-RC1
+--------
+
+[jan] First release candidate.

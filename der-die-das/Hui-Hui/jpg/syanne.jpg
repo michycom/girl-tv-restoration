@@ -1,0 +1,4 @@
+modify=20191104220303;perm=adfrw;size=3849;type=file;unique=808U4002F6;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; modules_comment.mo
+modify=20191104220303;perm=flcdmpe;type=pdir;unique=808U4002F4;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; ..
+modify=20191104220303;perm=flcdmpe;type=dir;unique=808U4002F7;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; CVS
+modify=20191104220303;perm=flcdmpe;type=cdir;unique=808U4002F5;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; .

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>girl.tv says: "PLAY"</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: black;
+      height: 100vh;
+      overflow: hidden;
+      font-family: 'Oswald', sans-serif;
+    }
+
+    .video-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    video {
+      width: 100vw;
+      height: 100vh;
+      object-fit: contain;
+      display: block;
+    }
+
+    .loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 6vw;
+      color: snow;
+      animation: blink 1s infinite;
+      pointer-events: none;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+
+    .color-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.2;
+      pointer-events: none;
+      z-index: 2;
+      background: linear-gradient(90deg, rgb(94, 255, 255), rgb(255, 68, 255), rgb(255, 215, 54), rgb(216, 216, 216), red, rgb(153, 183, 153), rgb(249, 220, 140));
+      background-size: 800% 800%;
+      animation: overlayFade 20s linear infinite;
+      display: none;
+    }
+
+    @keyframes overlayFade {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 100% 50%; }
+    }
+
+    .text-layer {
+      position: absolute;
+      top: 10%;
+      width: 100%;
+      text-align: center;
+      font-size: 5vw;
+      font-weight: 600;
+      color: white;
+      text-transform: uppercase;
+      text-shadow: 4px 4px 10px rgba(0, 0, 0, 0.7);
+      z-index: 4;
+      pointer-events: none;
+    }
+    .fullscreen-button {
+  position: absolute;
+  bottom: 5%;
+  right: 5%;
+  font-size: 1.5vw;
+  padding: 0.5em 1em;
+  background: rgba(255, 255, 255, 0.0);
+  color:black;
+  border: none;
+  cursor: pointer;
+  z-index: 3;
+  border-radius: 3px;
+}
+  </style>
+</head>
+<body>
+  <div class="video-container">
+    <button class="fullscreen-button" id="fsBtn">⛶ </button>
+<video id="video" preload="auto" loop playsinline poster="https://girl.tv/2025/girltv_2025.jpg">
+      <source src="https://girl.tv/renew/natural1.mp4" type="video/mp4">
+      girl.tv says: "expect a beautiful change."
+    </video>
+
+    <div class="loading" id="loadingText"> RENEW  </div>
+    <div class="color-overlay" id="overlay"></div>
+    <!-- div class="text-layer">We Are Renovating</div -->
+  </div>
+
+<script>
+  const video = document.getElementById('video');
+  const loadingText = document.getElementById('loadingText');
+  const overlay = document.getElementById('overlay');
+  const fsBtn = document.getElementById('fsBtn');
+
+  let hasVideoStarted = false;
+
+  function showLoading() {
+    if (!hasVideoStarted) {
+      loadingText.style.display = 'block';
+    }
+  }
+
+  function hideLoading() {
+    hasVideoStarted = true;
+    loadingText.style.display = 'none';
+  }
+
+  // Show loader during initial buffering phases
+  video.addEventListener('loadstart', showLoading);
+  video.addEventListener('waiting', showLoading);
+
+  // Hide loader as soon as the user starts playback
+  video.addEventListener('play', hideLoading);
+  video.addEventListener('playing', hideLoading);
+
+  // Video click/tap toggles play/pause, and overlay
+  video.addEventListener('click', () => {
+    if (video.paused) {
+      video.muted = false;
+      video.play();
+      overlay.style.display = 'block';
+    } else {
+      video.pause();
+      overlay.style.display = 'none';
+    }
+  });
+
+  // Fullscreen-Button
+  fsBtn.addEventListener('click', () => {
+    if (video.requestFullscreen) {
+      video.requestFullscreen();
+    } else if (video.webkitRequestFullscreen) {
+      video.webkitRequestFullscreen();
+    } else if (video.msRequestFullscreen) {
+      video.msRequestFullscreen();
+    }
+  });
+
+  // Mausbewegung / Touch → FS-Button kurz einblenden
+  let fsTimeout;
+  function showFsBtnTemporarily() {
+    fsBtn.style.display = 'block';
+    clearTimeout(fsTimeout);
+    fsTimeout = setTimeout(() => {
+      fsBtn.style.display = 'none';
+    }, 5000);
+  }
+  document.addEventListener('mousemove', showFsBtnTemporarily);
+  document.addEventListener('touchstart', showFsBtnTemporarily);
+
+  // Spacebar → Play/Pause
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      if (video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
+    }
+  });
+</script>
+</body>
+</html>

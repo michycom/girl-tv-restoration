@@ -1,0 +1,5 @@
+<html>
+<body>
+<!--#exec cgi="http://www.der-die-das.com/cgi-bin/rand_text.cgi"--> 
+</body>
+</html> 

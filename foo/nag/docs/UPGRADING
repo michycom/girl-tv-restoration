@@ -1,0 +1,34 @@
+======================
+ Upgrading to Nag 2.0
+======================
+
+:Last update:   $Date: 2004/11/16 22:44:42 $
+:Revision:      $Revision: 1.1 $
+:Contact:       nag@lists.horde.org
+
+
+These are instructions to upgrade from Nag 1.1.x to Nag 2.0.  Please backup
+your existing data before running any of the steps described below.  You can't
+use the updated data with your old Nag version anymore.
+
+
+SQL Backends
+============
+
+Two new fields have been added to the default SQL table layout.  The new
+``task_uid`` field provides a global unique ID to task items, the
+``task_alarm`` allows you to set alarm notification on due dates.
+
+Execute the provided SQL script to update your data to the new Nag version::
+
+   mysql --user=root --password=<MySQL-root-password> <db name> < scripts/upgrades/1.1_to_2.0.mysql.sql
+
+
+Categories
+==========
+
+Categories are now being maintained centrally for all Horde applications that
+support them.  To convert the old task categories execute the provided PHP
+script::
+
+   php scripts/upgrades/2004-05-13_convert_categories_to_strings.php

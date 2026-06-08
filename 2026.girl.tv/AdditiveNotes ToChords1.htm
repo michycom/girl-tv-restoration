@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>Additive Notes → Chords (Solemi-Tree)</title>
+  <style>
+    :root {
+      --bg: #05060a;
+      --panel: #10121a;
+      --line: #2b3345;
+      --accent: #ffb347;
+      --accent-strong: #ff6b8b;
+      --text: #e9edf5;
+      --muted: #9aa3b5;
+      --node: #1b202c;
+      --node-active: #ffb347;
+      --node-possible: #2d945b;
+      --node-impossible: #3a3f50;
+      --node-size: 42;
+      --stroke-width: 2;
+      --row-gap: 120;
+      --col-gap: 140;
+      --shadow-soft: 0 18px 40px rgba(0,0,0,.55);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at top, #141829, #05060a 55%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+    }
+    header {
+      padding: 16px 24px 8px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    header strong {
+      color: var(--text);
+      letter-spacing: .03em;
+    }
+    main {
+      flex: 1;
+      padding: 0 24px 24px;
+      display: flex;
+      gap: 20px;
+      align-items: stretch;
+      justify-content: stretch;
+    }
+    #diagram-panel {
+      flex: 1 1 auto;
+      background: radial-gradient(circle at top, #171b2b, #0b0d14 70%);
+      border-radius: 18px;
+      box-shadow: var(--shadow-soft);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: stretch;
+      position: relative;
+      overflow: hidden;
+      min-height: 520px;
+    }
+    #diagram-container {
+      flex: 1 1 auto;
+      border-radius: 12px;
+      background: radial-gradient(circle at top, #141724, #070810 65%);
+      border: 1px solid rgba(255,255,255,.04);
+      position: relative;
+      overflow: hidden;
+    }
+    svg#diagram {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    #info-panel {
+      width: 280px;
+      max-width: 40vw;
+      background: linear-gradient(145deg, #131622, #0d0f18);
+      border-radius: 18px;
+      padding: 16px 16px 18px;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(255,255,255,.06);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 13px;
+    }
+    #info-panel h2 {
+      margin: 0 0 6px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: .14em;
+      color: var(--muted);
+    }
+    #info-panel h3 {
+      margin: 8px 0 4px;
+      font-size: 14px;
+      color: var(--text);
+    }
+    #current-path {
+      font-size: 14px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.02);
+      border: 1px solid rgba(255,255,255,.05);
+      min-height: 28px;
+    }
+    #current-chords {
+      font-size: 13px;
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: rgba(255,255,255,.02);
+      border: 1px solid rgba(255,255,255,.05);
+      max-height: 170px;
+      overflow-y: auto;
+    }
+    #current-chords .chord-entry {
+      margin-bottom: 4px;
+    }
+    #current-chords .chord-name {
+      color: var(--accent);
+      font-weight: 600;
+      margin-right: 4px;
+    }
+    #current-chords .chord-tones {
+      color: var(--muted);
+    }
+    #hint {
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    #hint code {
+      font-size: 11px;
+      background: rgba(255,255,255,.04);
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+
+    /* ASCII-Block */
+    #solemi-wrapper {
+      padding: 4px 24px 10px;
+      font-size: 11px;
+      color: var(--muted);
+      opacity: .8;
+    }
+    #solemi {
+      font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+      white-space: pre;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.08);
+      display: inline-block;
+    }
+
+    /* SVG styles */
+    .node-group {
+      cursor: pointer;
+      transition: transform 120ms ease;
+    }
+    .node-group:hover {
+      transform: translate(0,-2px);
+    }
+    .node-circle {
+      fill: var(--node);
+      stroke: rgba(255,255,255,.18);
+      stroke-width: var(--stroke-width);
+      filter: drop-shadow(0 8px 16px rgba(0,0,0,.65));
+      transition: fill 120ms ease, stroke 120ms ease, r 120ms ease;
+    }
+    .node-label {
+      fill: var(--text);
+      font-size: 14px;
+      font-weight: 600;
+      text-anchor: middle;
+      dominant-baseline: central;
+      pointer-events: none;
+    }
+    .node-sub {
+      fill: var(--muted);
+      font-size: 11px;
+      text-anchor: middle;
+      dominant-baseline: central;
+      transform: translateY(12px);
+      pointer-events: none;
+    }
+    .node-group.active .node-circle {
+      fill: var(--node-active);
+      stroke: rgba(0,0,0,.7);
+    }
+    .node-group.active .node-label {
+      fill: #000;
+    }
+    .node-group.possible-next:not(.active) .node-circle {
+      fill: var(--node-possible);
+    }
+    .node-group.possible-next:not(.active) .node-label {
+      fill: #e9fff3;
+    }
+    .node-group.impossible {
+      opacity: .18;
+    }
+
+    .conn-line {
+      stroke: var(--line);
+      stroke-width: 2;
+      stroke-linecap: round;
+      opacity: .7;
+    }
+    .conn-line.active-path {
+      stroke: var(--accent);
+      stroke-width: 3;
+      opacity: .95;
+    }
+    .conn-line.next-option {
+      stroke: var(--node-possible);
+      stroke-width: 2.4;
+      opacity: .9;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>Additive Notes → Chords</strong> · klick dich von <code>do</code>
+    durch die Ebenen: 2, 3/4, 5, 7, 9…
+  </header>
+
+  <div id="solemi-wrapper">
+    ASCII Solemi-Ebenen (wird vom Script gelesen):
+    <div id="solemi">
+do
+re me mi fa
+se sol si
+la te ti
+re' fa' la'
+    </div>
+  </div>
+
+  <main>
+    <section id="diagram-panel">
+      <div id="diagram-container">
+        <svg id="diagram"></svg>
+      </div>
+    </section>
+
+    <aside id="info-panel">
+      <h2>Aktueller Pfad</h2>
+      <div id="current-path">–</div>
+
+      <h2>Akkorde auf diesem Pfad</h2>
+      <div id="current-chords">
+        <div class="chord-entry">
+          <span class="chord-name">Noch nichts gewählt.</span>
+          <span class="chord-tones">Starte mit <code>do</code>.</span>
+        </div>
+      </div>
+
+      <h2>Hinweis</h2>
+      <div id="hint">
+        1. Klick auf <code>do</code> → mögliche&nbsp;2. Stufe leuchtet.<br/>
+        2. Klick z.&nbsp;B. <code>me</code> → passende Quinten <code>se / sol</code>.<br/>
+        3. Weiter zu <code>la / te / ti</code>, dann <code>re' / fa' / la'</code>.<br/>
+        Nur Pfade, die in der Chord-Liste existieren, sind wählbar.
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    // ----------------------------
+    // Daten: Solemi-Ebenen aus ASCII-Block
+    // ----------------------------
+    const solemiDiv = document.getElementById("solemi");
+    const rawLines = solemiDiv.innerText
+      .split("\n")
+      .map(l => l.trim())
+      .filter(l => l.length > 0);
+
+    const rows = rawLines.map(line => line.split(/\s+/));
+
+    // Map: note -> rowIndex
+    const noteToRowIndex = {};
+    rows.forEach((row, ri) => {
+      row.forEach(note => {
+        noteToRowIndex[note] = ri;
+      });
+    });
+
+    // Globale Nummerierung der Knoten: 1,2,3,... über alle Ebenen
+    const nodesFlat = [];
+    const noteToId = {};
+    const idToNote = {};
+    let globalId = 1;
+    rows.forEach((row, ri) => {
+      row.forEach(note => {
+        nodesFlat.push({ id: globalId, note, rowIndex: ri });
+        noteToId[note] = globalId;
+        idToNote[globalId] = note;
+        globalId++;
+      });
+    });
+
+    // ----------------------------
+    // Akkord-Liste (numerisch): ausgehend von do
+    // Zahlen beziehen sich auf die globale Reihenfolge der Solemi-Nodes:
+    // 1: do
+    // 2-5: re me mi fa
+    // 6-8: se sol si
+    // 9-11: la te ti
+    // 12-14: re' fa' la'
+    // Beispiel: 1-4-7 = do-mi-sol (Dur)
+    // ----------------------------
+    const chordPatterns = [
+      // Dreiklänge
+      { name: "Dur", ids: [1, 4, 7] },          // do-mi-sol
+      { name: "Moll", ids: [1, 3, 7] },         // do-me-sol
+      { name: "sus2", ids: [1, 2, 7] },         // do-re-sol
+      { name: "sus4", ids: [1, 5, 7] },         // do-fa-sol
+      { name: "dim", ids: [1, 3, 6] },          // do-me-se
+      { name: "aug", ids: [1, 4, 8] },          // do-mi-si
+
+      // 7er
+      { name: "Moll7", ids: [1, 3, 7, 10] },      // do-me-sol-te
+      { name: "MollMaj7", ids: [1, 3, 7, 11] },   // do-me-sol-ti
+      { name: "Dur7", ids: [1, 4, 7, 10] },       // do-mi-sol-te
+      { name: "DurMaj7", ids: [1, 4, 7, 11] },    // do-mi-sol-ti
+      { name: "ø7", ids: [1, 3, 6, 10] },         // do-me-se-te
+      { name: "dim7", ids: [1, 3, 6, 11] },       // do-me-se-ti
+      { name: "7sus2", ids: [1, 2, 7, 10] },      // do-re-sol-te
+      { name: "7sus4", ids: [1, 5, 7, 10] },      // do-fa-sol-te
+      { name: "+7", ids: [1, 4, 8, 10] },         // do-mi-si-te
+      { name: "+Maj7", ids: [1, 4, 8, 11] },      // do-mi-si-ti
+
+      // 9er (Ebene 5: re' = 12)
+      { name: "Moll9", ids: [1, 3, 7, 10, 12] },     // do-me-sol-te-re'
+      { name: "MollMaj9", ids: [1, 3, 7, 11, 12] },  // do-me-sol-ti-re'
+      { name: "9", ids: [1, 4, 7, 10, 12] },         // do-mi-sol-te-re'
+      { name: "Maj9", ids: [1, 4, 7, 11, 12] },      // do-mi-sol-ti-re'
+      { name: "ø9", ids: [1, 3, 6, 10, 12] },        // do-me-se-te-re'
+      { name: "dim9", ids: [1, 3, 6, 11, 12] },      // do-me-se-ti-re'
+      { name: "7sus2(9)", ids: [1, 2, 7, 10, 12] },  // do-re-sol-te-re'
+      { name: "+9", ids: [1, 4, 8, 10, 12] },        // do-mi-si-te-re'
+      { name: "+Maj9", ids: [1, 4, 8, 11, 12] },     // do-mi-si-ti-re'
+
+      // 11er (fa' = 13)
+      { name: "Moll11", ids: [1, 3, 7, 10, 13] },    // do-me-sol-te-fa'
+      { name: "11", ids: [1, 4, 7, 10, 13] },        // do-mi-sol-te-fa'
+      { name: "Maj11", ids: [1, 4, 7, 11, 13] },     // do-mi-sol-ti-fa'
+      { name: "ø11", ids: [1, 3, 6, 10, 13] },       // do-me-se-te-fa'
+      { name: "7sus4(11)", ids: [1, 5, 7, 10, 13] }, // do-fa-sol-te-fa'
+
+      // 13er (la' = 14)
+      { name: "Moll13", ids: [1, 3, 7, 10, 14] },    // do-me-sol-te-la'
+      { name: "13", ids: [1, 4, 7, 10, 14] },        // do-mi-sol-te-la'
+      { name: "Maj13", ids: [1, 4, 7, 11, 14] },     // do-mi-sol-ti-la'
+      { name: "ø13", ids: [1, 3, 6, 10, 14] }        // do-me-se-te-la'
+    ];
+
+    // Aus den numerischen Patterns werden die tatsächlichen Solemi-Tonfolgen abgeleitet
+    const chords = chordPatterns.map(ch => ({
+      name: ch.name,
+      tones: ch.ids.map(id => idToNote[id])
+    }));
+
+    // ----------------------------
+    // SVG Setup
+    // ----------------------------
+    const svg = document.getElementById("diagram");
+    const nodeRadius = parseFloat(getComputedStyle(document.documentElement)
+      .getPropertyValue("--node-size")) / 2 || 21;
+    const rowGap = parseFloat(getComputedStyle(document.documentElement)
+      .getPropertyValue("--row-gap")) || 120;
+    const colGap = parseFloat(getComputedStyle(document.documentElement)
+      .getPropertyValue("--col-gap")) || 140;
+    const marginX = 180;
+    const marginY = 90;
+
+    const nodeMap = new Map(); // key: note -> {x,y,group,rowIndex}
+
+    function buildLayout() {
+      // Erzeuge viewBox abhängig von rows
+      const maxCols = Math.max(...rows.map(r => r.length));
+      const width = marginX * 2 + (maxCols - 1) * colGap + 120;
+      const height = marginY * 2 + (rows.length - 1) * rowGap + 120;
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+
+      // Gruppencontainer für Verbindungen und Nodes
+      const connLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      connLayer.setAttribute("id", "connections-layer");
+      const nodeLayer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+      nodeLayer.setAttribute("id", "nodes-layer");
+
+      svg.appendChild(connLayer);
+      svg.appendChild(nodeLayer);
+
+      rows.forEach((row, ri) => {
+        const y = marginY + ri * rowGap;
+        const rowOffset = ((maxCols - row.length) * colGap) / 2;
+
+        row.forEach((note, ci) => {
+          const x = marginX + rowOffset + ci * colGap;
+
+          const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+          g.classList.add("node-group");
+          g.dataset.note = note;
+          g.dataset.rowIndex = String(ri);
+
+          const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+          circle.classList.add("node-circle");
+          circle.setAttribute("cx", x);
+          circle.setAttribute("cy", y);
+          circle.setAttribute("r", nodeRadius);
+
+          const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+          label.classList.add("node-label");
+          label.setAttribute("x", x);
+          label.setAttribute("y", y);
+          label.textContent = note;
+
+          g.appendChild(circle);
+          g.appendChild(label);
+
+          g.addEventListener("click", () => onNodeClick(note, ri));
+
+          nodeLayer.appendChild(g);
+
+          nodeMap.set(note, {
+            note,
+            rowIndex: ri,
+            x,
+            y,
+            group: g,
+            circle,
+            label
+          });
+        });
+      });
+    }
+
+    // ----------------------------
+    // Pfad-Logik
+    // ----------------------------
+    let currentPath = []; // Array von Noten: ["do", "me", "se", ...]
+
+    const currentPathDiv = document.getElementById("current-path");
+    const currentChordsDiv = document.getElementById("current-chords");
+
+    function pathToString(path) {
+      return path.length ? path.join(" – ") : "–";
+    }
+
+    function chordsForPath(path) {
+      if (!path.length) return [];
+      return chords.filter(ch =>
+        ch.tones.length === path.length &&
+        ch.tones.every((t, i) => t === path[i])
+      );
+    }
+
+    function chordsWithPrefix(path) {
+      if (!path.length) return [];
+      return chords.filter(ch =>
+        ch.tones.length >= path.length &&
+        ch.tones.slice(0, path.length).every((t, i) => t === path[i])
+      );
+    }
+
+    function allowedNextNotes(path) {
+      const result = new Set();
+      if (!path.length) return result;
+      chords.forEach(ch => {
+        if (
+          ch.tones.length > path.length &&
+          ch.tones.slice(0, path.length).every((t, i) => t === path[i])
+        ) {
+          result.add(ch.tones[path.length]);
+        }
+      });
+      return result;
+    }
+
+    function onNodeClick(note, rowIndex) {
+      rowIndex = Number(rowIndex);
+
+      // Root-Ebene: Pfad neu starten / toggeln
+      if (rowIndex === 0) {
+        if (currentPath.length === 1 && currentPath[0] === note) {
+          currentPath = [];
+        } else {
+          currentPath = [note];
+        }
+        updateUI();
+        return;
+      }
+
+      // Wenn noch kein Root gesetzt ist und man z.B. direkt "me" klickt:
+      if (!currentPath.length) {
+        const rootRow = rows[0];
+        const rootNote = rootRow && rootRow[0];
+        if (!rootNote) return;
+        currentPath = [rootNote];
+      }
+
+      // Keine Spruenge: man darf maximal auf die naechste Ebene klicken
+      if (rowIndex > currentPath.length) {
+        return;
+      }
+
+      // Neuen Pfad bis zu dieser Ebene bilden
+      const newPath = currentPath.slice(0, rowIndex);
+      newPath[rowIndex] = note;
+
+      // Nur akzeptieren, wenn es wenigstens einen Akkord mit diesem Praefix gibt
+      const hasAny = chordsWithPrefix(newPath);
+      if (!hasAny.length) {
+        return;
+      }
+
+      // Toggle: wenn derselbe Ton am Ende erneut geklickt wird, eine Ebene zurueck
+      if (
+        currentPath.length === newPath.length &&
+        currentPath[rowIndex] === note
+      ) {
+        currentPath = newPath.slice(0, rowIndex);
+      } else {
+        currentPath = newPath;
+      }
+
+      updateUI();
+    }
+
+    function updateUI() {
+      // Pfad anzeigen
+      currentPathDiv.textContent = pathToString(currentPath);
+
+      // Akkorde anzeigen
+      const matches = chordsForPath(currentPath);
+      currentChordsDiv.innerHTML = "";
+      if (!matches.length) {
+        const div = document.createElement("div");
+        div.className = "chord-entry";
+        const n = document.createElement("span");
+        n.className = "chord-name";
+        n.textContent = currentPath.length ? "Kein kompletter Akkord." : "Noch nichts gewählt.";
+        const t = document.createElement("span");
+        t.className = "chord-tones";
+        t.textContent = currentPath.length
+          ? "Erweitere den Pfad oder gehe eine Ebene zurück."
+          : "Starte mit do.";
+        div.appendChild(n);
+        div.appendChild(t);
+        currentChordsDiv.appendChild(div);
+      } else {
+        matches.forEach(ch => {
+          const div = document.createElement("div");
+          div.className = "chord-entry";
+          const n = document.createElement("span");
+          n.className = "chord-name";
+          n.textContent = ch.name;
+          const t = document.createElement("span");
+          t.className = "chord-tones";
+          t.textContent = " · " + ch.tones.join(" – ");
+          div.appendChild(n);
+          div.appendChild(t);
+          currentChordsDiv.appendChild(div);
+        });
+      }
+
+      // Alle Nodes resetten
+      nodeMap.forEach(node => {
+        node.group.classList.remove("active", "possible-next", "impossible");
+      });
+
+      // Aktive Noten
+      currentPath.forEach(note => {
+        const node = nodeMap.get(note);
+        if (node) {
+          node.group.classList.add("active");
+          // aktive nach vorne holen
+          node.group.parentNode.appendChild(node.group);
+        }
+      });
+
+      // Moegliche naechste Stufe markieren
+      const nextSet = allowedNextNotes(currentPath);
+      if (currentPath.length > 0) {
+        const nextRowIndex = currentPath.length;
+        const nextRow = rows[nextRowIndex];
+        if (nextRow) {
+          nextRow.forEach(note => {
+            const node = nodeMap.get(note);
+            if (!node) return;
+            if (nextSet.has(note)) {
+              node.group.classList.add("possible-next");
+            } else {
+              node.group.classList.add("impossible");
+            }
+          });
+        }
+      }
+
+      // Verbindungen aktualisieren
+      updateConnections(nextSet);
+    }
+
+    function updateConnections(nextSet) {
+      const connLayer = document.getElementById("connections-layer");
+      while (connLayer.firstChild) connLayer.removeChild(connLayer.firstChild);
+
+      if (!currentPath.length) return;
+
+      // Aktiver Pfad: Linien zwischen allen bisher gewaehlt Tonstufen
+      for (let i = 0; i < currentPath.length - 1; i++) {
+        const a = nodeMap.get(currentPath[i]);
+        const b = nodeMap.get(currentPath[i + 1]);
+        if (!a || !b) continue;
+        const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        line.classList.add("conn-line", "active-path");
+        line.setAttribute("x1", a.x);
+        line.setAttribute("y1", a.y);
+        line.setAttribute("x2", b.x);
+        line.setAttribute("y2", b.y);
+        connLayer.appendChild(line);
+      }
+
+      // Moegliche naechste Optionen von der letzten Stufe aus
+      if (currentPath.length > 0 && nextSet.size > 0) {
+        const lastNote = currentPath[currentPath.length - 1];
+        const fromNode = nodeMap.get(lastNote);
+        if (fromNode) {
+          nextSet.forEach(nextNote => {
+            const toNode = nodeMap.get(nextNote);
+            if (!toNode) return;
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.classList.add("conn-line", "next-option");
+            line.setAttribute("x1", fromNode.x);
+            line.setAttribute("y1", fromNode.y);
+            line.setAttribute("x2", toNode.x);
+            line.setAttribute("y2", toNode.y);
+            connLayer.appendChild(line);
+          });
+        }
+      }
+    }
+
+    // Initialisieren
+    buildLayout();
+    updateUI();
+  </script>
+</body>
+</html> 

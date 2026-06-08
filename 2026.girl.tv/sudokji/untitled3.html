@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>9x9 Negativeform S</title>
+
+  <style>
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: #111;
+      color: #f2f2f2;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      display: grid;
+      place-items: center;
+    }
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(9, 42px);
+      grid-template-rows: repeat(9, 42px);
+      gap: 6px;
+      padding: 18px;
+      background: #1b1b1b;
+      border-radius: 18px;
+    }
+
+    .cell {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      font-size: 20px;
+      font-weight: 900;
+      line-height: 1;
+      transition: 120ms ease;
+    }
+
+    .cell.material {
+      background: #f2f2f2;
+      color: #111;
+    }
+
+    .cell.void {
+      background: #111;
+      color: #333;
+      box-shadow: inset 0 0 0 1px #333;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="grid"></div>
+
+  <script>
+    const glyph = [
+      "SSSSSSSSS",
+      "S.......S",
+      "S.SSSSSSS",
+      "S.S......",
+      "S.SSSSSSS",
+      "S.......S",
+      "SSSSSSS.S",
+      "S.......S",
+      "SSSSSSSSS"
+    ];
+
+    const gridSize = 9;
+    const gridElement = document.getElementById("grid");
+
+    for (let y = 0; y < gridSize; y++) {
+      for (let x = 0; x < gridSize; x++) {
+        const value = glyph[y][x];
+
+        const cell = document.createElement("div");
+        cell.className = "cell";
+
+        if (value === ".") {
+          cell.classList.add("void");
+          cell.textContent = "";
+        } else {
+          cell.classList.add("material");
+          cell.textContent = value;
+        }
+
+        gridElement.appendChild(cell);
+      }
+    }
+  </script>
+</body>
+</html>     

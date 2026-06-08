@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>pixel_gen_01</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080808;
+      --fg: #f2f2f2;
+      --muted: #9a9a9a;
+      --line: #2d2d2d;
+      --accent: #ffea00;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--fg);
+      font: 14px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    body {
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    main {
+      display: grid;
+      gap: 14px;
+      justify-items: start;
+    }
+
+    .stage {
+      position: relative;
+      display: grid;
+      width: min-content;
+      max-width: calc(100vw - 48px);
+      border: 1px solid var(--line);
+      background: #000;
+      overflow: hidden;
+      image-rendering: pixelated;
+    }
+
+    canvas {
+      display: block;
+      max-width: calc(100vw - 48px);
+      max-height: calc(100vh - 120px);
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    .status {
+      max-width: min(720px, calc(100vw - 48px));
+      color: var(--muted);
+    }
+
+    .status strong {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    input[type="file"] {
+      max-width: min(720px, calc(100vw - 48px));
+      color: var(--muted);
+      border: 1px solid var(--line);
+      padding: 9px;
+      background: #111;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="stage" aria-label="pixel_gen_01 animation">
+      <canvas id="screen"></canvas>
+    </div>
+    <div class="status" id="status">lade bildcache...</div>
+    <input id="filePicker" type="file" accept="image/*" aria-label="bild laden">
+  </main>
+
+  <script>
+    const SOURCE_IMAGE = "d542b9b16e02cf67b8c2ed64e8e9e9a353cbb05cffa1055cab680c13192a913e.jpg";
+    const COLS = 5;
+    const ROWS = 2;
+    const FRAME_COUNT = COLS * ROWS;
+    const FRAME_HOLD_MS = 100;
+    const RENDER_FPS = 25;
+    const RENDER_STEP_MS = 1000 / RENDER_FPS;
+
+    const screen = document.getElementById("screen");
+    const ctx = screen.getContext("2d", { alpha: false });
+    const statusEl = document.getElementById("status");
+    const filePicker = document.getElementById("filePicker");
+
+    let frameCache = [];
+    let frameWidth = 0;
+    let frameHeight = 0;
+    let startTime = 0;
+    let lastRender = 0;
+    let rafId = 0;
+
+    ctx.imageSmoothingEnabled = false;
+
+    function setStatus(html) {
+      statusEl.innerHTML = html;
+    }
+
+    function frameName(index) {
+      const row = Math.floor(index / COLS) + 1;
+      const col = (index % COLS) + 1;
+      return `${row}/${ROWS} ${col}/${COLS}`;
+    }
+
+    function buildFrameCache(image) {
+      frameWidth = Math.floor(image.naturalWidth / COLS);
+      frameHeight = Math.floor(image.naturalHeight / ROWS);
+
+      screen.width = frameWidth;
+      screen.height = frameHeight;
+      screen.style.width = `${frameWidth}px`;
+      screen.style.height = `${frameHeight}px`;
+
+      frameCache = [];
+
+      for (let row = 0; row < ROWS; row += 1) {
+        for (let col = 0; col < COLS; col += 1) {
+          const frame = document.createElement("canvas");
+          frame.width = frameWidth;
+          frame.height = frameHeight;
+
+          const frameCtx = frame.getContext("2d", { alpha: false });
+          frameCtx.imageSmoothingEnabled = false;
+          frameCtx.drawImage(
+            image,
+            col * frameWidth,
+            row * frameHeight,
+            frameWidth,
+            frameHeight,
+            0,
+            0,
+            frameWidth,
+            frameHeight
+          );
+
+          frameCache.push(frame);
+        }
+      }
+    }
+
+    function render(now) {
+      if (!frameCache.length) {
+        return;
+      }
+
+      rafId = requestAnimationFrame(render);
+
+      if (now - lastRender < RENDER_STEP_MS) {
+        return;
+      }
+
+      lastRender = now;
+      const frameIndex = Math.floor((now - startTime) / FRAME_HOLD_MS) % FRAME_COUNT;
+      ctx.drawImage(frameCache[frameIndex], 0, 0);
+      setStatus(`cache ${frameWidth} x ${frameHeight}px | frame ${frameIndex + 1}/10 | ausschnitt ${frameName(frameIndex)} | 25fps render / 100ms step`);
+    }
+
+    function startAnimation(image) {
+      cancelAnimationFrame(rafId);
+      buildFrameCache(image);
+      startTime = performance.now();
+      lastRender = 0;
+      ctx.drawImage(frameCache[0], 0, 0);
+      rafId = requestAnimationFrame(render);
+    }
+
+    function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = src;
+      });
+    }
+
+    filePicker.addEventListener("change", () => {
+      const file = filePicker.files && filePicker.files[0];
+      if (!file) {
+        return;
+      }
+
+      const url = URL.createObjectURL(file);
+      loadImage(url)
+        .then((image) => {
+          startAnimation(image);
+          URL.revokeObjectURL(url);
+        })
+        .catch(() => {
+          setStatus("<strong>bild konnte nicht geladen werden.</strong>");
+          URL.revokeObjectURL(url);
+        });
+    });
+
+    loadImage(SOURCE_IMAGE)
+      .then(startAnimation)
+      .catch(() => {
+        screen.width = 320;
+        screen.height = 160;
+        screen.style.width = "320px";
+        screen.style.height = "160px";
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, screen.width, screen.height);
+        ctx.fillStyle = "#ffea00";
+        ctx.font = "14px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace";
+        ctx.fillText("bild fehlt", 18, 44);
+        ctx.fillStyle = "#f2f2f2";
+        ctx.fillText("jpg in diesen ordner legen", 18, 72);
+        setStatus(`<strong>${SOURCE_IMAGE}</strong> nicht gefunden. Datei hier ablegen oder unten laden.`);
+      });
+  </script>
+</body>
+</html>

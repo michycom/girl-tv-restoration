@@ -1,0 +1,35 @@
+<html>
+<head>
+<title> you are back at girl.tv!  welcome.</title>
+
+<script> var repeat=1
+var title=document.title
+var leng=title.length
+var start=1
+function titlemove() {
+titl=title.substring(start, leng) + title.substring(0, start)
+document.title=titl
+start++
+if (start==leng+1) {
+start=0
+if (repeat==0)
+return
+}
+setTimeout("titlemove()",120)
+}
+if (document.title)
+titlemove()
+</script>
+
+
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="expires" content="0">
+<meta http-equiv="cache-control" content="no-cache">
+</head>
+<FRAMESET rows="22,*" border="0">
+<frame src="http://girl.tv/banner/menu.html" scrolling="no" noresize border=0 frameborder=0 framespacing=0 name="browse">
+<frame src="http://girl.tv/peter_pan" scrolling="auto" noresize border=0 frameborder=0 framespacing=0 name="computer">
+</frameset>
+<noframes></noframes>
+
+</html>

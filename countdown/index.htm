@@ -1,0 +1,51 @@
+<HTML><TITLE></TITLE><HEAD><SCRIPT LANGUAGE="JavaScript">
+
+function counter()
+{ 
+var f = ""
+var g = ""
+var h = "width=300,height=610,resizable=yes,status=yes,scrollbars=yes"
+
+var eigenschaften = f + g + h;
+var win=window.open("","",eigenschaften);
+
+var aa = 1;
+aa = aa + 0;
+var xx =  aa; 
+
+win.document.open();
+win.document.writeln('<HTML><HTML><BODY bgcolor="white">',xx,'</BODY>');
+win.document.close();
+counter_two(win, aa, eigenschaften);
+ }
+
+function counter_two(win, aa, eigenschaften)
+{
+aa = aa +1
+
+
+win.document.writeln('<HTML><HTML><BODY bgcolor="white">',aa,'',aa,'</b><br></BODY>');
+
+if (aa ==100)
+                    {
+
+                    }
+else
+                    {
+               counter_two(win,aa);
+                    }
+}
+</SCRIPT> 
+
+
+	
+
+ 
+
+
+
+
+</HEAD>
+<BODY bgcolor="white" onload='counter();'>
+</BODY> 
+</HTML> 

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Musical Notes</title>
+</head>
+<body>
+    <div id="staff-container"></div>
+    <div id="note"></div>
+<script>
+// Hier das obige JavaScript-Script einfügen
+
+class MusicalNotes {
+    constructor() {
+        this.svgNS = "http://www.w3.org/2000/svg";
+        // Mapping von Noten zu ihrer Y-Position auf dem Notensystem
+        // "C4" ist das mittlere C, "C5" ist das C eine Oktave darüber, usw.
+        this.notePositions = {
+            "C4": 5,
+            "D4": 4.5,
+            "E4": 4,
+            // Add all other notes in similar fashion
+            // ...
+            "A3": 2,
+            "B3": 1.5,
+            "C3": 1, // C im Bassschlüssel
+            // ...
+        };
+        this.lineHeight = 20;
+        this.clefSize = 60;
+    }
+    
+    // Funktion zum Zeichnen von Notenlinien
+    drawStaffLines(containerId, lineLength = 120) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        // Erstelle ein neues SVG-Element
+        const svg = document.createElementNS(this.svgNS, "svg");
+        svg.setAttribute("width", lineLength);
+        svg.setAttribute("height", "100");
+        svg.style.border = "1px solid black"; // Optional: SVG-Rahmen
+        container.appendChild(svg);
+
+        // Zeichne fünf Notenlinien
+        for (let i = 0; i < 5; i++) {
+            const line = document.createElementNS(this.svgNS, "line");
+            line.setAttribute("x1", "0");
+            line.setAttribute("y1", `${20 + i * 20}`); // Notenlinien sind 20px auseinander
+            line.setAttribute("x2", lineLength);
+            line.setAttribute("y2", `${20 + i * 20}`);
+            line.setAttribute("stroke", "black");
+            svg.appendChild(line);
+        }
+
+        return svg;
+    }
+
+ // Funktion zum Zeichnen einer Note
+    drawNote(containerId, noteSymbol, notePosition, clef) {
+        const svg = this.drawStaffLines(containerId);
+
+        // Berechne die Y-Position der Note
+        const noteY = this.calculateNoteYPosition(noteSymbol, notePosition, clef);
+
+        // Text-Element für die Note
+        const text = document.createElementNS(this.svgNS, "text");
+        text.setAttribute("x", "60"); // X-Position in der Mitte der Linien
+        text.setAttribute("y", noteY.toString()); // Y-Position für die Note
+        text.textContent = noteSymbol; // Note-Symbol, z.B. "A", "B", "C", ...
+        text.setAttribute("font-family", "serif");
+        text.setAttribute("font-size", "36px"); 
+        text.setAttribute("font-style","italic");
+        text.setAttribute("text-anchor", "middle");
+        svg.appendChild(text);
+        
+        // Zeichne den Notenschlüssel links neben den Notenlinien
+        const clefSymbol = clef === 'G' ? '𝄞' : '𝄢';
+        const clefText = document.createElementNS(this.svgNS, "text");
+        clefText.setAttribute("x", "20");
+        clefText.setAttribute("y", noteY < 60 ? "60" : "40"); // G-Schlüssel oben, F-Schlüssel unten
+        clefText.textContent = clefSymbol;
+        clefText.setAttribute("font-family", "serif");
+        clefText.setAttribute("font-size", "50px");
+        clefText.setAttribute("text-anchor", "middle");
+        svg.insertBefore(clefText, svg.firstChild); // Füge Notenschlüssel vor der ersten Note ein
+
+        // Update den Text in der Note-Division
+        document.getElementById('note').textContent = noteSymbol;
+    }
+
+    // Neue Funktion, um die Y-Position der Note zu berechnen
+    calculateNoteYPosition(noteSymbol, notePosition, clef) {
+        // Die Logik hier hängt von deiner Notensymbolik ab
+        // und wie du die Positionen der Noten in Bezug auf den Schlüssel berechnest.
+        // Hier ein Platzhalter für eine einfache Y-Positionsberechnung:
+        const positions = {'C': 70, 'D': 65, 'E': 60, 'F': 55, 'G': 50, 'A': 45, 'B': 40};
+        return positions[noteSymbol] || 70; // Standardposition, falls das Symbol nicht gefunden wird
+    }
+}
+
+// Nutze die Klasse MusicalNotes, um Noten und Notenlinien zu zeichnen
+const musicalNotes = new MusicalNotes();
+musicalNotes.drawNote('staff-container', 'C', 2, 'G'); // Zeichne C im G-Schlüssel
+musicalNotes.drawNote('staff-container', 'D', 1.5, 'G'); // Zeichne D im G-Schlüssel
+musicalNotes.drawNote('staff-container', 'D', 1.5, 'F'); // Zeichne D im F-Schlüssel
+musicalNotes.drawNote('staff-container', 'E', 1, 'G'); // Zeichne E im G-Schlüssel
+musicalNotes.drawNote('staff-container', 'G', 0, 'F'); // Zeichne G im F-Schlüssel
+
+</script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+
+  <channel>
+<atom:link href="http://girl.tv/feed.rss" rel="self" type="application/rss+xml" />
+
+    <title>hi</title>
+    <link>http://girl.tv</link>
+    <description>YOUR GIRL.TV TODAY </description>
+    <language>en-uk</language>
+    <copyright>all rights reserved</copyright>
+<pubDate>Mon, 14 Jan 2008 14:20:00 +0100</pubDate>
+    <image>
+      <url>http://girl.tv/favicon.png</url>
+      <title>hi</title>
+      <link>http://girl.tv</link>
+    </image>
+  
+    <item>
+      <title>girl.tv tidied up...</title>
+      <description> <![CDATA[ 
+<a href="http://your.girl.tv"><img src="http://girl.tv/3boys.gif" border="0">the boys</a> &#160; &#160; &#160; &#160; &#160;  
+<a href="http://girl.tv/platform"><img src="http://girl.tv/girl.tv.gif" border="0">girl.tv</a>  &#160; &#160; &#160; &#160; &#160;
+<a href="http://girl.tv/browser"><img src="http://girl.tv/me.gif" border="0">me</a> &#160; &#160; &#160; &#160; &#160; &#160; &#160;
+<a href="http://girl.tv/fly"><img src="http://girl.tv/fly/bunny.gif"  border="0">bunny</a>	<br>
+the girl.tv country was caught in a mess. so girl.tv, the girl, asked her boys, which represent the community, to clean it up. the boys were bussy, so me, that is the name of the boy, had to do it all alone. well, now it looks much better. this is a net.art project, which is currently reflecting the culture of social networks and the commercial context of the internet. besides it is a platform for subcultural and contemporary emergences. sometimes i feel like having to explain a mediocre joke.]]>
+</description>
+<pubDate>Mon, 14 Jan 2008 21:43:00 +0100</pubDate>
+      <link>http://girl.tv/popup</link>
+      <author>we@girl.tv (me)</author>
+      <guid>http://girl.tv/index.php</guid>
+    </item>
+
+  <item> 
+    <title>the aliens</title>
+      <description>the journey to outer space 
+  <![CDATA[<br>
+<br>
+girl.tv was lonley and he took his space shuttel to visit some aliens...<br>
+more informations you get at http://girl.tv... <br>
+<br> 
+      ]]>
+</description>
+<pubDate>Mon, 14 Jan 2008 14:43:00 +0100</pubDate>
+     <link>http://girl.tv/alien</link>
+      <author>press@girl.tv (paris)</author>
+      <guid>http://girl.tv/alien/index.html</guid>
+    </item>  
+  </channel>
+
+</rss>
+
+

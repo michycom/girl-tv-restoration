@@ -1,0 +1,10 @@
+# robots.txt for http://*.girl.tv
+# Zugriff auf alle Dateien erlauben
+User-agent: *
+Disallow:
+User-agent: *
+Disallow: /scripts/
+User-agent: *
+Disallow: /mail+/
+Sitemap: <http://girl.tv/sitemap.xml>
+

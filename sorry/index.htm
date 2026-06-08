@@ -1,0 +1,88 @@
+<html>
+<header> <title>HowTo hack your own root account</title>
+</header>
+
+<body bgcolor="#faebc5" background="../../ac_background.jpg">
+<a href="index.html">Back</a>
+
+<center>
+<h1>HowTo Hack your own root account</h1>
+</center>
+
+<pre>
+####################################################################
+# Howto regain root access to your linux box
+#
+# Author : Ansgar M. Schmidt
+# Version: 0.2
+# Date   : 01/17/2002
+####################################################################
+
+DISCLAIMER
+
+The author cannot be held responsible for any damage occuring in your 
+computing environment before, during or after using this howto :)
+
+=====================================
+It is very easy, provided your machine is not in a productive
+environment since the following steps require rebooting the machine.
+
+1.When Lino comes up type at the boot prompt:
+"linux init=/bin/bash"
+This will start the installed linux. Instead of asking
+for a user the system starts directly the bash. Without
+answering any question about account or password 
+you get root access to your maschine.
+
+2.Remount your harddisk.
+"mount -n -w -o remount /"
+This command remount your harddisk so you can alter 
+files on it. This is necessary because the /etc directory
+is mounted read only.
+
+3.Delete your password.
+"vi /etc/shadow"
+Search the line containing the root account and delete 
+the encrypted password. You can't change it, because it has to be
+saved encrypted. By simple deleting it you can avoid the system from
+bothering you with the password when you login. 
+If you are not familare with vi don't worry. Navigate with
+your cursor keys to the first character of the root password
+and press "x" for each character of the password. By pressing
+Shift+"ZZ" you can save the file.
+Usually the line in your shadow file will look like this:
+"root:sdcj3h2jb34d:0:0:root:/root:/bin/bash". 
+The password is saved in the word "sdcj3h2jb34d". After your 
+operation the line should look like this:
+"root::0:0:root:/root:/bin/bash".
+
+4.Sync your harddisk
+"/bin/sync" 
+This will save your chances to the harddisk.
+
+5.Reboot your system
+"/sbin/reboot"
+This command will reboot your system.
+
+6.Log into your system
+When your system ask for a user type in "root". There is no question
+for a password.
+
+7.Chance your password
+"passwd"
+The system asks your for your new password. Do not forget it. :-)
+
+########################################################################
+# end of howto
+########################################################################
+</pre>
+<p>
+
+<small>
+Last change at <b>24.1.2003</b> by 
+<a href="mailto:Ansgar.Schmidt@gmx.net">Ansgar M. Schmidt</a> | 
+<a href="http://www.pluriverse.de/impressum.html">Impressum</a> | 
+<a href="http://www.disclaimer.de/disclaimer.htm?farbe=faebc5/000000/000000/000000">Disclaimer</a>
+</small>
+</body>
+</html>

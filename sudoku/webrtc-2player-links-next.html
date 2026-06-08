@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>2 Player Live (WebRTC via Links)</title>
+<style>
+  :root{
+    --bg:#0b0b0d; --panel:#14141a; --panel2:#101015; --fg:#eaeaf0; --muted:#a8a8b5;
+    --line:#2a2a35; --ok:#3ddc97; --bad:#ff5c7a; --warn:#ffd166;
+    --btn:#222235; --btn2:#1b1b2b; --accent:#7aa2ff;
+  }
+  html,body{height:100%; margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--fg);}
+  .topbar{display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid var(--line); background:rgba(0,0,0,.2); position:sticky; top:0; backdrop-filter: blur(8px);}
+  .title{font-weight:700; letter-spacing:.2px;}
+  .btn{appearance:none; border:1px solid var(--line); background:var(--btn); color:var(--fg); border-radius:12px; padding:10px 12px; font-weight:650; cursor:pointer;}
+  .btn:hover{border-color:#3a3a55;}
+  .btn:active{transform:translateY(1px);}
+  .btn.ghost{background:transparent;}
+  .btn.primary{background:linear-gradient(180deg,var(--btn),var(--btn2)); border-color:#3a3a55;}
+  .btn.small{padding:7px 10px; border-radius:10px; font-weight:650;}
+  .wrap{max-width:980px; margin:0 auto; padding:16px;}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:16px; padding:14px; margin:14px 0;}
+  .row{display:flex; gap:12px; flex-wrap:wrap;}
+  .col{flex:1 1 320px;}
+  .muted{color:var(--muted); font-size:13px; line-height:1.35;}
+  .kv{display:flex; gap:8px; align-items:center; margin-top:10px; flex-wrap:wrap;}
+  .pill{display:inline-flex; align-items:center; gap:8px; border:1px solid var(--line); background:rgba(0,0,0,.15); border-radius:999px; padding:6px 10px; font-size:13px; color:var(--muted);}
+  .dot{width:9px; height:9px; border-radius:50%; background:var(--warn); box-shadow:0 0 0 2px rgba(255,255,255,.06) inset;}
+  .dot.ok{background:var(--ok);}
+  .dot.bad{background:var(--bad);}
+  .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+  textarea,input,select{width:100%; box-sizing:border-box; background:var(--panel2); color:var(--fg); border:1px solid var(--line); border-radius:12px; padding:10px 12px; outline:none;}
+  textarea{min-height:88px; resize:vertical;}
+  input{height:44px;}
+  select{height:44px;}
+  label{display:block; margin:12px 0 6px; color:var(--muted); font-size:12px;}
+  .sep{height:1px; background:var(--line); margin:14px 0;}
+  .chatbox{display:flex; flex-direction:column; gap:10px;}
+  .log{background:var(--panel2); border:1px solid var(--line); border-radius:14px; padding:10px; min-height:180px; max-height:320px; overflow:auto;}
+  .msg{padding:8px 10px; border-radius:12px; margin:6px 0; border:1px solid rgba(255,255,255,.06);}
+  .msg.me{background:rgba(122,162,255,.12); border-color:rgba(122,162,255,.25);}
+  .msg.them{background:rgba(61,220,151,.10); border-color:rgba(61,220,151,.20);}
+  .msg.sys{background:rgba(255,209,102,.10); border-color:rgba(255,209,102,.22); color:var(--muted);}
+  .msg .meta{font-size:11px; color:var(--muted); margin-bottom:3px;}
+  .msg .txt{white-space:pre-wrap; word-break:break-word;}
+  dialog{border:none; border-radius:18px; padding:0; width:min(920px,92vw); background:var(--panel); color:var(--fg); box-shadow:0 20px 80px rgba(0,0,0,.55); border:1px solid var(--line);}
+  dialog::backdrop{background:rgba(0,0,0,.6); backdrop-filter: blur(4px);}
+  .dlgHead{display:flex; justify-content:space-between; align-items:center; padding:14px 14px; border-bottom:1px solid var(--line);}
+  .dlgBody{padding:14px;}
+  .h2{font-size:14px; font-weight:800; letter-spacing:.3px; margin:0;}
+  .hint{font-size:12px; color:var(--muted); margin-top:4px;}
+  .hide{display:none !important;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  @media (max-width:780px){ .grid2{grid-template-columns:1fr;} }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="title">2 Player Live — WebRTC via Links</div>
+    <button id="btnPeople" class="btn primary" title="2 Player Live">👥</button>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="muted">
+        Ohne Server: Offer/Answer wird als <span class="mono">#offer=…</span> bzw. <span class="mono">#answer=…</span> in die URL geschrieben.
+        Du teilst nur Links. Für WAN ist meist STUN nötig. Für LAN kannst du „LAN-only“ wählen.
+      </div>
+      <div class="kv">
+        <span class="pill"><span id="dotState" class="dot"></span><span id="txtState">idle</span></span>
+        <span class="pill">Rolle: <span id="txtRole" class="mono">—</span></span>
+        <span class="pill">Peer: <span id="txtPeer" class="mono">—</span></span>
+      </div>
+    </div>
+
+    <div id="chatCard" class="card hide">
+      <div class="row">
+        <div class="col">
+          <div class="chatbox">
+            <div class="muted">Chat (DataChannel)</div>
+            <div id="log" class="log"></div>
+            <div class="row" style="gap:10px; align-items:center;">
+              <div class="col" style="flex:1 1 520px;">
+                <input id="chatInput" type="text" placeholder="Nachricht …" />
+              </div>
+              <div style="flex:0 0 auto;">
+                <button id="btnSend" class="btn primary">Send</button>
+              </div>
+            </div>
+            <div class="muted">Player 1 sendet alle 7s „ping“, Player 2 antwortet „pong“ — bis Player 1 etwas eigenes schreibt.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <dialog id="dlg">
+    <div class="dlgHead">
+      <div>
+        <div class="h2">2 Player Live</div>
+        <div class="hint">Offer-Link öffnen → Player 2. Answer-Link zurück → Player 1 verbindet.</div>
+      </div>
+      <button id="btnClose" class="btn ghost">✕</button>
+    </div>
+
+    <div class="dlgBody">
+      <div class="row">
+        <div class="col">
+          <div class="card" style="margin:0;">
+            <div class="muted" style="font-weight:800; color:var(--fg);">Netz-Modus</div>
+
+            <label>Mode</label>
+            <select id="selMode">
+              <option value="auto">Auto (URL > Setting)</option>
+              <option value="lan">LAN-only (no STUN)</option>
+              <option value="wan">Global/WAN (STUN)</option>
+            </select>
+
+            <div class="grid2">
+              <label style="margin:10px 0 0;">
+                <input id="chkStun" type="checkbox" checked />
+                STUN benutzen (empfohlen für WAN)
+              </label>
+
+              <label style="margin:10px 0 0;">
+                <input id="chkNoGoogle" type="checkbox" checked />
+                „No Google STUN“ (privacy)
+              </label>
+            </div>
+
+            <div class="muted" style="margin-top:8px;">
+              Tipp: Wenn LAN-only nicht verbindet, schalte auf Global/WAN.
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="muted" style="font-weight:800; color:var(--fg);">Player 1 (send offer)</div>
+            <div class="muted" id="p1Status">Klicke „Generate offer link“.</div>
+
+            <div class="sep"></div>
+
+            <button id="btnCreateOffer" class="btn primary">Generate offer link</button>
+
+            <label>Offer link (share/copy)</label>
+            <textarea id="taOfferLink" class="mono" readonly></textarea>
+
+            <div class="row" style="gap:10px;">
+              <button id="btnShareOffer" class="btn small">Share</button>
+              <button id="btnCopyOffer" class="btn small">Copy</button>
+              <button id="btnOfferSent" class="btn small">Send offer link → enter answer</button>
+            </div>
+
+            <div id="p1AnswerBlock" class="hide">
+              <label>Paste answer link from Player 2</label>
+              <input id="inAnswerLink" class="mono" placeholder="https://…/#answer=…" />
+              <div class="row" style="gap:10px;">
+                <button id="btnApplyAnswer" class="btn primary small">Apply answer → connect</button>
+                <button id="btnClearP1" class="btn small">Reset Player 1</button>
+              </div>
+              <div class="muted" id="p1ApplyStatus"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col">
+          <div class="card">
+            <div class="muted" style="font-weight:800; color:var(--fg);">Player 2</div>
+            <div class="muted" id="p2Status">Wenn du einen Offer-Link öffnest, wird hier automatisch ein Answer-Link erzeugt.</div>
+
+            <div class="sep"></div>
+
+            <label>Detected offer (stored in browser)</label>
+            <textarea id="taDetectedOffer" class="mono" readonly></textarea>
+
+            <label>Answer link (send back)</label>
+            <textarea id="taAnswerLink" class="mono" readonly></textarea>
+
+            <div class="row" style="gap:10px;">
+              <button id="btnShareAnswer" class="btn small">Share</button>
+              <button id="btnCopyAnswer" class="btn small">Copy</button>
+              <button id="btnClearP2" class="btn small">Reset Player 2</button>
+            </div>
+
+            <div class="muted" id="p2GenStatus"></div>
+          </div>
+
+          <div class="card">
+            <div class="muted" style="font-weight:800; color:var(--fg);">Debug</div>
+            <div class="muted mono" id="dbg"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+<script>
+(() => {
+  // ========= helpers =========
+  const $ = (id) => document.getElementById(id);
+  const now = () => new Date().toLocaleTimeString();
+
+  // base64url encode/decode (UTF-8 safe)
+  function b64uEncode(str){
+    const bytes = new TextEncoder().encode(str);
+    let bin = "";
+    for (const b of bytes) bin += String.fromCharCode(b);
+    const b64 = btoa(bin);
+    return b64.replace(/\\+/g,"-").replace(/\\//g,"_").replace(/=+$/,"");
+  }
+  function b64uDecode(b64u){
+    const b64 = b64u.replace(/-/g,"+").replace(/_/g,"/") + "===".slice((b64u.length + 3) % 4);
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder().decode(bytes);
+  }
+
+  function parseHashParams(){
+    const h = location.hash.startsWith("#") ? location.hash.slice(1) : location.hash;
+    return new URLSearchParams(h);
+  }
+  function makeLinkWithHash(extraParams){
+    const u = new URL(location.href);
+    const p = new URLSearchParams(u.hash.startsWith("#") ? u.hash.slice(1) : u.hash);
+    for (const [k,v] of Object.entries(extraParams)) {
+      if (v === null || v === undefined) p.delete(k);
+      else p.set(k, v);
+    }
+    u.hash = p.toString();
+    return u.toString();
+  }
+
+  async function copyToClipboard(text){
+    try{
+      await navigator.clipboard.writeText(text);
+      return true;
+    }catch(e){
+      prompt("Copy:", text);
+      return false;
+    }
+  }
+  async function shareText(title, text){
+    if (navigator.share){
+      try { await navigator.share({ title, text }); return true; } catch(e){ return false; }
+    }
+    return false;
+  }
+
+  // ========= UI refs =========
+  const dlg = $("dlg");
+  const dotState = $("dotState");
+  const txtState = $("txtState");
+  const txtRole = $("txtRole");
+  const txtPeer = $("txtPeer");
+  const dbg = $("dbg");
+
+  const selMode = $("selMode");
+  const chkStun = $("chkStun");
+  const chkNoGoogle = $("chkNoGoogle");
+
+  const p1Status = $("p1Status");
+  const btnCreateOffer = $("btnCreateOffer");
+  const taOfferLink = $("taOfferLink");
+  const btnShareOffer = $("btnShareOffer");
+  const btnCopyOffer = $("btnCopyOffer");
+  const btnOfferSent = $("btnOfferSent");
+  const p1AnswerBlock = $("p1AnswerBlock");
+  const inAnswerLink = $("inAnswerLink");
+  const btnApplyAnswer = $("btnApplyAnswer");
+  const btnClearP1 = $("btnClearP1");
+  const p1ApplyStatus = $("p1ApplyStatus");
+
+  const p2Status = $("p2Status");
+  const taDetectedOffer = $("taDetectedOffer");
+  const taAnswerLink = $("taAnswerLink");
+  const btnShareAnswer = $("btnShareAnswer");
+  const btnCopyAnswer = $("btnCopyAnswer");
+  const btnClearP2 = $("btnClearP2");
+  const p2GenStatus = $("p2GenStatus");
+
+  const chatCard = $("chatCard");
+  const log = $("log");
+  const chatInput = $("chatInput");
+  const btnSend = $("btnSend");
+
+  // ========= state =========
+  let pc = null;
+  let dc = null;
+  let role = "—";
+  let peerName = "—";
+  let pingTimer = null;
+  let stopAutoPing = false;
+
+  // localStorage keys
+  const LS_OFFER = "webrtc2p.offer";
+  const LS_ANSWER = "webrtc2p.answer";
+  const LS_STUN = "webrtc2p.useStun";
+  const LS_MODE = "webrtc2p.mode";
+  const LS_NOGOOGLE = "webrtc2p.noGoogle";
+
+  // Split STUN lists per role (to reduce correlation a bit)
+  const STUN_P1 = [
+    "stun:stun.cloudflare.com:3478",
+    "stun:stun.nextcloud.com:443",
+    "stun:stun.sipnet.net:3478",
+    "stun:stun.voip.blackberry.com:3478",
+    "stun:stun1.l.google.com:19302"
+  ];
+  const STUN_P2 = [
+    "stun:stun.nextcloud.com:443",
+    "stun:stun.cloudflare.com:3478",
+    "stun:stun.sipnet.net:3478",
+    "stun:stun.voip.blackberry.com:3478",
+    "stun:stun2.l.google.com:19302"
+  ];
+
+  function setUiState(state, ok=null){
+    txtState.textContent = state;
+    dotState.classList.remove("ok","bad");
+    if (ok === true) dotState.classList.add("ok");
+    if (ok === false) dotState.classList.add("bad");
+  }
+  function setRole(r){
+    role = r;
+    txtRole.textContent = r;
+  }
+  function setPeer(p){
+    peerName = p;
+    txtPeer.textContent = p;
+  }
+  function logMsg(kind, from, text){
+    const el = document.createElement("div");
+    el.className = "msg " + kind;
+    el.innerHTML = `<div class="meta">${now()} · ${from}</div><div class="txt"></div>`;
+    el.querySelector(".txt").textContent = text;
+    log.appendChild(el);
+    log.scrollTop = log.scrollHeight;
+  }
+  function debugLine(s){
+    dbg.textContent = s;
+  }
+
+  function readBool(key, def){
+    const v = localStorage.getItem(key);
+    if (v === null) return def;
+    return v === "1";
+  }
+  function writeBool(key, v){
+    localStorage.setItem(key, v ? "1" : "0");
+  }
+  function readStr(key, def){
+    const v = localStorage.getItem(key);
+    return v === null ? def : v;
+  }
+  function writeStr(key, v){
+    localStorage.setItem(key, v);
+  }
+
+  // ========= WebRTC =========
+  function effectiveModeFromUrlOrSetting(){
+    const p = parseHashParams();
+    const urlMode = p.get("mode"); // "lan" | "wan" | null
+    if (urlMode === "lan" || urlMode === "wan") return urlMode;
+    const m = selMode.value;
+    if (m === "lan") return "lan";
+    if (m === "wan") return "wan";
+    // auto: use STUN checkbox as decision
+    return chkStun.checked ? "wan" : "lan";
+  }
+
+  function shuffle(arr){
+    // Fisher-Yates
+    const a = arr.slice();
+    for (let i=a.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [a[i],a[j]] = [a[j],a[i]];
+    }
+    return a;
+  }
+
+  function buildRtcConfig(r){
+    const mode = effectiveModeFromUrlOrSetting();
+    if (mode === "lan") return { iceServers: [] };
+
+    const noGoogle = chkNoGoogle.checked;
+    const list = (r === "Player 1" ? STUN_P1 : STUN_P2);
+    const filtered = noGoogle ? list.filter(u => !u.includes("google.com")) : list.slice();
+
+    const servers = shuffle(filtered).map(url => ({ urls: url }));
+    return { iceServers: servers };
+  }
+
+  function cleanupPc(){
+    stopPing();
+    stopAutoPing = false;
+
+    if (dc){
+      try{ dc.onopen = dc.onmessage = dc.onclose = null; dc.close(); }catch(e){}
+      dc = null;
+    }
+    if (pc){
+      try{ pc.onicecandidate = pc.onconnectionstatechange = pc.onicegatheringstatechange = pc.ondatachannel = null; pc.close(); }catch(e){}
+      pc = null;
+    }
+
+    chatCard.classList.add("hide");
+    setPeer("—");
+    setRole("—");
+    setUiState("idle", null);
+    debugLine("");
+  }
+
+  async function waitIceComplete(peer){
+    if (peer.iceGatheringState === "complete") return;
+    await new Promise((resolve) => {
+      const onState = () => {
+        if (peer.iceGatheringState === "complete"){
+          peer.removeEventListener("icegatheringstatechange", onState);
+          resolve();
+        }
+      };
+      peer.addEventListener("icegatheringstatechange", onState);
+      setTimeout(() => { try{ peer.removeEventListener("icegatheringstatechange", onState); }catch(e){} resolve(); }, 6500);
+    });
+  }
+
+  function attachPcDebug(peer){
+    peer.onicegatheringstatechange = () => {
+      debugLine(`iceGatheringState=${peer.iceGatheringState} · connectionState=${peer.connectionState}`);
+    };
+    peer.onconnectionstatechange = () => {
+      debugLine(`iceGatheringState=${peer.iceGatheringState} · connectionState=${peer.connectionState}`);
+      if (peer.connectionState === "connected"){
+        setUiState("Connection established", true);
+        chatCard.classList.remove("hide");
+      }
+      if (peer.connectionState === "failed" || peer.connectionState === "disconnected" || peer.connectionState === "closed"){
+        setUiState(peer.connectionState, false);
+      }
+    };
+  }
+
+  function wireDataChannel(channel, myLabel, theirLabel){
+    dc = channel;
+
+    dc.onopen = () => {
+      setUiState("DataChannel open", true);
+      setPeer(theirLabel);
+      logMsg("sys", "system", `Connected: ${myLabel} ↔ ${theirLabel}`);
+      chatCard.classList.remove("hide");
+
+      if (role === "Player 1"){
+        stopAutoPing = false;
+        startPingLoop();
+      }
+    };
+
+    dc.onmessage = (ev) => {
+      const msg = String(ev.data ?? "");
+      logMsg("them", theirLabel, msg);
+
+      if (role === "Player 2"){
+        if (msg.trim().toLowerCase() === "ping"){
+          try{ dc.send("pong"); logMsg("me", myLabel, "pong"); }catch(e){}
+        }
+      }
+    };
+
+    dc.onclose = () => {
+      setUiState("DataChannel closed", false);
+      stopPing();
+      logMsg("sys", "system", "DataChannel closed");
+    };
+  }
+
+  function startPingLoop(){
+    stopPing();
+    pingTimer = setInterval(() => {
+      if (!dc || dc.readyState !== "open") return;
+      if (stopAutoPing) return;
+      try{
+        dc.send("ping");
+        logMsg("me", "Player 1", "ping");
+      }catch(e){}
+    }, 7000);
+  }
+  function stopPing(){
+    if (pingTimer){ clearInterval(pingTimer); pingTimer = null; }
+  }
+
+  async function createOfferLink(){
+    cleanupPc();
+    setRole("Player 1");
+    setPeer("Player 2");
+    setUiState("Creating offer…", null);
+
+    pc = new RTCPeerConnection(buildRtcConfig("Player 1"));
+    attachPcDebug(pc);
+
+    const channel = pc.createDataChannel("chat");
+    wireDataChannel(channel, "Player 1", "Player 2");
+
+    const offer = await pc.createOffer({ offerToReceiveAudio:false, offerToReceiveVideo:false });
+    await pc.setLocalDescription(offer);
+    await waitIceComplete(pc);
+
+    const fullOffer = pc.localDescription;
+    const payload = b64uEncode(JSON.stringify(fullOffer));
+    const mode = effectiveModeFromUrlOrSetting();
+    const link = makeLinkWithHash({ offer: payload, mode: mode });
+
+    localStorage.setItem(LS_OFFER, payload);
+    taOfferLink.value = link;
+    p1Status.textContent = "Offer-Link erzeugt. Teile ihn an Player 2.";
+    setUiState("Offer ready", null);
+
+    p1AnswerBlock.classList.add("hide");
+    p1ApplyStatus.textContent = "";
+  }
+
+  async function player2FromOfferPayload(offerPayload){
+    cleanupPc();
+    setRole("Player 2");
+    setPeer("Player 1");
+    setUiState("Offer detected → creating answer…", null);
+
+    localStorage.setItem(LS_OFFER, offerPayload);
+    taDetectedOffer.value = makeLinkWithHash({ offer: offerPayload });
+
+    pc = new RTCPeerConnection(buildRtcConfig("Player 2"));
+    attachPcDebug(pc);
+
+    pc.ondatachannel = (ev) => {
+      wireDataChannel(ev.channel, "Player 2", "Player 1");
+    };
+
+    const offerObj = JSON.parse(b64uDecode(offerPayload));
+    await pc.setRemoteDescription(offerObj);
+
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    await waitIceComplete(pc);
+
+    const fullAnswer = pc.localDescription;
+    const answerPayload = b64uEncode(JSON.stringify(fullAnswer));
+    const mode = effectiveModeFromUrlOrSetting();
+    const answerLink = makeLinkWithHash({ answer: answerPayload, mode: mode });
+
+    localStorage.setItem(LS_ANSWER, answerPayload);
+    taAnswerLink.value = answerLink;
+
+    p2Status.textContent = "Answer-Link erzeugt. Sende ihn an Player 1 (copy/share).";
+    p2GenStatus.textContent = "Hinweis: Player 2 verbindet erst vollständig, nachdem Player 1 den Answer-Link angewendet hat.";
+    setUiState("Answer ready", null);
+  }
+
+  async function applyAnswerLink(answerLinkOrHash){
+    try{
+      p1ApplyStatus.textContent = "";
+      setUiState("Applying answer…", null);
+
+      const url = new URL(answerLinkOrHash, location.href);
+      const p = new URLSearchParams((url.hash || "").replace(/^#/, ""));
+      const payload = p.get("answer");
+      if (!payload) throw new Error("Kein #answer=… im Link gefunden.");
+
+      localStorage.setItem(LS_ANSWER, payload);
+
+      const ansObj = JSON.parse(b64uDecode(payload));
+      await pc.setRemoteDescription(ansObj);
+
+      p1ApplyStatus.textContent = "Answer gesetzt. Warte auf Connection…";
+      setUiState("Waiting for connection…", null);
+    } catch (e){
+      setUiState("Failed to apply answer", false);
+      p1ApplyStatus.textContent = "Fehler: " + (e && e.message ? e.message : String(e));
+    }
+  }
+
+  // ========= chat send =========
+  function sendChat(){
+    const text = chatInput.value.trim();
+    if (!text) return;
+    if (!dc || dc.readyState !== "open"){
+      logMsg("sys", "system", "Not connected.");
+      return;
+    }
+    if (role === "Player 1" && text.toLowerCase() !== "ping"){
+      stopAutoPing = true;
+    }
+    try{
+      dc.send(text);
+      logMsg("me", role, text);
+      chatInput.value = "";
+    }catch(e){
+      logMsg("sys", "system", "Send failed.");
+    }
+  }
+
+  // ========= buttons =========
+  $("btnPeople").addEventListener("click", () => dlg.showModal());
+  $("btnClose").addEventListener("click", () => dlg.close());
+
+  function persistNetSettings(){
+    writeBool(LS_STUN, chkStun.checked);
+    writeStr(LS_MODE, selMode.value);
+    writeBool(LS_NOGOOGLE, chkNoGoogle.checked);
+  }
+  chkStun.addEventListener("change", persistNetSettings);
+  selMode.addEventListener("change", persistNetSettings);
+  chkNoGoogle.addEventListener("change", persistNetSettings);
+
+  btnCreateOffer.addEventListener("click", async () => {
+    p1Status.textContent = "Generating offer link…";
+    await createOfferLink();
+  });
+
+  btnShareOffer.addEventListener("click", async () => {
+    const link = taOfferLink.value.trim();
+    if (!link) return;
+    const ok = await shareText("Offer link", link);
+    if (!ok) await copyToClipboard(link);
+  });
+
+  btnCopyOffer.addEventListener("click", async () => {
+    const link = taOfferLink.value.trim();
+    if (!link) return;
+    await copyToClipboard(link);
+  });
+
+  btnOfferSent.addEventListener("click", () => {
+    if (!taOfferLink.value.trim()) return;
+    p1AnswerBlock.classList.remove("hide");
+    inAnswerLink.focus();
+    p1Status.textContent = "Offer-Link gesendet. Jetzt Answer-Link von Player 2 einfügen.";
+  });
+
+  btnApplyAnswer.addEventListener("click", async () => {
+    const v = inAnswerLink.value.trim();
+    if (!v) return;
+    await applyAnswerLink(v);
+  });
+
+  btnClearP1.addEventListener("click", () => {
+    localStorage.removeItem(LS_OFFER);
+    localStorage.removeItem(LS_ANSWER);
+    taOfferLink.value = "";
+    inAnswerLink.value = "";
+    p1Status.textContent = "Reset done.";
+    p1ApplyStatus.textContent = "";
+    cleanupPc();
+  });
+
+  btnShareAnswer.addEventListener("click", async () => {
+    const link = taAnswerLink.value.trim();
+    if (!link) return;
+    const ok = await shareText("Answer link", link);
+    if (!ok) await copyToClipboard(link);
+  });
+
+  btnCopyAnswer.addEventListener("click", async () => {
+    const link = taAnswerLink.value.trim();
+    if (!link) return;
+    await copyToClipboard(link);
+  });
+
+  btnClearP2.addEventListener("click", () => {
+    localStorage.removeItem(LS_OFFER);
+    localStorage.removeItem(LS_ANSWER);
+    taDetectedOffer.value = "";
+    taAnswerLink.value = "";
+    p2Status.textContent = "Reset done.";
+    p2GenStatus.textContent = "";
+    cleanupPc();
+  });
+
+  btnSend.addEventListener("click", sendChat);
+  chatInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") sendChat();
+  });
+
+  // ========= init =========
+  function initFromUrl(){
+    // restore settings
+    chkStun.checked = readBool(LS_STUN, true);
+    selMode.value = readStr(LS_MODE, "auto");
+    chkNoGoogle.checked = readBool(LS_NOGOOGLE, true);
+
+    const p = parseHashParams();
+
+    // URL overrides (mode)
+    const urlMode = p.get("mode");
+    if (urlMode === "lan" || urlMode === "wan"){
+      // if URL says explicit mode, show Auto but effective mode will use URL > setting
+      // keep user's selection unchanged; effectiveModeFromUrlOrSetting() will take URL
+    }
+
+    const offer = p.get("offer");
+    const answer = p.get("answer");
+
+    if (offer){
+      dlg.showModal();
+      taDetectedOffer.value = makeLinkWithHash({ offer: offer });
+      p2Status.textContent = "Offer-Link erkannt. Erzeuge Answer…";
+      player2FromOfferPayload(offer).catch(err => {
+        setUiState("Player 2 failed", false);
+        p2Status.textContent = "Fehler beim Offer/Answer: " + (err?.message || String(err));
+      });
+      return;
+    }
+
+    if (answer){
+      dlg.showModal();
+      p1AnswerBlock.classList.remove("hide");
+      inAnswerLink.value = location.href;
+      p1Status.textContent = "Answer-Link erkannt. Klicke „Apply answer → connect“ (nachdem du ein Offer erzeugt hast).";
+      return;
+    }
+  }
+
+  cleanupPc();
+  initFromUrl();
+
+})();
+</script>
+</body>
+</html>

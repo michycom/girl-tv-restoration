@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guitar Tab Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            margin: 20px 0;
+        }
+        svg {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Guitar Tab Viewer</h1>
+    <script>
+        class GuitarTab {
+            static TUNING = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'];
+            static NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+            constructor(note) {
+                this.note = note;
+                this.positions = GuitarTab.findPositions(note);
+                this.clickTimeout = null;
+            }
+
+            static findPositions(note) {
+                const noteIndex = GuitarTab.NOTES.indexOf(note.slice(0, -1));
+                const octave = parseInt(note.slice(-1), 10);
+                let positions = [];
+
+                for (let string = 0; string < GuitarTab.TUNING.length; string++) {
+                    const stringNote = GuitarTab.TUNING[string];
+                    const stringNoteIndex = GuitarTab.NOTES.indexOf(stringNote.slice(0, -1));
+                    const stringOctave = parseInt(stringNote.slice(-1), 10);
+                    let fret = (noteIndex - stringNoteIndex) + 12 * (octave - stringOctave);
+                    if (fret >= 0 && fret <= 24) {
+                        positions.push({ string: string + 1, fret, octave });
+                    }
+                }
+                return positions;
+            }
+
+            static getNoteAtPosition(string, fret) {
+                const stringNote = GuitarTab.TUNING[string - 1];
+                const stringNoteIndex = GuitarTab.NOTES.indexOf(stringNote.slice(0, -1));
+                const stringOctave = parseInt(stringNote.slice(-1), 10);
+                const noteIndex = (stringNoteIndex + fret) % 12;
+                const octave = stringOctave + Math.floor((stringNoteIndex + fret) / 12);
+                return GuitarTab.NOTES[noteIndex] + octave;
+            }
+
+            static getColorForInterval(note, interval) {
+                const noteIndex = GuitarTab.NOTES.indexOf(note.slice(0, -1));
+                const octave = parseInt(note.slice(-1), 10);
+                const intervalIndex = (noteIndex + interval) % 12;
+                const intervalOctave = octave + Math.floor((noteIndex + interval) / 12);
+                return GuitarTab.NOTES[intervalIndex] + intervalOctave;
+            }
+
+            static getCyanColorForOctave(octave) {
+                const cyanIntensity = Math.floor(150 + (octave - 2) * 35);
+                return `rgb(0, ${cyanIntensity}, ${cyanIntensity})`;
+            }
+
+            static getYellowColorForOctave(octave) {
+                const yellowIntensity = Math.floor(150 + (octave - 2) * 35);
+                return `rgb(${yellowIntensity}, ${yellowIntensity}, 0)`;
+            }
+
+            static getGreenColorForOctave(octave) {
+                const greenIntensity = Math.floor(150 + (octave - 2) * 35);
+                return `rgb(0, ${greenIntensity}, 0)`;
+            }
+
+            static getRedColorForOctave(octave) {
+                const redIntensity = Math.floor(150 + (octave - 2) * 35);
+                return `rgb(${redIntensity}, 0, 0)`;
+            }
+
+            draw(highlightFifth = false, highlightMajorThird = false, highlightMinorSeventh = false) {
+                document.body.innerHTML = '';  // Clear the existing content
+                document.write('<h1>Guitar Tab for ' + this.note + ' </h1>');
+
+                const svgWidth = 170, svgHeight = 618, stringSpacing = 30, fretSpacing = 25;
+                let svgContent = `<svg id="fretboard" width="${svgWidth}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg">`;
+
+                // Draw fretboard
+                svgContent += `<rect x="0" y="0" width="${svgWidth}" height="${svgHeight}" fill="#964B00" />`;
+
+                // Draw nut
+                svgContent += `<rect x="0" y="0" width="${svgWidth}" height="10" fill="#444" />`;
+
+                // Draw frets
+                for (let j = 0; j <= 24; j++) {
+                    svgContent += `<line x1="0" y1="${j * fretSpacing + 10}" x2="${svgWidth}" y2="${j * fretSpacing + 10}" stroke="grey" stroke-width="2" />`;
+                }
+
+                // Draw strings
+                for (let i = 0; i < 6; i++) {
+                    svgContent += `<line x1="${i * stringSpacing + 10}" y1="10" x2="${i * stringSpacing + 10}" y2="${svgHeight + 10}" stroke="black" stroke-width="2" />`;
+                }
+
+                // Draw fret markers
+                const markers = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24];
+                markers.forEach(marker => {
+                    if (marker === 12 || marker === 24) {
+                        svgContent += `<circle cx="78" cy="${marker * fretSpacing - fretSpacing / 2 + 10}" r="5" fill="snow" />`;
+                        svgContent += `<circle cx="92" cy="${marker * fretSpacing - fretSpacing / 2 + 10}" r="5" fill="snow" />`;
+                    } else {
+                        svgContent += `<circle cx="85" cy="${marker * fretSpacing - fretSpacing / 2 + 10}" r="5" fill="snow" />`;
+                    }
+                });
+
+                // Draw the note positions
+                this.positions.forEach(position => {
+                    const { string, fret, octave } = position;
+                    const color = GuitarTab.getRedColorForOctave(octave);
+                    svgContent += `<circle class="note" cx="${(string - 1) * stringSpacing + 10}" cy="${fret * fretSpacing}" r="8" fill="${color}" data-string="${string}" data-fret="${fret}" data-note="${GuitarTab.NOTES[GuitarTab.NOTES.indexOf(this.note.slice(0, -1))] + octave}" data-color="red" />`;
+                });
+
+                // Add octave positions for the root note
+                const addOctavePositions = () => {
+                    const rootNoteIndex = GuitarTab.NOTES.indexOf(this.note.slice(0, -1));
+                    const octaves = [1, 2, 3, 4, 5, 6]; // All possible octaves
+
+                    octaves.forEach(octave => {
+                        const noteWithOctave = GuitarTab.NOTES[rootNoteIndex] + octave;
+                        const positions = GuitarTab.findPositions(noteWithOctave);
+                        positions.forEach(position => {
+                            const { string, fret } = position;
+                            const color = GuitarTab.getRedColorForOctave(octave);
+                            svgContent += `<circle class="octave-note" cx="${(string - 1) * stringSpacing + 10}" cy="${fret * fretSpacing}" r="8" fill="${color}" data-string="${string}" data-fret="${fret}" data-note="${noteWithOctave}" data-color="red" />`;
+                        });
+                    });
+                };
+
+                addOctavePositions();
+
+                const addExtraPositions = (interval, getColorForOctave, colorName) => {
+                    const existingNotes = this.positions.map(pos => GuitarTab.getNoteAtPosition(pos.string, pos.fret));
+                    let extraPositions = [];
+
+                    existingNotes.forEach(note => {
+                        extraPositions.push(...GuitarTab.findPositions(GuitarTab.getColorForInterval(note, interval)));
+                    });
+
+                    extraPositions.forEach(position => {
+                        const { string, fret, octave } = position;
+                        const color = getColorForOctave(octave);
+                        svgContent += `<circle class="extra-note" cx="${(string - 1) * stringSpacing + 10}" cy="${fret * fretSpacing}" r="8" fill="${color}" data-string="${string}" data-fret="${fret}" data-color="${colorName}" />`;
+                    });
+                };
+
+                if (highlightFifth) addExtraPositions(7, GuitarTab.getYellowColorForOctave, 'yellow');
+                if (highlightMajorThird) addExtraPositions(4, GuitarTab.getCyanColorForOctave, 'cyan');
+                if (highlightMinorSeventh) addExtraPositions(10, GuitarTab.getGreenColorForOctave, 'green');
+
+                svgContent += '</svg>';
+                document.body.innerHTML += svgContent;
+                this.addEventListeners();
+            }
+
+            addEventListeners() {
+                document.getElementById('fretboard').addEventListener('click', (event) => {
+                    clearTimeout(this.clickTimeout);
+                    this.clickTimeout = setTimeout(() => {
+                        const svg = document.getElementById('fretboard');
+                        const pt = svg.createSVGPoint();
+                        pt.x = event.clientX;
+                        pt.y = event.clientY;
+                        const cursorpt = pt.matrixTransform(svg.getScreenCTM().inverse());
+                        const clickedString = Math.floor(cursorpt.x / 30) + 1;
+                        const clickedFret = Math.floor(cursorpt.y / 25);
+
+                        if (clickedString >= 1 && clickedString <= 6 && clickedFret >= 0 && clickedFret <= 24) {
+                            const clickedNote = GuitarTab.getNoteAtPosition(clickedString, clickedFret);
+                            const isHighlighted = !!document.elementFromPoint(event.clientX, event.clientY).classList.contains('note');
+                            if (!isHighlighted) {
+                                new GuitarTab(clickedNote).draw();
+                            } else {
+                                console.log('Note clicked:', clickedNote);
+                            }
+                        }
+                    }, 250);
+                });
+
+                document.getElementById('fretboard').addEventListener('dblclick', (event) => {
+                    clearTimeout(this.clickTimeout);
+                    const svg = document.getElementById('fretboard');
+                    const pt = svg.createSVGPoint();
+                    pt.x = event.clientX;
+                    pt.y = event.clientY;
+                    const cursorpt = pt.matrixTransform(svg.getScreenCTM().inverse());
+                    const clickedString = Math.floor(cursorpt.x / 30) + 1;
+                    const clickedFret = Math.floor(cursorpt.y / 25);
+
+                    if (clickedString >= 1 && clickedString <= 6 && clickedFret >= 0 && clickedFret <= 24) {
+                        const clickedNote = GuitarTab.getNoteAtPosition(clickedString, clickedFret);
+                        const isHighlighted = !!document.elementFromPoint(event.clientX, event.clientY).classList.contains('note');
+                        if (isHighlighted) {
+                            new GuitarTab(clickedNote).draw(true, true, true);
+                        }
+                    }
+                });
+            }
+        }
+
+        new GuitarTab("C4").draw();  // You can change this to any note you want to visualize
+    </script>
+</body>
+</html>

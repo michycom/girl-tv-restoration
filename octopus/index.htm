@@ -1,0 +1,1252 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VirtualCutter – HTML/JS Prototype (Phase 1)</title>
+  <style>
+    :root{
+      --bg:#0b0d12; --panel:#121625; --panel2:#0f1320; --text:#e9ecf1; --muted:#9aa4b2;
+      --ok:#2dd4bf; --warn:#f59e0b; --bad:#ef4444; --stroke:#232a3d; --chip:#1b2236;
+      --shadow: 0 12px 40px rgba(0,0,0,.45);
+      --r:14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:var(--sans); background: radial-gradient(1200px 600px at 15% -10%, #1a2140 0%, transparent 60%),
+      radial-gradient(1200px 600px at 85% 0%, #163a2f 0%, transparent 55%),
+      var(--bg);
+      color:var(--text);
+    }
+    a{color:inherit}
+    .wrap{max-width:1200px;margin:0 auto;padding:16px 16px 22px}
+    .topbar{
+      position:sticky; top:0; z-index:50;
+      backdrop-filter: blur(14px);
+      background: rgba(11,13,18,.72);
+      border-bottom:1px solid rgba(255,255,255,.06);
+      box-shadow: 0 8px 18px rgba(0,0,0,.25);
+    }
+    .topbar-inner{max-width:1200px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px}
+    .brand{display:flex;align-items:center;gap:10px;min-width:240px}
+    .logo{
+      width:34px;height:34px;border-radius:10px;
+      background: linear-gradient(135deg, rgba(45,212,191,.95), rgba(59,130,246,.7));
+      box-shadow: 0 12px 24px rgba(45,212,191,.2);
+    }
+    .brand h1{margin:0;font-size:14px;letter-spacing:.2px}
+    .brand small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+    .spacer{flex:1}
+    .btn{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      color:var(--text);
+      padding:9px 12px;border-radius:12px;
+      cursor:pointer; user-select:none;
+      display:inline-flex; align-items:center; gap:8px;
+      box-shadow: 0 10px 18px rgba(0,0,0,.22);
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{border-color:rgba(45,212,191,.35); background: rgba(45,212,191,.12)}
+    .btn.warn{border-color:rgba(245,158,11,.35); background: rgba(245,158,11,.10)}
+    .btn.bad{border-color:rgba(239,68,68,.35); background: rgba(239,68,68,.10)}
+    .btn[disabled]{opacity:.45; cursor:not-allowed; transform:none}
+    .chip{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:6px 10px;border-radius:999px;
+      background: rgba(255,255,255,.05);
+      border:1px solid rgba(255,255,255,.10);
+      color:var(--muted); font-size:12px;
+    }
+    .status-dot{width:8px;height:8px;border-radius:50%;}
+    .dot-ok{background:var(--ok)}
+    .dot-warn{background:var(--warn)}
+    .dot-bad{background:var(--bad)}
+    .grid{
+      --left: 1.15fr;
+      --right: .85fr;
+      display:grid;
+      grid-template-columns: var(--left) 10px var(--right);
+      gap:0;
+      margin-top:14px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr; gap:14px}
+      .splitter{display:none}
+    }
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: var(--r);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .panel-h{
+      padding:12px 14px;
+      display:flex;align-items:center;gap:10px;
+      border-bottom:1px solid rgba(255,255,255,.07);
+      background: rgba(18,22,37,.65);
+    }
+    .panel-h h2{margin:0;font-size:13px;letter-spacing:.2px}
+    .panel-h .sub{margin-left:auto;color:var(--muted);font-size:12px}
+    .panel-b{padding:12px 14px}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .col{display:flex;flex-direction:column;gap:8px}
+    .field{
+      flex:1; min-width:240px;
+      display:flex; gap:8px; align-items:center;
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 12px;
+      padding: 8px 10px;
+    }
+    .field input{
+      flex:1; background:transparent; border:0; outline:0; color:var(--text);
+      font-size:13px;
+    }
+    .field input::placeholder{color:rgba(154,164,178,.6)}
+    .kbd{font-family:var(--mono); font-size:11px; color:rgba(154,164,178,.85); padding:3px 6px; border-radius:8px;
+      border:1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.05)
+    }
+    .help{
+      width:18px;height:18px;border-radius:999px;
+      display:inline-flex;align-items:center;justify-content:center;
+      font-size:12px;color:rgba(233,236,241,.9);
+      border:1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.06);
+      cursor:help;
+      position:relative;
+    }
+    .help[data-tip]:hover::after{
+      content: attr(data-tip);
+      position:absolute;
+      left:50%; transform:translateX(-50%);
+      bottom: calc(100% + 10px);
+      width:min(360px, 65vw);
+      background: rgba(10,12,18,.98);
+      color: var(--text);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      padding:10px 12px;
+      font-size:12px;
+      line-height:1.35;
+      box-shadow: 0 16px 44px rgba(0,0,0,.55);
+      white-space: pre-wrap;
+      z-index: 100;
+    }
+    .help[data-tip]:hover::before{
+      content:"";
+      position:absolute; left:50%; transform:translateX(-50%);
+      bottom: calc(100% + 2px);
+      border:8px solid transparent;
+      border-top-color: rgba(255,255,255,.12);
+      z-index:101;
+    }
+    .divider{height:1px;background:rgba(255,255,255,.08);margin:12px 0}
+    .list{display:flex;flex-direction:column;gap:10px}
+    .card{
+      background: rgba(0,0,0,.20);
+      border:1px solid rgba(255,255,255,.09);
+      border-radius: 14px;
+      overflow:hidden;
+    }
+    .card-h{
+      display:flex;align-items:center;gap:10px;
+      padding:10px 12px;
+      border-bottom:1px solid rgba(255,255,255,.07);
+      background: rgba(255,255,255,.03);
+    }
+    .tag{
+      font-size:11px; padding:4px 8px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.04);
+      color:var(--muted);
+    }
+    .tag.ok{border-color:rgba(45,212,191,.35); color:rgba(45,212,191,.95); background: rgba(45,212,191,.08)}
+    .tag.todo{border-color:rgba(245,158,11,.35); color:rgba(245,158,11,.95); background: rgba(245,158,11,.08)}
+    .tag.na{border-color:rgba(239,68,68,.35); color:rgba(239,68,68,.95); background: rgba(239,68,68,.08)}
+    .title{
+      flex:1; min-width:160px;
+      font-size:12px; color:rgba(233,236,241,.95);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .card-b{padding:10px 12px}
+    .thumbrow{display:flex;gap:8px;overflow:auto;padding-bottom:6px}
+    .thumb{
+      width:96px;height:54px;border-radius:10px;
+      border:1px solid rgba(255,255,255,.10);
+      background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      position:relative; flex:0 0 auto;
+    }
+    .thumb span{
+      position:absolute; left:8px; bottom:6px;
+      font-family:var(--mono); font-size:10px;
+      color:rgba(233,236,241,.85);
+      background: rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.12);
+      padding:2px 6px;border-radius:999px;
+    }
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .range{
+      display:grid; grid-template-columns: 62px 1fr 70px;
+      gap:8px; align-items:center; margin-top:8px;
+    }
+    .range label{color:var(--muted); font-size:12px}
+    .range input[type="range"]{width:100%}
+    .range output{font-family:var(--mono);font-size:11px;color:rgba(233,236,241,.85)}
+    .muteline{display:flex;align-items:center;gap:10px;margin-top:8px}
+    .switch{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:12px}
+    .switch input{accent-color: var(--ok)}
+    .toast{
+      position:fixed; left:50%; transform:translateX(-50%);
+      bottom:14px; z-index:999;
+      background: rgba(10,12,18,.95);
+      border:1px solid rgba(255,255,255,.12);
+      padding:10px 12px;
+      border-radius: 12px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.60);
+      color:rgba(233,236,241,.95);
+      font-size:12px;
+      display:none;
+      max-width:min(740px, 92vw);
+      white-space:pre-wrap;
+    }
+    .toast.show{display:block}
+    .mono{font-family:var(--mono)}
+    video{
+      width:100%; max-height:320px; border-radius: 12px;
+      background: #000;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .mini{
+      font-size:11px;color:rgba(154,164,178,.9);
+      line-height:1.35;
+    }
+    .pillbar{display:flex;gap:8px;flex-wrap:wrap}
+    .pill{
+      padding:6px 10px;border-radius:999px;
+      border:1px dashed rgba(255,255,255,.20);
+      color:rgba(233,236,241,.85);
+      background: rgba(255,255,255,.03);
+      font-size:12px;
+    }
+    .pill.ok{border-style:solid;border-color:rgba(45,212,191,.35);background:rgba(45,212,191,.07)}
+    .pill.todo{border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.06)}
+    .pill.na{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.06)}
+    .rightcol .panel{position:sticky; top:76px}
+    @media (max-width: 980px){ .rightcol .panel{position:static} }
+    .splitter{
+      width:10px;
+      cursor:col-resize;
+      user-select:none;
+      touch-action:none;
+      position:relative;
+    }
+    .splitter::before{
+      content:"";
+      position:absolute;
+      left:50%; top:0; bottom:0;
+      width:2px;
+      transform:translateX(-50%);
+      background: rgba(255,255,255,.10);
+      border-radius: 999px;
+    }
+    .splitter::after{
+      content:"";
+      position:absolute;
+      left:0; right:0;
+      top:50%;
+      height:56px;
+      transform:translateY(-50%);
+      background: rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 10px;
+      box-shadow: 0 10px 20px rgba(0,0,0,.22);
+    }
+    .textLayer{
+      position:absolute;
+      left:14px; right:14px;
+      bottom:16px;
+      padding:10px 12px;
+      border-radius: 12px;
+      background: rgba(0,0,0,.45);
+      border: 1px solid rgba(255,255,255,.14);
+      color: rgba(233,236,241,.98);
+      font-size: 16px;
+      line-height: 1.25;
+      text-shadow: 0 2px 10px rgba(0,0,0,.65);
+      backdrop-filter: blur(8px);
+    }
+    .textLayer.subtitle{ text-align:center; font-size: 16px }
+    .textLayer.title{ font-size: 22px; font-weight:700 }
+    .textLayer.note{ font-size: 14px; opacity: .95 }
+    .timeline{
+      margin-top:10px;
+      border-radius:14px; overflow:hidden;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.16);
+    }
+    .tl-h{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.07)}
+    .tl-h .mono{font-size:11px;color:rgba(154,164,178,.95)}
+    .slots{display:flex;flex-direction:column;gap:8px;padding:10px 12px}
+    .slot{
+      display:flex;gap:10px;align-items:center;
+      padding:10px 10px;border-radius:12px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+    }
+    .slot .idx{font-family:var(--mono);font-size:11px;color:rgba(154,164,178,.9);width:34px}
+    .slot .meta{flex:1;min-width:0}
+    .slot .meta .t{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .slot .meta .s{font-size:11px;color:rgba(154,164,178,.9);margin-top:2px}
+    .slot .x{opacity:.9}
+    .slot.drag{border-style:dashed}
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>VirtualCutter – Prototype (HTML/JS)</h1>
+          <small>Phase 1 Template: URL → Video → In/Out → Master-Zusammenschnitt</small>
+        </div>
+      </div>
+
+
+      <div class="spacer"></div>
+
+      <button class="btn primary" id="btnPlayMaster">
+        ▶ Master abspielen
+        <span class="help" data-tip="Plays the current selection in the master player. Composition/export will be implemented later.">?</span>
+      </button>
+      <button class="btn warn" id="btnExport">
+        ⤓ Export
+      </button>
+      <button class="btn" id="btnReset">
+        ↻ Reset
+        <span class="help" data-tip="Löscht State (localStorage) + UI.">?</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="grid">
+      <!-- LEFT -->
+      <div class="leftcol">
+        <div class="panel">
+          <div class="panel-h">
+            <h2>1) URL Eingabe</h2>
+            <div class="sub">
+              <span class="help" data-tip="Akzeptiert direkte Video-URLs (mp4/webm). 
+Template: 'Seiten-URL' → HTML parsen → Video-URLs extrahieren.">?</span>
+            </div>
+          </div>
+          <div class="panel-b">
+            <div class="row">
+              <div class="field" style="flex:1">
+                <span class="kbd">URL</span>
+                <input id="urlInput" placeholder="Direkte Video-URL (mp4/webm) ODER Webseiten-URL (Template)" autocomplete="off" />
+                <span class="help" data-tip="Tipp: Für sofortigen Test eine direkte MP4 nutzen.
+Beispiel:
+https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4">?</span>
+              </div>
+              <button class="btn primary" id="btnAdd">➕ Hinzufügen</button>
+              <button class="btn warn" id="btnScan">
+                🔎 Seite scannen
+              </button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="pillbar">
+              <div class="pill ok">Direct video URL playback</div>
+              <div class="pill">Timeline thumbnails (template)</div>
+              <div class="pill">Page scan for videos (template)</div>
+              <div class="pill">Export (template)</div>
+              <div class="pill">Commentary audio track (template)</div>
+            </div>
+
+            <p class="mini" style="margin:10px 0 0">
+              This is a Phase-1 UI skin. Some features are templates and will show a "Template" toast when clicked.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:14px">
+          <div class="panel-h">
+            <h2>2) Gefundene / hinzugefügte Videos</h2>
+            <div class="sub">
+              <span class="help" data-tip="Liste + Player für ein einzelnes Video, In/Out Slider, Mute Toggle. Standbilder alle 10% sind simuliert.">?</span>
+            </div>
+          </div>
+          <div class="panel-b">
+            <div id="sourceList" class="list"></div>
+            <div class="mini mono" id="emptyHint" style="opacity:.8">
+              Noch nichts drin. Füge eine direkte MP4/WebM-URL hinzu.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="splitter" id="splitter" aria-label="Resize panels" title="Drag to resize"></div>
+      <!-- RIGHT -->
+      <div class="rightcol">
+        <div class="panel">
+          <div class="panel-h">
+            <h2>Master Player + Timeline</h2>
+            <div class="sub">
+              <span class="help" data-tip="Timeline spiegelt Master-Reihenfolge. Master-Player spielt aktuell ausgewählte Quelle. Echter Zusammenschnitt folgt später.">?</span>
+            </div>
+          </div>
+          <div class="panel-b">
+            <div class="masterWrap" style="position:relative">
+              <video id="masterVideo" controls playsinline></video>
+              <div id="textLayer" class="textLayer" style="display:none"></div>
+            </div>
+            <audio id="commentaryAudio" controls style="width:100%; margin-top:10px; display:none"></audio>
+
+            <div class="timeline">
+              <div class="tl-h">
+                <strong style="font-size:12px">Master Reihenfolge</strong>
+                <span class="chip" style="margin-left:auto">
+                  <span class="mono">now:</span>
+                  <span class="mono" id="masterNow">0.0s</span>
+                  <span class="mono" style="opacity:.7">/</span>
+                  <span class="mono" id="masterTotal">0.0s</span>
+                </span>
+              </div>
+              <div class="slots" id="masterSlots"></div>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="row">
+              <button class="btn" id="btnSave">
+                💾 Save
+                <span class="help" data-tip="Saves only the cut data (state) to localStorage.">?</span>
+              </button>
+              <button class="btn" id="btnLoad">
+                📂 Load
+                <span class="help" data-tip="Loads the cut data (state) from localStorage.">?</span>
+              </button>
+              <button class="btn warn" id="btnAudio">
+                🎙 Kommentarspur
+              </button>
+            </div>
+
+            <div class="divider"></div>
+            <div class="row" style="align-items:flex-start">
+              <div class="col" style="flex:1; min-width:240px">
+                <div class="mini" style="margin-bottom:6px">Kommentarspur (working prototype): record mic or load audio file. Playback sync is best-effort (starts with master).</div>
+                <div class="row">
+                  <button class="btn" id="btnRecStart">⏺ Start Rec</button>
+                  <button class="btn" id="btnRecStop" disabled>⏹ Stop</button>
+                  <label class="btn" style="cursor:pointer">
+                    ⤒ Load Audio
+                    <input id="audioFile" type="file" accept="audio/*" style="display:none" />
+                  </label>
+                </div>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div class="panel" style="background:rgba(0,0,0,.10)">
+              <div class="panel-h" style="background:rgba(18,22,37,.35)">
+                <h2>Text Layer</h2>
+                <div class="sub"><span class="help" data-tip="Working prototype: create text overlays with start/end in master time. Use Set In/Out while master plays.">?</span></div>
+              </div>
+              <div class="panel-b">
+                <div class="row" style="align-items:flex-start">
+                  <div class="col" style="flex:1; min-width:240px">
+                    <div class="field">
+                      <span class="kbd">TEXT</span>
+                      <input id="txtInput" placeholder="Overlay text…" />
+                    </div>
+                    <div class="row">
+                      <select id="txtStyle" class="btn" style="padding:9px 10px">
+                        <option value="subtitle">subtitle</option>
+                        <option value="title">title</option>
+                        <option value="note">note</option>
+                      </select>
+                      <button class="btn" id="btnTxtAdd">➕ Add</button>
+                      <button class="btn" id="btnTxtSetIn">Set In</button>
+                      <button class="btn" id="btnTxtSetOut">Set Out</button>
+                      <button class="btn bad" id="btnTxtRemove">✕ Remove</button>
+                    </div>
+                    <div class="mini mono" id="txtTimes" style="opacity:.85">in: 0.0s · out: 2.0s</div>
+                  </div>
+                </div>
+                <div class="divider"></div>
+                <div id="txtList" class="list"></div>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <p class="mini">
+              Rechtlich: Das ist nur ein Prototyp. „Virtuelles Schneiden ohne Download“ ist trotzdem potenziell eine Nutzung/öffentliche Wiedergabe, je nach Quelle/Plattform/AGB.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+  // ==============================
+  // VirtualCutter Prototype (Phase 1 UI Skin)
+  // Implemented:
+  // - Add direct MP4/WebM URL
+  // - Per-source playback (single video element per card)
+  // - In/Out sliders (time-based)
+  // - Mute toggle
+  // - Save/Load/Reset state via localStorage (cut data only)
+  // - Master play (mock): plays currently selected source
+  // Templates (clickable, show toast):
+  // - Page scan, Export, Commentary audio
+  // ==============================
+
+  const $ = (sel) => document.querySelector(sel);
+  const stateKey = "virtualcutter.phase1.state.v2";
+
+  const toastEl = $("#toast");
+  function toast(msg, ms = 2200) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(() => toastEl.classList.remove("show"), ms);
+  }
+
+  /**
+   * State model
+   * sources: [{ id, url, in, out, muted, selected }]
+   */
+  const state = {
+    sources: [],
+    selectedId: null,
+  };
+
+  function uid() {
+    return Math.random().toString(16).slice(2) + Date.now().toString(16);
+  }
+
+  function isDirectVideoUrl(url) {
+    try {
+      const u = new URL(url);
+      return /\.(mp4|webm|ogg)(\?.*)?$/i.test(u.pathname);
+    } catch { return false; }
+  }
+
+  function clamp(n, a, b) { return Math.min(b, Math.max(a, n)); }
+
+  function saveState() {
+    try {
+      localStorage.setItem(stateKey, JSON.stringify(state));
+      toast("Saved cut data (localStorage)");
+    } catch (e) {
+      toast("Save failed: " + (e?.message || e));
+    }
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(stateKey);
+      if (!raw) return toast("Nothing saved yet");
+      const parsed = JSON.parse(raw);
+      state.sources = Array.isArray(parsed.sources) ? parsed.sources : [];
+      state.selectedId = parsed.selectedId || (state.sources[0]?.id ?? null);
+      toast("Loaded cut data");
+      render();
+      renderMaster();
+    } catch (e) {
+      toast("Load failed: " + (e?.message || e));
+    }
+  }
+
+  function resetAll() {
+    state.sources = [];
+    state.selectedId = null;
+    try { localStorage.removeItem(stateKey); } catch {}
+    $("#masterVideo").removeAttribute("src");
+    $("#masterVideo").load();
+    render();
+    renderMaster();
+    toast("Reset done");
+  }
+
+  function addSource(url) {
+    const s = {
+      id: uid(),
+      url,
+      in: 0,
+      out: 5,
+      muted: false,
+      selected: false,
+    };
+    state.sources.unshift(s);
+    state.selectedId = s.id;
+    render();
+    renderMaster();
+  }
+
+  function setSelected(id) {
+    state.selectedId = id;
+    render();
+    renderMaster();
+  }
+
+  function selectedSource() {
+    return state.sources.find(s => s.id === state.selectedId) || state.sources[0] || null;
+  }
+
+  function renderMaster() {
+    const mv = $("#masterVideo");
+    const sel = selectedSource();
+    if (!sel) {
+      mv.removeAttribute("src");
+      mv.load();
+      return;
+    }
+    if (mv.getAttribute("data-src") !== sel.url) {
+      mv.setAttribute("data-src", sel.url);
+      mv.src = sel.url;
+      mv.muted = false;
+      mv.load();
+    }
+  }
+
+  function mockThumbnailsHtml() {
+    // Template: real thumbnails would be generated via <video> + canvas capture.
+    // Here: 10 blocks labeled 0%..90%.
+    const parts = [];
+    for (let i = 0; i < 10; i++) {
+      parts.push(`<div class="thumb" title="Thumbnail ${i*10}% (template)"><span>${i*10}%</span></div>`);
+    }
+    return `<div class="thumbrow">${parts.join("")}</div>`;
+  }
+
+  function render() {
+    const list = $("#sourceList");
+    const empty = $("#emptyHint");
+
+    if (!state.sources.length) {
+      list.innerHTML = "";
+      empty.style.display = "block";
+    } else {
+      empty.style.display = "none";
+    }
+
+    list.innerHTML = state.sources.map((s, idx) => {
+      const selected = s.id === state.selectedId;
+      const safeUrl = s.url.replace(/</g, "&lt;");
+      const cardTag = selected
+        ? `<span class="tag ok">selected</span>`
+        : `<span class="tag">source</span>`;
+
+      return `
+        <div class="card" data-id="${s.id}">
+          <div class="card-h">
+            ${cardTag}
+            <div class="title" title="${safeUrl}">${safeUrl}</div>
+            <button class="btn" data-act="select" title="Select">☑</button>
+            <button class="btn bad" data-act="remove" title="Remove">✕</button>
+          </div>
+          <div class="card-b">
+            <video class="srcVideo" ${selected ? "" : "preload=\"none\""} controls playsinline></video>
+
+            ${mockThumbnailsHtml()}
+
+            <div class="range">
+              <label>In</label>
+              <input type="range" min="0" max="60" step="0.1" value="${s.in}" data-act="in" />
+              <output class="mono">${s.in.toFixed(1)}s</output>
+            </div>
+            <div class="range">
+              <label>Out</label>
+              <input type="range" min="0" max="60" step="0.1" value="${s.out}" data-act="out" />
+              <output class="mono">${s.out.toFixed(1)}s</output>
+            </div>
+
+            <div class="muteline">
+              <label class="switch">
+                <input type="checkbox" ${s.muted ? "checked" : ""} data-act="muted" />
+                Mute
+              </label>
+              <button class="btn primary" data-act="play">▶ Play Clip</button>
+              <button class="btn" data-act="addMaster">➕ Add to Master</button>
+              <span class="help" data-tip="Working: time-based in/out and mute. Real frame-accurate trimming and thumbnails come later.">?</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    // after DOM render: assign video sources for visible cards (only selected + first few)
+    const cards = [...document.querySelectorAll(".card")];
+    cards.forEach((card, i) => {
+      const id = card.getAttribute("data-id");
+      const s = state.sources.find(x => x.id === id);
+      const v = card.querySelector("video.srcVideo");
+      if (!s || !v) return;
+      const shouldAttach = (id === state.selectedId) || (i < 1);
+      if (shouldAttach && v.getAttribute("data-src") !== s.url) {
+        v.setAttribute("data-src", s.url);
+        v.src = s.url;
+        v.load();
+      }
+      v.muted = !!s.muted;
+    });
+
+    renderMasterSlots();
+  }
+
+  // Commentary recording
+  let recStream = null;
+  let rec = null;
+  let recChunks = [];
+
+  const master = {
+    clips: [],
+    playIndex: 0,
+    isPlaying: false,
+    timelineTotal: 0,
+    // text overlays: {id,text,style,start,end}
+    overlays: [],
+    selectedOverlayId: null,
+    // commentary audio blobs
+    commentary: { blobUrl: null, offset: 0 }
+  };
+
+  function renderMasterSlots() {
+    const slots = $("#masterSlots");
+    if (!master.clips.length) {
+      slots.innerHTML = `<div class="mini" style="opacity:.85">No clips in master yet. Use “Add to Master” on a source.</div>`;
+      computeMasterTotal();
+      return;
+    }
+    slots.innerHTML = master.clips.map((c, i) => {
+      const safeUrl = c.url.replace(/</g, "&lt;");
+      return `
+        <div class="slot" data-mi="${i}">
+          <div class="idx">#${i+1}</div>
+          <div class="meta">
+            <div class="t" title="${safeUrl}">${safeUrl}</div>
+            <div class="s mono">${c.in.toFixed(1)}s → ${c.out.toFixed(1)}s</div>
+          </div>
+          <button class="btn" data-act="mup" title="Move up">↑</button>
+          <button class="btn" data-act="mdown" title="Move down">↓</button>
+          <button class="btn" data-act="mselect" title="Select in master">☑</button>
+          <button class="btn bad" data-act="mremove" title="Remove">✕</button>
+        </div>
+      `;
+    }).join("");
+    computeMasterTotal();
+  }
+
+  function addToMaster(sourceId) {
+    const s = state.sources.find(x => x.id === sourceId);
+    if (!s) return;
+    master.clips.push({ url: s.url, in: s.in, out: s.out });
+    renderMasterSlots();
+    computeMasterTotal();
+    toast("Added clip to master (template timeline)");
+  }
+
+  function clipLen(c) {
+    const a = Number(c.in || 0);
+    const b = Number(c.out || 0);
+    return Math.max(0, b - a);
+  }
+
+  function computeMasterTotal() {
+    master.timelineTotal = master.clips.reduce((sum, c) => sum + clipLen(c), 0);
+    $("#masterTotal").textContent = master.timelineTotal.toFixed(1) + "s";
+  }
+
+  function masterTimeFromVideoTime(vTime) {
+    // Returns global master time (sum previous segments + position inside current segment)
+    const idx = master.playIndex;
+    let sum = 0;
+    for (let i = 0; i < idx; i++) sum += clipLen(master.clips[i]);
+    const c = master.clips[idx];
+    if (!c) return 0;
+    const inside = clamp(vTime - (c.in || 0), 0, clipLen(c));
+    return sum + inside;
+  }
+
+  function renderOverlaysAt(t) {
+    const layer = $("#textLayer");
+    const active = master.overlays.filter(o => t >= o.start && t <= o.end);
+    if (!active.length) {
+      layer.style.display = "none";
+      layer.textContent = "";
+      layer.className = "textLayer";
+      return;
+    }
+    // Show the last overlay by start time
+    active.sort((a,b) => a.start - b.start);
+    const o = active[active.length - 1];
+    layer.style.display = "block";
+    layer.textContent = o.text;
+    layer.className = "textLayer " + (o.style || "subtitle");
+  }
+
+  async function playMasterFrom(index = 0) {
+    const mv = $("#masterVideo");
+    if (!master.clips.length) return toast("Add clips to master first");
+    master.playIndex = clamp(index, 0, master.clips.length - 1);
+    master.isPlaying = true;
+
+    const c = master.clips[master.playIndex];
+    mv.src = c.url;
+    mv.load();
+
+    // Sync commentary (simple: start at 0 when master starts)
+    const ca = $("#commentaryAudio");
+    if (master.commentary.blobUrl) {
+      ca.src = master.commentary.blobUrl;
+      ca.style.display = "block";
+      ca.currentTime = clamp(master.commentary.offset || 0, 0, 10_000);
+      try { await ca.play(); } catch {}
+    }
+
+    // Wait metadata then seek
+    await new Promise((resolve) => {
+      const on = () => { mv.removeEventListener("loadedmetadata", on); resolve(); };
+      mv.addEventListener("loadedmetadata", on);
+      // fallback
+      setTimeout(resolve, 900);
+    });
+
+    mv.currentTime = clamp(c.in || 0, 0, Math.max(0, (mv.duration || 10_000) - 0.05));
+    try { await mv.play(); } catch { toast("Playback blocked. Click play on the video."); }
+  }
+
+  function stopMaster() {
+    master.isPlaying = false;
+    const mv = $("#masterVideo");
+    mv.pause();
+    const ca = $("#commentaryAudio");
+    ca.pause();
+  }
+
+  // Master sequencing and overlay updates
+  const mv = $("#masterVideo");
+  mv.addEventListener("timeupdate", () => {
+    if (!master.isPlaying || !master.clips.length) return;
+    const c = master.clips[master.playIndex];
+    if (!c) return;
+
+    const t = masterTimeFromVideoTime(mv.currentTime);
+    $("#masterNow").textContent = t.toFixed(1) + "s";
+    renderOverlaysAt(t);
+
+    // advance when passing out
+    if (mv.currentTime >= (c.out || 0) - 0.02) {
+      if (master.playIndex < master.clips.length - 1) {
+        master.playIndex += 1;
+        playMasterFrom(master.playIndex);
+      } else {
+        stopMaster();
+      }
+    }
+  });
+
+  mv.addEventListener("ended", () => {
+    if (!master.isPlaying) return;
+    if (master.playIndex < master.clips.length - 1) {
+      master.playIndex += 1;
+      playMasterFrom(master.playIndex);
+    } else {
+      stopMaster();
+    }
+  });
+
+  let overlayDraft = { start: 0, end: 2 };
+
+  function renderOverlayList() {
+    const el = $("#txtList");
+    if (!el) return;
+    if (!master.overlays.length) {
+      el.innerHTML = `<div class="mini" style="opacity:.85">No text overlays yet.</div>`;
+      return;
+    }
+    el.innerHTML = master.overlays.map((o) => {
+      const sel = o.id === master.selectedOverlayId;
+      return `
+        <div class="card" data-oid="${o.id}" style="border-color:${sel ? "rgba(45,212,191,.35)" : "rgba(255,255,255,.09)"}">
+          <div class="card-h">
+            <span class="tag ${sel ? "ok" : ""}">${sel ? "selected" : "text"}</span>
+            <div class="title">${(o.text||"").replace(/</g,"&lt;")}</div>
+            <span class="tag">${o.style}</span>
+            <button class="btn" data-act="tselect">☑</button>
+          </div>
+          <div class="card-b mini mono">${o.start.toFixed(1)}s → ${o.end.toFixed(1)}s</div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  function currentMasterNow() {
+    const mv = $("#masterVideo");
+    return masterTimeFromVideoTime(mv.currentTime || 0);
+  }
+
+  // Event delegation
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+
+    const act = btn.getAttribute("data-act");
+    const card = btn.closest(".card");
+    const slot = btn.closest(".slot");
+
+    if (btn.id === "btnAdd") {
+      const input = $("#urlInput");
+      const url = (input.value || "").trim();
+      if (!url) return;
+
+      if (!isDirectVideoUrl(url)) {
+        // keep unmarked: accept it but inform via toast
+        toast("Template: page URLs need scanning/proxy. For now use a direct .mp4/.webm URL.");
+      }
+      try {
+        // still add so UI works; direct video will play, page URL will fail gracefully in <video>
+        addSource(url);
+        input.value = "";
+      } catch (e2) {
+        toast("Add failed: " + (e2?.message || e2));
+      }
+      return;
+    }
+
+    if (btn.id === "btnScan") {
+      const input = $("#urlInput");
+      const pageUrl = (input.value || "").trim();
+      if (!pageUrl) return toast("Enter a page URL to scan");
+
+      toast("Scanning page (best-effort, requires CORS)…", 1800);
+      try {
+        const res = await fetch(pageUrl, { mode: "cors" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const html = await res.text();
+        const doc = new DOMParser().parseFromString(html, "text/html");
+
+        const found = new Set();
+
+        // <video src>
+        doc.querySelectorAll("video[src]").forEach(v => {
+          try { found.add(new URL(v.getAttribute("src"), pageUrl).toString()); } catch {}
+        });
+        // <source src>
+        doc.querySelectorAll("source[src]").forEach(s => {
+          try { found.add(new URL(s.getAttribute("src"), pageUrl).toString()); } catch {}
+        });
+        // direct links to mp4/webm/ogg
+        doc.querySelectorAll("a[href]").forEach(a => {
+          const href = a.getAttribute("href");
+          if (!href) return;
+          if (/\.(mp4|webm|ogg)(\?.*)?$/i.test(href)) {
+            try { found.add(new URL(href, pageUrl).toString()); } catch {}
+          }
+        });
+
+        const urls = [...found].filter(u => isDirectVideoUrl(u));
+        if (!urls.length) {
+          return toast("No direct video URLs found (or blocked by CORS). Try a direct .mp4/.webm URL.");
+        }
+
+        urls.slice(0, 20).forEach(u => addSource(u));
+        toast(`Found ${urls.length} video URL(s). Added ${Math.min(urls.length, 20)}.`);
+      } catch (e) {
+        toast("Scan failed (likely CORS). Use a direct .mp4/.webm URL.\n" + (e?.message || e));
+      }
+      return;
+    }
+
+    if (btn.id === "btnExport") {
+      toast("Template: export requires MSE/FFmpeg/WASM or server rendering." );
+      return;
+    }
+
+    if (btn.id === "btnAudio") {
+      toast("Kommentarspur: record mic or load audio below.");
+      return;
+    }
+
+    if (btn.id === "btnReset") {
+      resetAll();
+      return;
+    }
+
+    if (btn.id === "btnSave") {
+      saveState();
+      return;
+    }
+
+    if (btn.id === "btnLoad") {
+      loadState();
+      return;
+    }
+
+    if (btn.id === "btnPlayMaster") {
+      if (!master.clips.length) {
+        // fallback: play selected source as single
+        const sel = selectedSource();
+        if (!sel) return toast("Add a source first");
+        const mv = $("#masterVideo");
+        mv.src = sel.url;
+        mv.currentTime = clamp(sel.in || 0, 0, 60);
+        try { await mv.play(); } catch { toast("Playback blocked (try user gesture)"); }
+        return;
+      }
+      playMasterFrom(0);
+      return;
+    }
+
+    if (act && card) {
+      const id = card.getAttribute("data-id");
+      const s = state.sources.find(x => x.id === id);
+      if (!s) return;
+
+      if (act === "select") {
+        setSelected(id);
+        return;
+      }
+      if (act === "remove") {
+        state.sources = state.sources.filter(x => x.id !== id);
+        if (state.selectedId === id) state.selectedId = state.sources[0]?.id ?? null;
+        render();
+        renderMaster();
+        return;
+      }
+      if (act === "play") {
+        const v = card.querySelector("video.srcVideo");
+        if (!v) return;
+        if (v.getAttribute("data-src") !== s.url) {
+          v.setAttribute("data-src", s.url);
+          v.src = s.url;
+          v.load();
+        }
+        v.muted = !!s.muted;
+        v.currentTime = clamp(s.in || 0, 0, 60);
+        v.play().catch(() => toast("Playback blocked (try clicking play on the video control)") );
+        return;
+      }
+      if (act === "addMaster") {
+        addToMaster(id);
+        return;
+      }
+    }
+
+    if (act && slot) {
+      const mi = Number(slot.getAttribute("data-mi"));
+      if (Number.isNaN(mi)) return;
+      if (act === "mup") {
+        if (mi > 0) {
+          const tmp = master.clips[mi-1];
+          master.clips[mi-1] = master.clips[mi];
+          master.clips[mi] = tmp;
+          renderMasterSlots();
+          computeMasterTotal();
+        }
+        return;
+      }
+      if (act === "mdown") {
+        if (mi < master.clips.length - 1) {
+          const tmp = master.clips[mi+1];
+          master.clips[mi+1] = master.clips[mi];
+          master.clips[mi] = tmp;
+          renderMasterSlots();
+          computeMasterTotal();
+        }
+        return;
+      }
+      if (act === "mremove") {
+        master.clips.splice(mi, 1);
+        renderMasterSlots();
+        computeMasterTotal();
+        return;
+      }
+      if (act === "mselect") {
+        const c = master.clips[mi];
+        if (!c) return;
+        const mv = $("#masterVideo");
+        mv.src = c.url;
+        mv.currentTime = clamp(c.in || 0, 0, 60);
+        mv.play().catch(() => toast("Playback blocked") );
+        return;
+      }
+    }
+    // Overlay card selection
+    const c = e.target.closest(".card[data-oid]");
+    if (c) {
+      const act2 = e.target.closest("button")?.getAttribute("data-act");
+      if (act2 !== "tselect") return;
+      master.selectedOverlayId = c.getAttribute("data-oid");
+      renderOverlayList();
+      return;
+    }
+  });
+  async function startRecording() {
+    try {
+      recStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      recChunks = [];
+      rec = new MediaRecorder(recStream);
+      rec.ondataavailable = (ev) => { if (ev.data && ev.data.size) recChunks.push(ev.data); };
+      rec.onstop = () => {
+        const blob = new Blob(recChunks, { type: recChunks[0]?.type || "audio/webm" });
+        if (master.commentary.blobUrl) URL.revokeObjectURL(master.commentary.blobUrl);
+        master.commentary.blobUrl = URL.createObjectURL(blob);
+        const ca = $("#commentaryAudio");
+        ca.src = master.commentary.blobUrl;
+        ca.style.display = "block";
+        toast("Commentary recorded");
+      };
+      rec.start();
+      $("#btnRecStart").disabled = true;
+      $("#btnRecStop").disabled = false;
+      toast("Recording…");
+    } catch (e) {
+      toast("Mic recording failed: " + (e?.message || e));
+    }
+  }
+
+  function stopRecording() {
+    try {
+      if (rec && rec.state !== "inactive") rec.stop();
+      if (recStream) {
+        recStream.getTracks().forEach(t => t.stop());
+        recStream = null;
+      }
+      $("#btnRecStart").disabled = false;
+      $("#btnRecStop").disabled = true;
+    } catch (e) {
+      toast("Stop failed: " + (e?.message || e));
+    }
+  }
+
+  async function loadAudioFile(file) {
+    try {
+      if (!file) return;
+      if (master.commentary.blobUrl) URL.revokeObjectURL(master.commentary.blobUrl);
+      master.commentary.blobUrl = URL.createObjectURL(file);
+      const ca = $("#commentaryAudio");
+      ca.src = master.commentary.blobUrl;
+      ca.style.display = "block";
+      toast("Audio loaded");
+    } catch (e) {
+      toast("Load audio failed: " + (e?.message || e));
+    }
+  }
+
+  function updateTxtTimes() {
+    const t = $("#txtTimes");
+    if (t) t.textContent = `in: ${overlayDraft.start.toFixed(1)}s · out: ${overlayDraft.end.toFixed(1)}s`;
+  }
+
+  $("#btnTxtSetIn")?.addEventListener("click", () => {
+    overlayDraft.start = currentMasterNow();
+    if (overlayDraft.end < overlayDraft.start) overlayDraft.end = overlayDraft.start + 0.5;
+    updateTxtTimes();
+  });
+  $("#btnTxtSetOut")?.addEventListener("click", () => {
+    overlayDraft.end = currentMasterNow();
+    if (overlayDraft.end < overlayDraft.start) overlayDraft.start = Math.max(0, overlayDraft.end - 0.5);
+    updateTxtTimes();
+  });
+  $("#btnTxtAdd")?.addEventListener("click", () => {
+    const text = ($("#txtInput")?.value || "").trim();
+    if (!text) return toast("Enter overlay text");
+    const style = $("#txtStyle")?.value || "subtitle";
+    const o = { id: uid(), text, style, start: overlayDraft.start, end: overlayDraft.end };
+    master.overlays.push(o);
+    master.selectedOverlayId = o.id;
+    renderOverlayList();
+    toast("Text overlay added");
+  });
+  $("#btnTxtRemove")?.addEventListener("click", () => {
+    if (!master.selectedOverlayId) return;
+    master.overlays = master.overlays.filter(o => o.id !== master.selectedOverlayId);
+    master.selectedOverlayId = master.overlays[0]?.id || null;
+    renderOverlayList();
+    toast("Text overlay removed");
+  });
+
+  updateTxtTimes();
+  renderOverlayList();
+
+  $("#btnRecStart")?.addEventListener("click", startRecording);
+  $("#btnRecStop")?.addEventListener("click", stopRecording);
+  $("#audioFile")?.addEventListener("change", (e) => loadAudioFile(e.target.files?.[0]));
+
+  // Splitter (resize left/right columns)
+  (function initSplitter(){
+    const grid = document.querySelector('.grid');
+    const split = document.querySelector('#splitter');
+    if (!grid || !split) return;
+
+    let dragging = false;
+    const minLeft = 360;
+    const minRight = 320;
+
+    function setFromClientX(x){
+      const r = grid.getBoundingClientRect();
+      const leftPx = clamp(x - r.left, minLeft, r.width - minRight);
+      const leftPct = (leftPx / r.width) * 100;
+      grid.style.setProperty('--left', leftPct.toFixed(2) + '%');
+      grid.style.setProperty('--right', (100 - leftPct).toFixed(2) + '%');
+    }
+
+    split.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      split.setPointerCapture(e.pointerId);
+      setFromClientX(e.clientX);
+    });
+    split.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      setFromClientX(e.clientX);
+    });
+    split.addEventListener('pointerup', () => dragging = false);
+    split.addEventListener('pointercancel', () => dragging = false);
+  })();
+
+  document.addEventListener("input", (e) => {
+    const el = e.target;
+    const card = el.closest(".card");
+    if (!card) return;
+    const id = card.getAttribute("data-id");
+    const s = state.sources.find(x => x.id === id);
+    if (!s) return;
+
+    const act = el.getAttribute("data-act");
+    if (act === "in") {
+      s.in = Number(el.value);
+      s.in = clamp(s.in, 0, 60);
+      if (s.out < s.in) s.out = s.in;
+      render();
+      return;
+    }
+    if (act === "out") {
+      s.out = Number(el.value);
+      s.out = clamp(s.out, 0, 60);
+      if (s.out < s.in) s.in = s.out;
+      render();
+      return;
+    }
+    if (act === "muted") {
+      s.muted = !!el.checked;
+      const v = card.querySelector("video.srcVideo");
+      if (v) v.muted = s.muted;
+      return;
+    }
+  });
+
+  // init
+  render();
+  renderMaster();
+  </script>

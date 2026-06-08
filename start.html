@@ -1,0 +1,41 @@
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<center>
+<script type="text/javascript">
+// Button Zähler
+var nn=0, pause=100;
+function zaehler() {
+ document.formel.Button.value=Math.floor(nn)+"%";
+ nn++;
+ if  (nn <= 99) {
+  setTimeout("zaehler()",pause);
+ }
+ else{
+  document.formel.Button.value="...fertig (Start)";
+  nn=0;
+ }
+}
+</script>
+
+<form name="formel">
+ <input type=button value="Start" name="Button"
+ onclick="this.blur(); zaehler()"
+ style="width:140px; text-align:center">
+</form>
+

@@ -1,0 +1,51 @@
+#piano {
+    display: flex;
+    align-items: flex-start;
+    border: 1px solid black; /* Optional: Fügt dem Klavier einen Rahmen hinzu */
+    padding: 5px;
+    background-color: lightgray;
+    margin-top:20px;
+    width: fit-content;
+}
+
+
+.key {
+    cursor: pointer;
+    height: 120px;
+    border: 1px solid #000;
+    margin-right: -1px;
+    box-sizing: border-box; /* Sorgt dafür, dass die Border im Element enthalten ist */
+    /*min-width: 42px;*/
+}
+
+.white {
+    background-color: #fff;
+    width: 40px;
+    z-index: 1;
+    margin-left: -10px;
+}
+
+.black {
+    background-color: #000;
+    width: 20px; /* Schwarz Tasten sind schmaler */
+    margin-left: -10px; /* Überlappen die weißen Tasten teilweise */
+    z-index: 2;
+    height: 80px; /* Schwarz Tasten sind kürzer */
+}
+
+/* Add this to your existing styles.css file */
+
+/* Style for white keys on hover */
+.key.white:hover {
+    background-color: #e0e0e0; /* Light grey color for hover effect on white keys */
+    transition: background-color 0.3s; /* Smooth transition for the hover effect */
+}
+
+/* Style for black keys on hover */
+.key.black:hover {
+    background-color: #404040; /* Darker color for hover effect on black keys */
+    transition: background-color 0.3s; /* Smooth transition for the hover effect */
+}
+
+
+

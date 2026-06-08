@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>Chord Wheel – Zoom & Floating Layers</title>
+  <style>
+    :root{
+      color-scheme:dark;
+      --bg:#05060a;
+      --panel:#0f121b;
+      --ring:#181c29;
+      --ring2:#151827;
+      --text:#f5f7fd;
+      --muted:#9aa3b8;
+      --accent:#4fd1ff;
+      --accent-soft:rgba(79,209,255,.16);
+      --radius:18px;
+      --shadow:0 22px 55px rgba(0,0,0,.75);
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:radial-gradient(circle at top,#181a26 0,#05060a 55%,#000 100%);
+      color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+    }
+    .shell{
+      background:var(--panel);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px 20px 16px;
+      display:flex;
+      gap:20px;
+    }
+    .left{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
+    h1{
+      margin:0 0 4px;
+      font-size:18px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      text-align:center;
+      color:var(--muted);
+    }
+    .subtitle{
+      font-size:11px;
+      color:var(--muted);
+      text-align:center;
+      margin-bottom:6px;
+    }
+    svg{
+      display:block;
+      background:radial-gradient(circle at top,#141829 0,#05060b 70%);
+      border-radius:50%;
+    }
+    .right{
+      min-width:230px;
+      max-width:260px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      font-size:12px;
+    }
+    .box{
+      background:var(--ring);
+      border-radius:12px;
+      padding:10px 12px;
+      margin-bottom:8px;
+    }
+    .box h2{
+      margin:0 0 4px;
+      font-size:13px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      color:var(--muted);
+    }
+    .mono{
+      font-family:SFMono-Regular,ui-monospace,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+      font-size:12px;
+      word-break:break-word;
+    }
+    .label{
+      color:var(--muted);
+      margin-top:4px;
+      margin-bottom:2px;
+    }
+    .pill{
+      display:inline-block;
+      padding:2px 6px;
+      border-radius:999px;
+      border:1px solid #33394b;
+      margin:2px 2px 0 0;
+      font-size:11px;
+      color:var(--muted);
+    }
+
+    /* ROOT WHEEL (Overview) */
+    .root-segment{
+      fill:var(--ring2);
+      stroke:#25293b;
+      stroke-width:1;
+      cursor:pointer;
+      transition:fill .15s,stroke .15s;
+    }
+    .root-segment:hover{
+      fill:#202538;
+      stroke:var(--accent);
+    }
+    .root-label{
+      font-size:12px;
+      fill:var(--muted);
+      text-anchor:middle;
+      dominant-baseline:middle;
+      pointer-events:none;
+    }
+
+    /* ZOOM MODE */
+    .zoom-root-circle{
+      fill:var(--accent-soft);
+      stroke:var(--accent);
+      stroke-width:2;
+    }
+    .zoom-root-label{
+      font-size:22px;
+      fill:#ffffff;
+      text-anchor:middle;
+      dominant-baseline:middle;
+      font-weight:600;
+      pointer-events:none;
+    }
+
+    .opt-circle{
+      fill:#1a1f30;
+      stroke:#343b52;
+      stroke-width:1;
+      cursor:pointer;
+      transition:fill .18s,stroke .18s,r .18s,transform .18s;
+    }
+    .opt-circle:hover{
+      stroke:var(--accent);
+      fill:#20263a;
+      r:16;
+      transform:scale(1.05);
+    }
+    .opt-circle.active{
+      fill:var(--accent);
+      stroke:#ffffff;
+      r:16;
+      transform:scale(1.08);
+    }
+
+    .opt-label-main{
+      font-size:11px;
+      fill:var(--text);
+      text-anchor:middle;
+      dominant-baseline:middle;
+      pointer-events:none;
+      font-weight:500;
+    }
+    .opt-label-sub{
+      font-size:9px;
+      fill:var(--muted);
+      text-anchor:middle;
+      dominant-baseline:hanging;
+      pointer-events:none;
+    }
+    .opt-label-main.inactive{
+      fill:var(--muted);
+      font-weight:400;
+    }
+
+    .zoom-back{
+      fill:#171b27;
+      stroke:#30364a;
+      stroke-width:1;
+      cursor:pointer;
+    }
+    .zoom-back-label{
+      font-size:11px;
+      fill:var(--muted);
+      text-anchor:middle;
+      dominant-baseline:middle;
+      pointer-events:none;
+    }
+
+    .legend-text{
+      font-size:10px;
+      fill:var(--muted);
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <div class="left">
+    <h1>Chord Wheel (Zoom)</h1>
+    <div class="subtitle">Klick Root → Zoom · um den Root: Terzen, Quinten, Core, Tensions</div>
+    <svg id="wheel" viewBox="0 0 620 620" width="420" height="420"></svg>
+  </div>
+
+  <div class="right">
+    <div class="box" id="infoBox">
+      <h2>Aktueller Akkord</h2>
+      <div class="label">Symbol (roh)</div>
+      <div id="chordSymbol" class="mono">–</div>
+      <div class="label">Töne (eine Oktave, aufsteigend)</div>
+      <div id="chordNotes" class="mono">–</div>
+      <div class="label">Intervalle (Halbtonschritte)</div>
+      <div id="chordIntervals" class="mono">–</div>
+    </div>
+
+    <div class="box">
+      <h2>Layer</h2>
+      <div class="label">Terz-Schicht (qualities_three)</div>
+      <div>
+        <span class="pill">sus2 → re (0–2)</span>
+        <span class="pill">min → me (0–3)</span>
+        <span class="pill">maj → mi (0–4)</span>
+        <span class="pill">sus4 → fa (0–5)</span>
+      </div>
+      <div class="label">Fünfer-Schicht (qualities_five)</div>
+      <div>
+        <span class="pill">8 → eight</span>
+        <span class="pill">° → dim (b5)</span>
+        <span class="pill">+ → aug (#5)</span>
+        <span class="pill">⁵ → five (reine 5)</span>
+      </div>
+      <div class="label">Core</div>
+      <div>
+        <span class="pill">6</span>
+        <span class="pill">7 (b7)</span>
+        <span class="pill">maj7</span>
+      </div>
+      <div class="label">Tensions</div>
+      <div>
+        <span class="pill">9</span>
+        <span class="pill">11</span>
+        <span class="pill">13</span>
+      </div>
+    </div>
+
+    <div class="box">
+      <h2>Hinweis</h2>
+      <p style="margin:0;font-size:11px;color:var(--muted);">
+        Übersicht: 12 Roots im Kreis. Klick auf ein Segment zoomt auf diesen Grundton.<br>
+        Im Zoom erscheinen „Floating Balls“ für Terz-Schicht (innen),<br>
+        Fünfer-Schicht (eigener Ring, inkl. °, +, ⁵), Core (6/7/maj7) und Tensions (9/11/13).<br>
+        Rechts siehst du immer die resultierenden Töne & Intervalle.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const svgns = "http://www.w3.org/2000/svg";
+  const svg = document.getElementById('wheel');
+
+  // 12 Halbtöne, A oben
+  const NOTES = ['A','A#','B','C','C#','D','D#','E','F','F#','G','G#'];
+
+  // Terz-Schicht
+  const qualities_three = ['sus2','min','maj','sus4'];
+  const qualities_three_solemi = ['re','me','mi','fa'];
+
+  // Fünfer-Schicht
+  const qualities_five = ['eight','dim','aug','five'];
+  const qualities_five_symbols = {eight:'8', dim:'°', aug:'+', five:'⁵'};
+  const qualities_five_solemi = ['ti','se','si','sol'];
+
+  const coreOpts = ['6','7','maj7'];
+  const tensionOpts = ['9','11','13'];
+
+  // Zustand pro Root
+  const statePerRoot = Array.from({length:12}, () => ({
+    q3: null,        // sus2 / min / maj / sus4
+    q5: null,        // eight / dim / aug / five
+    six: false,
+    seven: 'none',   // 'none' | 'b7' | 'maj7'
+    tensions: { '9':false, '11':false, '13':false }
+  }));
+
+  let activeRoot = 0;
+  let zoomMode = false;
+
+  const centerX = 310;
+  const centerY = 310;
+  const angleStep = 2 * Math.PI / 12;
+  const startAngle0 = -Math.PI/2; // A oben
+
+  // Root-Wheel-Radien (Übersicht)
+  const rRootInner = 120;
+  const rRootOuter = 170;
+
+  // Zoom-Layout Radien
+  const zoomRootR = 40;
+  const rQ3 = 100;   // Terz-Schicht
+  const rQ5 = 150;   // Fünfer-Schicht
+  const rCore = 205; // Core
+  const rTen  = 255; // Tensions
+
+  let overviewGroup, zoomGroup;
+
+  function polar(cx,cy,r,angle){
+    return {
+      x: cx + r * Math.cos(angle),
+      y: cy + r * Math.sin(angle)
+    };
+  }
+
+  function arcSlicePath(cx,cy,rInner,rOuter,a0,a1){
+    const p0 = polar(cx,cy,rOuter,a0);
+    const p1 = polar(cx,cy,rOuter,a1);
+    const p2 = polar(cx,cy,rInner,a1);
+    const p3 = polar(cx,cy,rInner,a0);
+    const largeArc = (a1-a0) > Math.PI ? 1 : 0;
+    return [
+      "M",p0.x,p0.y,
+      "A",rOuter,rOuter,0,largeArc,1,p1.x,p1.y,
+      "L",p2.x,p2.y,
+      "A",rInner,rInner,0,largeArc,0,p3.x,p3.y,
+      "Z"
+    ].join(" ");
+  }
+
+  function makeEl(tag, attrs){
+    const el = document.createElementNS(svgns, tag);
+    for(const k in attrs){
+      el.setAttribute(k, attrs[k]);
+    }
+    return el;
+  }
+
+  function buildOverview(){
+    svg.innerHTML = '';
+    overviewGroup = makeEl('g',{id:'overview'});
+    zoomGroup = makeEl('g',{id:'zoomLayer', style:'display:none'});
+    svg.appendChild(overviewGroup);
+    svg.appendChild(zoomGroup);
+
+    // Hintergrundkreis
+    overviewGroup.appendChild(makeEl('circle',{
+      cx:centerX, cy:centerY, r:300, fill:'#05060b'
+    }));
+
+    // 12 Root-Segmente
+    for(let i=0;i<12;i++){
+      const a0 = startAngle0 + i * angleStep;
+      const a1 = a0 + angleStep;
+      const mid = (a0+a1)/2;
+
+      const d = arcSlicePath(centerX,centerY,rRootInner,rRootOuter,a0,a1);
+      const seg = makeEl('path',{
+        d,
+        class:'root-segment',
+        'data-root':i
+      });
+      seg.addEventListener('click', ()=>enterZoom(i));
+      overviewGroup.appendChild(seg);
+
+      const lp = polar(centerX,centerY,(rRootInner+rRootOuter)/2,mid);
+      const label = makeEl('text',{
+        x:lp.x, y:lp.y, class:'root-label'
+      });
+      label.textContent = NOTES[i];
+      overviewGroup.appendChild(label);
+    }
+
+    const legend = makeEl('text',{
+      x:centerX, y:centerY+230,
+      class:'legend-text',
+      'text-anchor':'middle'
+    });
+    legend.textContent = 'Klick auf Root → Zoom · ESC oder „Zurück“ → Übersicht';
+    overviewGroup.appendChild(legend);
+  }
+
+  function enterZoom(rootIdx){
+    activeRoot = rootIdx;
+    zoomMode = true;
+    overviewGroup.style.display = 'none';
+    buildZoomLayer();
+    updateInfoBox();
+  }
+
+  function exitZoom(){
+    zoomMode = false;
+    zoomGroup.style.display = 'none';
+    overviewGroup.style.display = 'block';
+    updateInfoBox(); // zeigt weiterhin letzten Akkord
+  }
+
+  function buildZoomLayer(){
+    zoomGroup.innerHTML = '';
+
+    // dunkler Hintergrundkreis
+    zoomGroup.appendChild(makeEl('circle',{
+      cx:centerX, cy:centerY, r:300, fill:'#05060b'
+    }));
+
+    // Back-Button
+    const backGroup = makeEl('g',{class:'zoom-back-group'});
+    const backRect = makeEl('rect',{
+      x: centerX-40,
+      y: centerY-280,
+      width:80,
+      height:20,
+      rx:8, ry:8,
+      class:'zoom-back'
+    });
+    backRect.addEventListener('click', exitZoom);
+    const backText = makeEl('text',{
+      x:centerX, y:centerY-270,
+      class:'zoom-back-label'
+    });
+    backText.textContent = 'Zurück';
+    backGroup.appendChild(backRect);
+    backGroup.appendChild(backText);
+    zoomGroup.appendChild(backGroup);
+
+    // Root-Kreis in der Mitte
+    const rootCircle = makeEl('circle',{
+      cx:centerX, cy:centerY, r:zoomRootR,
+      class:'zoom-root-circle'
+    });
+    zoomGroup.appendChild(rootCircle);
+    const rootLabel = makeEl('text',{
+      x:centerX, y:centerY,
+      class:'zoom-root-label'
+    });
+    rootLabel.textContent = NOTES[activeRoot];
+    zoomGroup.appendChild(rootLabel);
+
+    const s = statePerRoot[activeRoot];
+
+    // Terz-Schicht (qualities_three) – 4 Bubbles
+    const q3Angles = [-Math.PI/2, 0, Math.PI/2, Math.PI]; // oben, rechts, unten, links
+    qualities_three.forEach((q3, idx)=>{
+      const ang = q3Angles[idx];
+      const p = polar(centerX,centerY,rQ3,ang);
+      const id = `q3-${q3}`;
+
+      const circle = makeEl('circle',{
+        cx:p.x, cy:p.y, r:14,
+        class:'opt-circle',
+        'data-layer':'q3',
+        'data-opt':q3
+      });
+      circle.addEventListener('click', onQ3Click);
+      zoomGroup.appendChild(circle);
+
+      const labelMain = makeEl('text',{
+        x:p.x, y:p.y+1,
+        class:'opt-label-main',
+        'data-layer':'q3-label-main',
+        'data-opt':q3
+      });
+      labelMain.textContent = q3;
+      zoomGroup.appendChild(labelMain);
+
+      const labelSub = makeEl('text',{
+        x:p.x, y:p.y+12,
+        class:'opt-label-sub'
+      });
+      labelSub.textContent = qualities_three_solemi[idx];
+      zoomGroup.appendChild(labelSub);
+
+      if(s.q3 === q3){
+        circle.classList.add('active');
+      }else{
+        labelMain.classList.add('inactive');
+      }
+    });
+
+    // Fünfer-Schicht (eigener Ring): eight / dim / aug / five
+    const q5Angles = [-Math.PI/3, Math.PI/3, Math.PI- Math.PI/3, Math.PI+Math.PI/3];
+    qualities_five.forEach((q5, idx)=>{
+      const ang = q5Angles[idx];
+      const p = polar(centerX,centerY,rQ5,ang);
+      const circle = makeEl('circle',{
+        cx:p.x, cy:p.y, r:14,
+        class:'opt-circle',
+        'data-layer':'q5',
+        'data-opt':q5
+      });
+      circle.addEventListener('click', onQ5Click);
+      zoomGroup.appendChild(circle);
+
+      const labelMain = makeEl('text',{
+        x:p.x, y:p.y+1,
+        class:'opt-label-main',
+        'data-layer':'q5-label-main',
+        'data-opt':q5
+      });
+      labelMain.textContent = qualities_five_symbols[q5];
+      zoomGroup.appendChild(labelMain);
+
+      const labelSub = makeEl('text',{
+        x:p.x, y:p.y+12,
+        class:'opt-label-sub'
+      });
+      labelSub.textContent = qualities_five_solemi[idx];
+      zoomGroup.appendChild(labelSub);
+
+      if(s.q5 === q5){
+        circle.classList.add('active');
+      }else{
+        labelMain.classList.add('inactive');
+      }
+    });
+
+    // Core (6 / 7 / maj7) – 3 Bubbles
+    const coreAngles = [-Math.PI/2, 0, Math.PI]; // oben, rechts, links
+    coreOpts.forEach((co, idx)=>{
+      const ang = coreAngles[idx];
+      const p = polar(centerX,centerY,rCore,ang);
+      const circle = makeEl('circle',{
+        cx:p.x, cy:p.y, r:14,
+        class:'opt-circle',
+        'data-layer':'core',
+        'data-opt':co
+      });
+      circle.addEventListener('click', onCoreClick);
+      zoomGroup.appendChild(circle);
+
+      const labelMain = makeEl('text',{
+        x:p.x, y:p.y+1,
+        class:'opt-label-main',
+        'data-layer':'core-label-main',
+        'data-opt':co
+      });
+      labelMain.textContent = co === 'maj7' ? 'maj7' : co;
+      zoomGroup.appendChild(labelMain);
+
+      const active = (co === '6' && s.six) ||
+                     (co === '7' && s.seven === 'b7') ||
+                     (co === 'maj7' && s.seven === 'maj7');
+      if(active){
+        circle.classList.add('active');
+      }else{
+        labelMain.classList.add('inactive');
+      }
+    });
+
+    // Tensions (9 / 11 / 13) – 3 Bubbles
+    const tenAngles = [-Math.PI/2, 0, Math.PI]; // oben, rechts, links
+    tensionOpts.forEach((to, idx)=>{
+      const ang = tenAngles[idx] + 0.45; // leicht versetzt
+      const p = polar(centerX,centerY,rTen,ang);
+      const circle = makeEl('circle',{
+        cx:p.x, cy:p.y, r:14,
+        class:'opt-circle',
+        'data-layer':'ten',
+        'data-opt':to
+      });
+      circle.addEventListener('click', onTenClick);
+      zoomGroup.appendChild(circle);
+
+      const labelMain = makeEl('text',{
+        x:p.x, y:p.y+1,
+        class:'opt-label-main',
+        'data-layer':'ten-label-main',
+        'data-opt':to
+      });
+      labelMain.textContent = to;
+      zoomGroup.appendChild(labelMain);
+
+      const active = !!s.tensions[to];
+      if(active){
+        circle.classList.add('active');
+      }else{
+        labelMain.classList.add('inactive');
+      }
+    });
+
+  }
+
+  function onQ3Click(evt){
+    const opt = evt.currentTarget.getAttribute('data-opt');
+    const s = statePerRoot[activeRoot];
+    s.q3 = (s.q3 === opt) ? null : opt;
+    buildZoomLayer();
+    updateInfoBox();
+  }
+
+  function onQ5Click(evt){
+    const opt = evt.currentTarget.getAttribute('data-opt');
+    const s = statePerRoot[activeRoot];
+    s.q5 = (s.q5 === opt) ? null : opt;
+    buildZoomLayer();
+    updateInfoBox();
+  }
+
+  function onCoreClick(evt){
+    const opt = evt.currentTarget.getAttribute('data-opt');
+    const s = statePerRoot[activeRoot];
+    if(opt === '6'){
+      s.six = !s.six;
+    }else if(opt === '7'){
+      s.seven = (s.seven === 'b7') ? 'none' : 'b7';
+    }else if(opt === 'maj7'){
+      s.seven = (s.seven === 'maj7') ? 'none' : 'maj7';
+    }
+    buildZoomLayer();
+    updateInfoBox();
+  }
+
+  function onTenClick(evt){
+    const opt = evt.currentTarget.getAttribute('data-opt');
+    const s = statePerRoot[activeRoot];
+    s.tensions[opt] = !s.tensions[opt];
+    buildZoomLayer();
+    updateInfoBox();
+  }
+
+  // Interval-Berechnung aus q3/q5 + core + tensions
+  function intervalsFromQ3(q3){
+    if(!q3) return [0]; // nur Grundton
+    switch(q3){
+      case 'sus2': return [0,2];
+      case 'min':  return [0,3];
+      case 'maj':  return [0,4];
+      case 'sus4': return [0,5];
+      default:     return [0];
+    }
+  }
+
+  function fifthFromQ5(q5){
+    switch(q5){
+      case 'dim':  return 6;  // b5
+      case 'aug':  return 8;  // #5
+      case 'five': return 7;  // reine 5
+      case 'eight':
+      default:
+        return null; // kein extra Ton (optional könnte man 12 nehmen)
+    }
+  }
+
+  function buildChordForRoot(rootIdx){
+    const s = statePerRoot[rootIdx];
+    let intervals = intervalsFromQ3(s.q3).slice();
+
+    const fifthInterval = fifthFromQ5(s.q5);
+    if(fifthInterval !== null) intervals.push(fifthInterval);
+
+    // Core
+    if(s.six) intervals.push(9); // 6
+    if(s.seven === 'b7') intervals.push(10);
+    if(s.seven === 'maj7') intervals.push(11);
+
+    // Tensions
+    if(s.tensions['9'])  intervals.push(14);
+    if(s.tensions['11']) intervals.push(17);
+    if(s.tensions['13']) intervals.push(21);
+
+    // Normalisieren (eine Oktave, unique)
+    const norm = Array.from(new Set(intervals.map(i=>((i%12)+12)%12))).sort((a,b)=>a-b);
+
+    const notes = norm.map(off=>{
+      const idx = (rootIdx + off + 1200) % 12;
+      return NOTES[idx];
+    });
+
+    return {intervals, normIntervals:norm, notes};
+  }
+
+  function buildSymbol(rootIdx){
+    const s = statePerRoot[rootIdx];
+    const rootName = NOTES[rootIdx];
+
+    // Wir zeigen hier bewusst "roh" die Layer-Kombination statt klassische Akkordnotation
+    const parts = [];
+
+    if(s.q3) parts.push('q3:'+s.q3);
+    if(s.q5) parts.push('q5:'+s.q5);
+    if(s.six) parts.push('6');
+    if(s.seven === 'b7') parts.push('7');
+    if(s.seven === 'maj7') parts.push('maj7');
+
+    const tens = [];
+    if(s.tensions['9']) tens.push('9');
+    if(s.tensions['11']) tens.push('11');
+    if(s.tensions['13']) tens.push('13');
+    if(tens.length) parts.push('['+tens.join(',')+']');
+
+    if(parts.length === 0) return rootName + ' (nur Grundton)';
+
+    return rootName + ' · ' + parts.join(' · ');
+  }
+
+  function updateInfoBox(){
+    const symEl = document.getElementById('chordSymbol');
+    const notesEl = document.getElementById('chordNotes');
+    const intsEl = document.getElementById('chordIntervals');
+
+    const symbol = buildSymbol(activeRoot);
+    const chord  = buildChordForRoot(activeRoot);
+
+    symEl.textContent = symbol;
+    notesEl.textContent = chord.notes.length ? chord.notes.join(' – ') : '–';
+    intsEl.textContent = chord.normIntervals.length
+      ? chord.normIntervals.map(i=>i+' HT').join(', ')
+      : '–';
+  }
+
+  // ESC zum Zurückspringen
+  window.addEventListener('keydown', e=>{
+    if(e.key === 'Escape' && zoomMode){
+      exitZoom();
+    }
+  });
+
+  // Init
+  buildOverview();
+  updateInfoBox();
+})();
+</script>
+</body>
+</html>

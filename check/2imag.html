@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Untitled Document</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<script type="text/javascript">
+function getImgSize(id){
+var pic = document.getElementById(id);
+var h = pic.offsetHeight;
+var w = pic.offsetWidth;
+alert ('The image size is '+w+'*'+h);
+}
+</script> 
+</head>
+<body>
+<input type="button" onclick="getImgSize('demoImg')" value="Get Image Size">
+
+<script language='JavaScript'> 
+function getImgSize2(imgSrc)
+{
+var newImg = new Image();
+newImg.src = imgSrc;
+var height = newImg.height;
+var width = newImg.width;
+alert ('The image size is '+width+'*'+height);
+}
+
+function getImgSize3(id){
+var image = document.getElementById(id);
+document.image.width.value=parseInt(document.image.width.value)+10;
+}
+</script>
+
+<input type="button" onclick="getImgSize2('http://girl.tv/3boys.gif')" value="Get Image Size">
+<a href="javascript:getImgSize3('demoImg')"><img id="demoImg" style="height:200px;" src="http://girl.tv/3boys.gif"></a>
+
+
+<script langauge="javascript">
+
+function changeIt(){
+var width=250
+var height=250
+
+document.TheImage.width=width
+document.TheImage.height=height
+}
+
+</script>
+
+<img src="http://girl.tv/3boys.gif" name="TheImage">
+<BR>
+<input type="button" value=" Change " onclick="changeIt()">
+

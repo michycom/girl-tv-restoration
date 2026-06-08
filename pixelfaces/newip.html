@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<title>IP → ASCII Face (32×32) + PNG</title>
+<style>
+  :root{--bg:#111;--fg:#0f0}
+  body{margin:0;padding:18px;background:var(--bg);color:var(--fg);font:13px/1.25 ui-monospace,Menlo,Consolas,monospace}
+  h3{margin:0 0 10px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
+  input[type=text]{padding:8px 10px;border:1px solid #333;background:#000;color:#9f9;min-width:220px;border-radius:6px}
+  button{padding:8px 12px;border:1px solid #333;background:#181818;color:#9f9;border-radius:6px;cursor:pointer}
+  button:hover{background:#202020}
+  pre#ascii{font-size:12px;line-height:12px;white-space:pre;margin:10px 0;border:1px solid #333;padding:10px;border-radius:8px;background:#000;color:#0f0;max-width:fit-content}
+  .meta{opacity:.85}
+  canvas{display:none}
+</style>
+</head>
+<body>
+  <h3>IP → ASCII Face (32×32) + PNG</h3>
+  <div class="row">
+    <input id="ip" type="text" value="" placeholder="z.B. 192.168.0.55" />
+    <button id="btnRand">Random IP</button>
+    <button id="btnGen">Generieren</button>
+    <button id="btnPng">Als PNG speichern</button>
+  </div>
+  <div class="meta" id="meta"></div>
+  <pre id="ascii"></pre>
+  <canvas id="cv" width="32" height="32"></canvas>
+
+<script>
+// =================== VARIANT-SHAPES (small blocks) =================== //
+// We stamp these into the 32×32 canvas.
+// Hair (width ~ 20..26), 3 shapes. 'H'=hair, '.'=transparent
+const HAIR = [
+`HHHHHHHHHHHHHHHHHH\nHHHH0000000000HHHH\n0HHHH00000000HHHH0\n0HHHHH000000HHHH0\n.HHHHHH0000HHHHH.\n..HHHHHHHHHHHHH..`,
+`HHH.HHHHHHHHH.HHH\nHHHHHH000000HHHHH\n0HHHHH000000HHHH0\n..HHHH000000HHH..\n...HHHH0000HHH...\n....HHHHHHHHH....`,
+`H0H0H0H0H0H0H0H0H\nHH0000000000000HH\nH0H0H0H0H0H0H0H0H\nHH0000000000000HH\nH0H0H0H0H0H0H0H0H\nHHHHHHHHHHHHHHHHH`
+];
+
+// Eyes (width ~ 14..18), 3 shapes. 'E'=eye pixel, '0'=eye hole, '.' transparent
+const EYES = [
+`EEE00EEE00EEE\n0E0000E0000E0\nEEE00EEE00EEE`,
+`EE000000EE00E\n0E0E000000EE00\nEEEE00000EE00E`,
+`EEEE00000EEEEE\n0EE000000EE00\nEEEE00000EEEEE`
+];
+
+// Nose (width ~ 5..7), 3 shapes. 'N'=nose pixel, '.' transparent
+const NOSE = [
+`..N..\n.NNN.\nNNNNN`,
+`...N..\n..N.N.\n.N...N`,
+`.NN.\nNNNN\n.NN.`
+];
+
+// Mouth (width ~ 14..18), 3 shapes. 'M'=solid, 'm'=shadow, '.' transparent
+const MOUTH = [
+`...mmmmMMMMMmmmm...\n....mMMMMMMMmmmm...\n.....mmmmmmmmm.....`,
+`..mmmMMMMMMMMMmmm..\n..mMMMmmmmmMMMm m..\n..mmmMMMMMMMMMmmm..`,
+`....mmMMMMMmm.....\n.....mMMMMMm......\n......mmmmm.......`
+];
+
+// Ears (width ~ 18..22), 3 shapes. 'R' used as ear marker; we'll color like hair/skin later
+const EARS = [
+`R..............R\nR..............R\nEEE0000000EEE`,
+`R....R....R....R\nR....R....R....R\nEEE0000000EEE`,
+`RR..........RR\nR............R\nEEE0000000EEE`
+];
+
+// =================== HELPERS =================== //
+function rndIP(){return [0,0,0,0].map(()=>Math.floor(Math.random()*256)).join('.');}
+function clamp(v,min,max){return Math.max(min,Math.min(max,v));}
+function lines(s){return s.split('\n');}
+
+// Stamp a small block into 32×32 char matrix at (row,col)
+function stamp(mat, block, row, col){
+  const h = block.length, w = block[0].length;
+  for(let y=0;y<h;y++){
+    for(let x=0;x<w;x++){
+      const ch = block[y][x]||' ';
+      if(ch !== '.' && ch !== ' ') {
+        const ry = row + y, rx = col + x;
+        if(ry>=0 && ry<32 && rx>=0 && rx<32) mat[ry][rx] = ch;
+      }
+    }
+  }
+}
+
+// Build a blank 32×32 matrix filled with spaces
+function blank(){return Array.from({length:32},()=>Array(32).fill(' '));}
+
+// Encode 32-bit barcode of IP on bottom row for reversibility
+function barcodeFromIP(ip){
+  const [a,b,c,d] = ip.split('.').map(n=>parseInt(n)||0);
+  const bits = [];
+  for(const o of [a,b,c,d]){
+    for(let b=7;b>=0;b--) bits.push((o>>b)&1);
+  }
+  return bits; // length 32
+}
+
+function applyBarcodeRow(mat, bits){
+  const y=31;
+  for(let x=0;x<32;x++) mat[y][x] = bits[x] ? '█' : ' ';
+}
+
+// Map char codes to RGBA for PNG rendering
+const COLOR = { // simple palette
+  'H':[180,120,60,255], // hair
+  'G':[255,230,190,255], // skin
+  'E':[50,200,255,255],  // eyes
+  '0':[160,140,120,255], // neck/base
+  'N':[150,90,70,255],   // nose
+  'M':[220,60,60,255],   // mouth
+  'm':[140,30,30,255],   // mouth shadow
+  'R':[200,180,150,255], // ears helper
+  '█':[255,255,255,255], // barcode 1
+  ' ':[0,0,0,255],       // background
+  '.':[0,0,0,0]          // transparent (unused here)
+};
+
+function matrixToAscii(mat){return mat.map(r=>r.join('')).join('\n');}
+
+// =================== MAIN BUILDER =================== //
+function buildFace32(ip){
+  const [a,b,c,d] = ip.split('.').map(n=>parseInt(n)||0);
+  const mat = blank();
+
+  // Choose variants
+  const hairVar  = b % 3; // hair from 2nd octet for variety
+  const eyesVar  = c % 3;
+  const noseVar  = d % 3;
+  const mouthVar = a % 3;
+  const earsVar  = (a + c) % 3;
+
+  // Hair depth variation (top section length): 4..10 rows based on b
+  const hairDepth = 4 + (b % 7); // 4..10
+
+  // BASE SKIN area (simple oval-ish fill using 'G')
+  // We keep it simple: a centered 20×16 block for readability
+  for(let y=8;y<24;y++){
+    for(let x=6;x<26;x++) mat[y][x] = 'G';
+  }
+
+  // NECK area (rows 26..28, centered)
+  for(let y=26;y<29;y++){
+    for(let x=10;x<22;x++) mat[y][x] = '0';
+  }
+
+  // HAIR: stamp variant starting at row 0..hairDepth
+  const hairBlock = lines(HAIR[hairVar]);
+  // limit visible rows according to hairDepth
+  const cropped = hairBlock.slice(0, clamp(hairDepth,1,hairBlock.length));
+  stamp(mat, cropped, 0, 3);
+
+  // EYES: centered around row 12..14
+  const eyeBlock = lines(EYES[eyesVar]);
+  stamp(mat, eyeBlock, 12, 8);
+
+  // NOSE: around row 17..19
+  const noseBlock = lines(NOSE[noseVar]);
+  stamp(mat, noseBlock, 17, 14);
+
+  // MOUTH: around row 22..24 (uses shadow 'm' to look smaller)
+  const mouthBlock = lines(MOUTH[mouthVar]);
+  stamp(mat, mouthBlock, 22, 9);
+
+  // EARS: just above neck, left/right
+  const earsBlock = lines(EARS[earsVar]);
+  stamp(mat, earsBlock, 25, 5);
+
+  // Barcode bottom row (reversible IP)
+  applyBarcodeRow(mat, barcodeFromIP(ip));
+
+  return {mat, vars:{hairVar,eyesVar,noseVar,mouthVar,earsVar,hairDepth}};
+}
+
+// =================== RENDERERS =================== //
+function renderASCII(ip){
+  const {mat, vars} = buildFace32(ip);
+  const ascii = matrixToAscii(mat);
+  document.getElementById('ascii').textContent = ascii;
+  document.getElementById('meta').textContent = `IP ${ip}  |  hairVar:${vars.hairVar} depth:${vars.hairDepth}  eyesVar:${vars.eyesVar}  noseVar:${vars.noseVar}  mouthVar:${vars.mouthVar}  earsVar:${vars.earsVar}`;
+  return {mat, vars};
+}
+
+function renderPNGFromMatrix(mat, scale=16){
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  // draw 32×32 into offscreen, then scale via toDataURL on a temp canvas
+  const imgData = ctx.createImageData(32,32);
+  let i=0;
+  for(let y=0;y<32;y++){
+    for(let x=0;x<32;x++){
+      const ch = mat[y][x];
+      const col = COLOR[ch] || COLOR[' '];
+      imgData.data[i++] = col[0];
+      imgData.data[i++] = col[1];
+      imgData.data[i++] = col[2];
+      imgData.data[i++] = col[3];
+    }
+  }
+  ctx.putImageData(imgData,0,0);
+
+  // upscale into a visible canvas for download
+  const up = document.createElement('canvas');
+  up.width = 32*scale; up.height = 32*scale;
+  const uctx = up.getContext('2d');
+  uctx.imageSmoothingEnabled = false;
+  uctx.drawImage(cv, 0,0, up.width, up.height);
+  return up.toDataURL('image/png');
+}
+
+// =================== UI =================== //
+const ipInp = document.getElementById('ip');
+const btnRand = document.getElementById('btnRand');
+const btnGen = document.getElementById('btnGen');
+const btnPng = document.getElementById('btnPng');
+
+btnRand.addEventListener('click', ()=>{ ipInp.value = rndIP(); renderASCII(ipInp.value); });
+btnGen.addEventListener('click', ()=>{ if(ipInp.value) renderASCII(ipInp.value); });
+btnPng.addEventListener('click', ()=>{
+  const ip = ipInp.value.trim(); if(!ip) return;
+  const {mat} = buildFace32(ip);
+  const url = renderPNGFromMatrix(mat, 16);
+  const a = document.createElement('a');
+  a.download = `face_${ip.replaceAll('.', '-')}.png`;
+  a.href = url; a.click();
+});
+
+// initial
+ipInp.value = rndIP();
+renderASCII(ipInp.value);
+</script>
+</body>
+</html>

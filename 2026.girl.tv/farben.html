@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ton–Farbe Klaviatur (Skrjabin / Michy)</title>
+  <style>
+    :root{
+      --white-w: 64px;
+      --white-h: 240px;
+      --black-w: 42px;
+      --black-h: 150px;
+      --border: #1f2937;
+      --panel: #0b1220;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --bg: #050914;
+    }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .wrap{
+      max-width: 980px;
+      margin: 28px auto;
+      padding: 0 16px 28px;
+    }
+    h1{
+      font-size: 18px;
+      margin: 0 0 10px;
+      font-weight: 650;
+      letter-spacing: .2px;
+    }
+    .sub{
+      color: var(--muted);
+      margin: 0 0 18px;
+      line-height: 1.35;
+      font-size: 13px;
+    }
+    .controls{
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+    .row{
+      display:flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .pill{
+      display:inline-flex;
+      gap: 8px;
+      align-items:center;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      cursor: pointer;
+      user-select: none;
+      font-size: 13px;
+    }
+    .pill input{ accent-color: #93c5fd; }
+    .hint{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .stage{
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      padding: 14px;
+    }
+
+    .keyboard{
+      position: relative;
+      width: calc(var(--white-w) * 7);
+      height: var(--white-h);
+      margin: 8px auto 12px;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    .white-key{
+      position: absolute;
+      bottom: 0;
+      width: var(--white-w);
+      height: var(--white-h);
+      border: 1px solid rgba(255,255,255,.12);
+      border-bottom: 2px solid rgba(255,255,255,.18);
+      border-radius: 10px;
+      background: #e5e7eb;
+      color: #111827;
+      box-shadow: 0 8px 18px rgba(0,0,0,.35);
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .black-key{
+      position: absolute;
+      bottom: calc(var(--white-h) - var(--black-h));
+      width: var(--black-w);
+      height: var(--black-h);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 10px;
+      background: #111827;
+      color: #f9fafb;
+      z-index: 2;
+      box-shadow: 0 10px 20px rgba(0,0,0,.55);
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .key-inner{
+      position: absolute;
+      inset: 0;
+      display:flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      padding: 10px 6px;
+      gap: 6px;
+    }
+
+    .swatch{
+      width: 100%;
+      height: 46%;
+      border-radius: 10px;
+      border: 1px solid rgba(0,0,0,.18);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.08);
+    }
+    .black-key .swatch{
+      height: 52%;
+      border-color: rgba(255,255,255,.12);
+    }
+
+    .label{
+      font-weight: 650;
+      font-size: 13px;
+      letter-spacing: .2px;
+      line-height: 1;
+      text-align:center;
+    }
+    .desc{
+      font-size: 11px;
+      line-height: 1.1;
+      opacity: .85;
+      text-align:center;
+    }
+
+    .selected{
+      outline: 3px solid rgba(147,197,253,.9);
+      outline-offset: 2px;
+      transform: translateY(-1px);
+    }
+
+    .info{
+      display:flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+    .info .card{
+      flex: 1 1 380px;
+      background: rgba(0,0,0,.22);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      padding: 10px 12px;
+      min-width: 280px;
+    }
+    .info .card h2{
+      margin: 0 0 6px;
+      font-size: 13px;
+      font-weight: 650;
+      color: #e5e7eb;
+    }
+    .kv{
+      display:grid;
+      grid-template-columns: 120px 1fr;
+      gap: 6px 10px;
+      font-size: 13px;
+      color: #e5e7eb;
+    }
+    .k{ color: var(--muted); }
+    .v code{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      background: rgba(255,255,255,.06);
+      padding: 2px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .mini-swatch{
+      width: 26px;
+      height: 16px;
+      border-radius: 6px;
+      display:inline-block;
+      vertical-align: -3px;
+      margin-right: 8px;
+      border: 1px solid rgba(255,255,255,.14);
+    }
+
+    .legend{
+      margin-top: 10px;
+      display:grid;
+      gap: 8px;
+    }
+    .legend .grid{
+      display:grid;
+      grid-template-columns: repeat(6, minmax(120px, 1fr));
+      gap: 8px;
+    }
+    @media (max-width: 860px){
+      .legend .grid{ grid-template-columns: repeat(3, minmax(120px, 1fr)); }
+      .keyboard{ transform: scale(.92); transform-origin: top center; }
+    }
+    @media (max-width: 520px){
+      .legend .grid{ grid-template-columns: repeat(2, minmax(120px, 1fr)); }
+      .keyboard{ transform: scale(.85); }
+    }
+
+    .legend-item{
+      font-size: 12px;
+      color: #e5e7eb;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 10px;
+      padding: 8px 10px;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+    .legend-note{
+      width: 36px;
+      color: var(--muted);
+      font-weight: 650;
+    }
+    .legend-desc{
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.1;
+    }
+
+    .foot{
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Klaviatur zur Veranschaulichung: Skrjabin (Sabanejew / Pariser Partitur) + Michy Pattern</h1>
+    <p class="sub">
+      Ein Oktav-Ausschnitt (C–H/B) mit Farb-Swatches pro Taste. Umschalten zwischen drei Zuordnungen.
+      Hinweis: Die Skrjabin-Farben sind historisch als Tonalitäts-/Grundton-Zuordnung überliefert; hier als Tastendarstellung visualisiert.
+    </p>
+
+    <div class="controls">
+      <div class="row" role="radiogroup" aria-label="Mapping Auswahl">
+        <label class="pill"><input type="radio" name="mapping" value="sabanejew" checked> Sabanejew</label>
+        <label class="pill"><input type="radio" name="mapping" value="paris"> Pariser Partitur</label>
+        <label class="pill"><input type="radio" name="mapping" value="michy"> Michy Pattern (HSL Hue)</label>
+      </div>
+      <div class="row">
+        <span class="hint">Klick auf eine Taste zeigt Details unten. Tooltip via “hover” (Desktop).</span>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="keyboard" id="keyboard" aria-label="Klaviatur"></div>
+
+      <div class="info">
+        <div class="card" id="infoCard">
+          <h2>Auswahl</h2>
+          <div class="kv">
+            <div class="k">Note</div><div class="v" id="infoNote">—</div>
+            <div class="k">Mapping</div><div class="v" id="infoMapping">—</div>
+            <div class="k">Farbe</div><div class="v" id="infoColor">—</div>
+            <div class="k">CSS</div><div class="v" id="infoCss"><code>—</code></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Legende (aktuelles Mapping)</h2>
+          <div class="legend">
+            <div class="grid" id="legendGrid"></div>
+          </div>
+          <div class="foot">
+            Für “metallisch” nutze ich bewusst einen Stahl/Lead-Gradienten (keine eindeutige Hue).
+            Wenn du exakte RGB/HEX-Werte willst (z. B. aus einer konkreten Edition/Quelle), sag mir welche, dann setze ich sie 1:1 um.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Notes in one octave (German labels: H == B natural; A# == B♭)
+    const NOTES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","H"];
+    const WHITE_NOTES = ["C","D","E","F","G","A","H"];
+    const BLACK_NOTES = ["C#","D#","F#","G#","A#"];
+
+    // Keyboard geometry (white-index based)
+    const WHITE_INDEX = { C:0, D:1, E:2, F:3, G:4, A:5, H:6 };
+    const BLACK_POS = {
+      "C#": 1, // between C and D
+      "D#": 2, // between D and E
+      "F#": 4, // between F and G
+      "G#": 5, // between G and A
+      "A#": 6  // between A and H (B natural)
+    };
+
+    // Helpers
+    const hsl = (h, s=90, l=55) => `hsl(${h} ${s}% ${l}%)`;
+
+    // "Metallic" gradients for the two Skrjabin variants
+    const STEEL_GRAD = "linear-gradient(135deg, rgba(220,230,240,.95), rgba(70,110,160,.65), rgba(180,200,220,.85))";
+    const LEAD_GRAD  = "linear-gradient(135deg, rgba(210,210,210,.90), rgba(120,120,125,.75), rgba(170,170,175,.88))";
+
+    // Skrjabin mappings: approximate CSS for visualization + descriptive label
+    // (Because sources give verbal color names; "metallisch" is handled as gradient.)
+    const MAP_SABANEJEW = {
+      "C":  { css: hsl(0, 95, 52),          desc: "Rot" },
+      "C#": { css: hsl(275, 85, 55),        desc: "Violett" },
+      "D":  { css: hsl(55, 95, 55),         desc: "Gelb" },
+      "D#": { css: STEEL_GRAD,              desc: "Stahl / metallisch" },
+      "E":  { css: hsl(215, 85, 42),        desc: "dunkelblau (glitzernd)" },
+      "F":  { css: hsl(350, 85, 35),        desc: "Dunkelrot" },
+      "F#": { css: hsl(228, 85, 45),        desc: "Dunkelblau (hell/kräftig)" },
+      "G":  { css: hsl(22, 90, 55),         desc: "Orange-Pink" },
+      "G#": { css: hsl(305, 85, 52),        desc: "Magenta-Violett" },
+      "A":  { css: hsl(120, 70, 45),        desc: "Grün" },
+      "A#": { css: STEEL_GRAD,              desc: "ähnlich E♭ (metallisch)" }, // B♭ ~ E♭ bei Sabanejew
+      "H":  { css: hsl(215, 85, 42),        desc: "ähnlich E" }
+    };
+
+    const MAP_PARIS = {
+      "C":  { css: hsl(0, 95, 52),          desc: "Rot" },
+      "C#": { css: hsl(275, 92, 55),        desc: "reines Violett" },
+      "D":  { css: hsl(55, 95, 55),         desc: "sonniges Gelb" },
+      "D#": { css: STEEL_GRAD,              desc: "stählern-blau (metallisch)" },
+      "E":  { css: hsl(195, 80, 50),        desc: "blau-grünlich / hellblau" },
+      "F":  { css: hsl(350, 85, 35),        desc: "Dunkelrot" },
+      "F#": { css: hsl(238, 80, 43),        desc: "tiefes Dunkelblau mit Violettstich" },
+      "G":  { css: hsl(30, 92, 55),         desc: "Orange (feurig)" },
+      "G#": { css: hsl(312, 70, 58),        desc: "lilienfarben (rötlich)" },
+      "A":  { css: hsl(120, 75, 44),        desc: "Grasgrün" },
+      "A#": { css: LEAD_GRAD,               desc: "metallisches Bleigrau (B♭)" },
+      "H":  { css: hsl(205, 80, 48),        desc: "Dunkelblau mit hellerer Bläue" }
+    };
+
+    // Michy Pattern: Hue map provided by you
+    const NOTE_HUE_MAP = {
+      "C": 60,    // Gelb
+      "C#": 90,   // Gelbgrün
+      "D": 120,   // Grün
+      "D#": 150,  // Türkis
+      "E": 180,   // Cyan
+      "F": 210,   // Himmelblau
+      "F#": 240,  // Blau
+      "G": 270,   // Violett
+      "G#": 300,  // Magenta
+      "A": 330,   // Rosa
+      "A#": 0,    // Rot (B♭)
+      "B": 30,    // Orange (Alias für H)
+      "H": 30     // Orange
+    };
+
+    const MAP_MICHY = Object.fromEntries(
+      NOTES.map(n => {
+        const hue = NOTE_HUE_MAP[n] ?? NOTE_HUE_MAP["B"];
+        return [n, { css: hsl(hue, 92, 52), desc: `Hue ${hue}°` }];
+      })
+    );
+
+    const MAPPINGS = {
+      sabanejew: { name: "Sabanejew", data: MAP_SABANEJEW },
+      paris:     { name: "Pariser Partitur", data: MAP_PARIS },
+      michy:     { name: "Michy Pattern", data: MAP_MICHY }
+    };
+
+    // DOM
+    const keyboardEl = document.getElementById("keyboard");
+    const legendGrid = document.getElementById("legendGrid");
+    const infoNote = document.getElementById("infoNote");
+    const infoMapping = document.getElementById("infoMapping");
+    const infoColor = document.getElementById("infoColor");
+    const infoCss = document.getElementById("infoCss");
+
+    let currentMappingKey = "sabanejew";
+    let selectedNote = "C";
+
+    function noteDisplay(n){
+      if(n === "A#") return "A# (B♭)";
+      if(n === "H") return "H (B)";
+      return n;
+    }
+
+    function buildKeyboard(){
+      keyboardEl.innerHTML = "";
+
+      // White keys
+      WHITE_NOTES.forEach(note => {
+        const key = document.createElement("div");
+        key.className = "white-key";
+        key.dataset.note = note;
+        key.style.left = `calc(var(--white-w) * ${WHITE_INDEX[note]})`;
+
+        const inner = document.createElement("div");
+        inner.className = "key-inner";
+
+        const sw = document.createElement("div");
+        sw.className = "swatch";
+
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = noteDisplay(note);
+
+        const desc = document.createElement("div");
+        desc.className = "desc";
+        desc.textContent = "";
+
+        inner.appendChild(sw);
+        inner.appendChild(label);
+        inner.appendChild(desc);
+        key.appendChild(inner);
+
+        key.addEventListener("click", () => selectNote(note));
+        keyboardEl.appendChild(key);
+      });
+
+      // Black keys
+      BLACK_NOTES.forEach(note => {
+        const key = document.createElement("div");
+        key.className = "black-key";
+        key.dataset.note = note;
+
+        // position centered between two whites: left = (whiteIndex * whiteW) - halfBlackW
+        const leftIndex = BLACK_POS[note]; // 1..6
+        key.style.left = `calc(var(--white-w) * ${leftIndex} - (var(--black-w) / 2))`;
+
+        const inner = document.createElement("div");
+        inner.className = "key-inner";
+
+        const sw = document.createElement("div");
+        sw.className = "swatch";
+
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = noteDisplay(note);
+
+        const desc = document.createElement("div");
+        desc.className = "desc";
+        desc.textContent = "";
+
+        inner.appendChild(sw);
+        inner.appendChild(label);
+        inner.appendChild(desc);
+        key.appendChild(inner);
+
+        key.addEventListener("click", () => selectNote(note));
+        keyboardEl.appendChild(key);
+      });
+    }
+
+    function applyMapping(){
+      const mapping = MAPPINGS[currentMappingKey];
+      const data = mapping.data;
+
+      // Update keys
+      [...keyboardEl.querySelectorAll(".white-key,.black-key")].forEach(key => {
+        const note = key.dataset.note;
+        const sw = key.querySelector(".swatch");
+        const descEl = key.querySelector(".desc");
+
+        const entry = data[note] || { css: "transparent", desc: "—" };
+
+        // swatch background can be color or gradient
+        sw.style.background = entry.css;
+        descEl.textContent = entry.desc;
+
+        // tooltip
+        key.title = `${mapping.name} – ${noteDisplay(note)}: ${entry.desc}`;
+      });
+
+      // Legend
+      legendGrid.innerHTML = "";
+      NOTES.forEach(note => {
+        const entry = data[note] || { css: "transparent", desc: "—" };
+
+        const item = document.createElement("div");
+        item.className = "legend-item";
+
+        const sw = document.createElement("span");
+        sw.className = "mini-swatch";
+        sw.style.background = entry.css;
+
+        const noteEl = document.createElement("span");
+        noteEl.className = "legend-note";
+        noteEl.textContent = note;
+
+        const txtWrap = document.createElement("div");
+
+        const main = document.createElement("div");
+        main.textContent = noteDisplay(note);
+
+        const sub = document.createElement("div");
+        sub.className = "legend-desc";
+        sub.textContent = entry.desc;
+
+        txtWrap.appendChild(main);
+        txtWrap.appendChild(sub);
+
+        item.appendChild(sw);
+        item.appendChild(noteEl);
+        item.appendChild(txtWrap);
+
+        legendGrid.appendChild(item);
+      });
+
+      // keep selection visible
+      selectNote(selectedNote, {silent:true});
+    }
+
+    function selectNote(note, opts={silent:false}){
+      selectedNote = note;
+
+      [...keyboardEl.querySelectorAll(".white-key,.black-key")].forEach(k => {
+        k.classList.toggle("selected", k.dataset.note === note);
+      });
+
+      const mapping = MAPPINGS[currentMappingKey];
+      const entry = mapping.data[note] || { css: "transparent", desc: "—" };
+
+      infoNote.textContent = noteDisplay(note);
+      infoMapping.textContent = mapping.name;
+      infoColor.innerHTML = `<span class="mini-swatch" style="background:${entry.css}"></span>${entry.desc}`;
+      infoCss.innerHTML = `<code>${entry.css}</code>`;
+
+      if(!opts.silent){
+        // no-op; kept for future (e.g., play sound)
+      }
+    }
+
+    // Events
+    document.querySelectorAll('input[name="mapping"]').forEach(r => {
+      r.addEventListener("change", (e) => {
+        currentMappingKey = e.target.value;
+        applyMapping();
+      });
+    });
+
+    // Init
+    buildKeyboard();
+    applyMapping();
+    selectNote("C");
+  </script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+<meta http-equiv="expires" content="0"> 
+   <meta name="description" content="girl tv loves you more">
+   <meta name="author" content="girl.tv, michael heering>
+   <meta name="keywords" content="girl tv loves no britney spears">
+<meta name="keywords" lang="en-us">
+<meta name="keywords" lang="en">
+   <meta name="date" content="2001-01-30T08:49:37+01:00">
+   <title>girl.TV</title>
+<style>
+.spanstyle {
+        position:absolute;
+        visibility:visible;
+        top:-50px;
+        font-size:10pt;
+        font-family:Verdana;
+      font-weight:bold;
+        color:orange;
+}
+</style>
+<script>
+var x,y
+var step=20
+var flag=0
+
+var message="www.girl.tv "
+message=message.split("")
+
+var xpos=new Array()
+for (i=0;i<=message.length-1;i++) {
+        xpos[i]=-50
+
+}
+
+var ypos=new Array()
+for (i=0;i<=message.length-1;i++) {
+        ypos[i]=-50
+
+}
+
+function handlerMM(e){
+        x = (document.layers) ? e.pageX : document.body.scrollLeft+event.clientX
+        y = (document.layers) ? e.pageY : document.body.scrollTop+event.clientY
+        flag=1
+
+}
+
+function makesnake() {
+        if (flag==1 && document.all) {
+        for (i=message.length-1; i>=1; i--) {
+                        xpos[i]=xpos[i-1]+step
+                        ypos[i]=ypos[i-1]
+        }
+                xpos[0]=x+step
+                ypos[0]=y
+        
+                for (i=0; i<message.length-1; i++) {
+                var thisspan = eval("span"+(i)+".style")
+
+                thisspan.posLeft=xpos[i]
+
+                        thisspan.posTop=ypos[i]
+
+        }
+        }
+        
+        else if (flag==1 && document.layers) {
+        for (i=message.length-1; i>=1; i--) {
+                        xpos[i]=xpos[i-1]+step
+                        ypos[i]=ypos[i-1]
+        }
+                xpos[0]=x+step
+                ypos[0]=y
+        
+                for (i=0; i<message.length-1; i++) {
+                var thisspan = eval("document.span"+i)
+
+                thisspan.left=xpos[i]
+
+                        thisspan.top=ypos[i]
+
+        }
+        }
+                var timer=setTimeout("makesnake()",30)
+
+}
+
+</script>
+
+</head>
+<body bgcolor="black" onLoad="makesnake()" leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" style="width:100%;overflow-x:hidden;overflow-y:scroll"  link="white" vlink="gray" alink="red" text="white">
+
+<br><br><br><br><br>
+
+
+<script>
+for (i=0;i<=message.length-1;i++) {
+    document.write("<span id='span"+i+"' class='spanstyle'>")
+        document.write(message[i])
+    document.write("</span>")
+}
+
+if (document.layers){
+        document.captureEvents(Event.MOUSEMOVE);
+}
+document.onmousemove = handlerMM;
+</script>.<br>.<br>.<br>.<br>.<br>
+<a href="http://www.girl.tv/chat" target="_top">chat</a>..........................<a href="http://www.girl.tv/flugzeug" target="_top">airport</a>.<br>.<br>.<br>.<br>.<br><center><a href="http://www.girl.tv/color" target="_top">automatic</a>............................
+<a href="http://www.girl.tv/puregirl" target="_top">girl</a>...................<a href="http://www.girl.tv/city" target="_top">/CiTy</a>...................
+<a href="http://www.girl.tv/missile/" target="_top">win a missile</a>
+...................<br><a href="http://www.dax.de"target="_top">waffen drogen schutzgeld.</a>
+..........<a href="http://www.girl.tv/girltvgirl"target="_top">top<font size=5> $ </font>girl</a><br><br><br><br><a href="http://www.girl.tv/snow">snow</a>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<br>.<
+<a href="http://www.der-die-das.com"target="_top">win<font size=5> </font>.</a>
+
+
+
+</body>
+</html>

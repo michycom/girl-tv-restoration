@@ -1,0 +1,1 @@
+|a:5:{s:14:"derivativePath";s:61:"/home/girltv/public_html/images/cache/derivative/1/0/1009.dat";s:14:"derivativeType";i:1;s:8:"mimeType";s:9:"image/gif";s:8:"parentId";i:1008;s:14:"pseudoFileName";s:19:"autoteil2_thumb.gif";}

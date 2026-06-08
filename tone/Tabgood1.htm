@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guitar Tab Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    
+    <script>
+        const TUNING = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'];
+
+        function findPositions(note) {
+            const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            const noteIndex = notes.indexOf(note.slice(0, -1));
+            const octave = parseInt(note.slice(-1), 10);
+            let positions = [];
+
+            for (let string = 0; string < TUNING.length; string++) {
+                const stringNote = TUNING[string];
+                const stringNoteIndex = notes.indexOf(stringNote.slice(0, -1));
+                const stringOctave = parseInt(stringNote.slice(-1), 10);
+                let fret = (noteIndex - stringNoteIndex) + 12 * (octave - stringOctave);
+                if (fret >= 0 && fret <= 24) {
+                    positions.push({ string: string + 1, fret, octave });
+                }
+            }
+            return positions;
+        }
+
+        function getColorForOctave(octave) {
+            const minOctave = 2;  // Lowest octave
+            const maxOctave = 5;  // Highest octave
+            const range = maxOctave - minOctave;
+            const factor = (octave - minOctave) / range;
+            const colorIntensity = Math.floor(255 * factor);
+            return `rgb(${colorIntensity}, 0, 0)`;
+        }
+
+        function guitarTabDrawer(note) {
+            document.write('<h1>Guitar Tab for ' + note + ' </h1>');
+            const positions = [];
+            const noteLetter = note.slice(0, -1);
+            const octaves = [2, 3, 4, 5];  // You can add or remove octaves as needed
+
+            octaves.forEach(octave => {
+                const noteWithOctave = noteLetter + octave;
+                positions.push(...findPositions(noteWithOctave));
+            });
+
+            const svgWidth = 170, svgHeight = 618, stringSpacing = 30, fretSpacing = 25;
+            let svgContent = `<svg id="fretboard" width="${svgWidth}" height="${svgHeight}" xmlns="http://www.w3.org/2000/svg">`;
+
+            // Draw fretboard
+            svgContent += `<rect x="0" y="0" width="${svgWidth}" height="${svgHeight}" fill="#964B00" />`;
+            
+            // Draw nut
+            svgContent += `<rect x="0" y="0" width="${svgWidth}" height="10" fill="#000" />`;
+
+            // Draw frets
+            for (let j = 0; j <= 24; j++) {
+                svgContent += `<line x1="0" y1="${j * fretSpacing + 10}" x2="${svgWidth}" y2="${j * fretSpacing + 10}" stroke="grey" stroke-width="2" />`;
+            }
+
+            // Draw strings
+            for (let i = 0; i < 6; i++) {
+                svgContent += `<line x1="${i * stringSpacing + 10}" y1="10" x2="${i * stringSpacing + 10}" y2="${svgHeight + 10}" stroke="black" stroke-width="2" />`;
+            }
+
+            // Draw fret markers
+            const markers = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24];
+            markers.forEach(marker => {
+                if (marker === 12 || marker === 24) {
+                    svgContent += `<circle cx="78" cy="${marker * fretSpacing - fretSpacing / 2 + 10}" r="5" fill="snow" />`;
+                    svgContent += `<circle cx="92" cy="${marker * fretSpacing - fretSpacing / 2 + 10}" r="5" fill="snow" />`;
+                } else {
+                    svgContent += `<circle cx="85" cy="${marker * fretSpacing - fretSpacing / 2 + 10}" r="5" fill="snow" />`;
+                }
+            });
+
+            // Draw the note positions
+            positions.forEach(position => {
+                const { string, fret, octave } = position;
+                const color = getColorForOctave(octave);
+                svgContent += `<circle class="note" cx="${(string - 1) * stringSpacing + 10}" cy="${fret * fretSpacing}" r="8" fill="${color}" data-note="${noteLetter + octave}" />`;
+            });
+
+            svgContent += '</svg>';
+            document.body.innerHTML += svgContent;
+
+            // Add event listener for note clicks
+            document.querySelectorAll('.note').forEach(noteElement => {
+                noteElement.addEventListener('click', (event) => {
+                    const clickedNote = event.target.getAttribute('data-note');
+                    console.log('Guitar Tab for ' + note + ' note clicked: ' + clickedNote);
+                    document.body.innerHTML = '';  // Clear the existing fretboard
+                    guitarTabDrawer(clickedNote);  // Redraw for the clicked note
+                });
+            });
+        }
+
+        guitarTabDrawer("C4");  // You can change this to any note you want to visualize
+    </script>
+</body>
+</html>

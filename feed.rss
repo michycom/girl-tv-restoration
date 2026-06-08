@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+	<atom:link href="http://girl.tv/feed.rss" rel="self" type="application/rss+xml" />
+
+    <title>hi</title>
+    <link>http://girl.tv</link>
+    <description>YOUR GIRL.TV TODAY </description>
+    <language>en-uk</language>
+    <copyright>all rights reserved</copyright>
+<pubDate>Tue, 15 Mar 2008 11:51:00 +0100 </pubDate>
+    <image>
+      <url>http://girl.tv/favicon.png</url>
+      <title>yes!</title>
+      <link>http://girl.tv</link>
+    </image>
+
+
+<item>
+<title>SHOP OPEN!</title>
+<pubDate>Tue, 15 Mar 2008 12:43:00 +0100 </pubDate>
+<description> <![CDATA[<a href="http://hui-hui.de"><img src="http://girl.tv/fly/huihui.gif" border="0"></a>
+<a href="http://girl.tv/pool"><img src="http://girl.tv/platform/girl.tv.gif"></a><a href="http://girl.tv/popup"><img src="http://girl.tv/platform/run-run-run.gif">
+<a href="hui_hui_flyer_stocksale.jpg"></a>
+HUI-HUI says: "SHOP OPEN!" SPRING STOCK SALE with HUI-HUI and FRIENDS. 
+Opening: Do 27.03.2008 (16-22h) Music: DJ RON. LIVE AT GIRL.TV STORE HAMBURG. ]]>
+</description>
+      <link>http://girl.tv/shop_open</link>
+      <author>press@girl.tv (press)</author>
+<guid>http://hui-hui.de</guid>
+</item>
+
+
+
+<item> 
+<title>best news are old news</title>
+<pubDate>Thu, 17 Jan 2008 17:43:00 +0100 </pubDate>
+<description> <![CDATA[<a href="http://willson-musik.de" border="0"><img src="http://girl.tv/art/willson-musik.de.gif"></a>
+The Willson vs. Tricks 7" 
+is only available at EK-Shop. 
+Check out: www.einlegen.de/shop
+
+New Willson media in the forest!
+Live video from the girl.tv/land
+exhibition at Kunsthaus Graz. And 
+some NEW Photos shot by the ronz. 
+]]>
+</description>
+<link>http://willson-musik.de</link>
+      <author>press@girl.tv (press)</author>
+      <guid>http://einlegen.de</guid>
+</item>
+
+
+
+
+<item> 
+<title>telegram from hui-hui</title>
+<pubDate>Thu, 17 Jan 2008 17:43:00 +0100 </pubDate>
+<description> <![CDATA[<a href="http://hui-hui.de"><img src="http://www.der-die-das.com/factory/huihui/HuiHuiPics/huihui.gif" border="0"></a>
+ hui-hui presents autumn-winter 08 09 collection at Telegram Showroom Berlin. 28 january - 3 february 2008. 
+Telegram Showroom, Friedrichstrasse 112a, 10117 Berlin, (10am -  8pm)
+
+]]>
+</description>
+<link>http://hui-hui.de</link>
+      <author>press@girl.tv (press)</author>
+      <guid>http://girl.tv/hui-hui</guid>
+</item>
+<item> 
+<title>lighting up pictures</title>
+<pubDate>Thu, 17 Jan 2008 18:50:00 +0100 </pubDate>
+<description> <![CDATA[<a href="http://elenagetzieh.de" border="0"><img src="http://girl.tv/fly/bunny.gif"></a> two new picture and a light box at elena's place.
+]]>
+</description>
+<link>http://elenagetzieh.de</link>
+      <author>press@girl.tv (press)</author>
+      <guid>http://elenagetzieh.de</guid>
+</item>
+
+<item>
+      <title>girl.tv tidied up...</title>
+      <description> <![CDATA[ 
+<a href="http://girl.tv/3boys"><img src="http://girl.tv/3boys.gif" border="0">the boys</a> &#160; &#160; &#160; &#160; &#160;  
+<a href="http://girl.tv/platform"><img src="http://girl.tv/girl.tv.gif" border="0">girl.tv</a>  &#160; &#160; &#160; &#160; &#160;
+<a href="http://girl.tv/browser"><img src="http://girl.tv/me.gif" border="0">me</a> &#160; &#160; &#160; &#160; &#160; &#160; &#160;
+<a href="http://girl.tv/fly"><img src="http://girl.tv/fly/bunny.gif"  border="0">bunny</a><br>
+the girl.tv country was caught in a mess. so girl.tv, the girl, asked her boys, which represent the community, to clean it up. the boys were bussy, so me, that is the name of the boy, had to do it all alone. well, now it looks much better. this is a net.art project, which is currently reflecting the culture of social networks and the commercial context of the internet. besides it is a platform for subcultural and contemporary emergences. sometimes i feel like having to explain a mediocre joke.
+]]>
+</description>
+<pubDate>Mon, 14 Jan 2008 21:43:00 +0100</pubDate>
+      <link>http://girl.tv/popup</link>
+      <author>we@girl.tv (me)</author>
+      <guid>http://girl.tv/index.php</guid>
+    </item>
+
+  <item> 
+    <title>the aliens</title>
+      <description>the journey to outer space 
+  <![CDATA[<br>
+<br>
+girl.tv was lonley and he took his space shuttel to visit some aliens...<br>
+more informations you get at http://girl.tv... <br>
+<br> 
+      ]]>
+</description>
+<pubDate>Mon, 14 Jan 2008 14:43:00 +0100</pubDate>
+     <link>http://girl.tv/alien</link>
+      <author>press@girl.tv (paris)</author>
+      <guid>http://girl.tv/alien/index.html</guid>
+    </item>  
+  </channel>
+
+</rss>
+
+

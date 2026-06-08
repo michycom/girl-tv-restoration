@@ -1,0 +1,69 @@
+===============
+ Upgrading IMP
+===============
+
+:Last update:   $Date: 2006/01/06 10:29:45 $
+:Revision:      $Revision: 1.7.8.8 $
+:Contact:       imp@lists.horde.org
+
+
+
+Upgrading IMP From 4.0.x To 4.1.x
+=================================
+
+This is a non-exhaustive, quick explanation of what has changed between an IMP
+4.0.x installation to IMP 4.1.x.
+
+
+Automatic Namespace Detection
+-----------------------------
+
+The ``namespace``, ``hierarchies``, ``folders``, ``delimiter``, and
+``dotfiles`` parameters were removed from ``config/servers.php``.  Namespaces
+are now automatically configured pursuant to RFC 2342.
+
+If using the UW IMAP daemon, you may notice a bunch of additional namespaces
+that were not displayed before as well as the ability of the user to
+view all files that live in their home directory via the folders screen.
+Information on how to correct your IMAP server configuration can be found at
+
+  http://wiki.horde.org/ImpUWIMAPNamespaces
+
+
+User-Defined Headers
+--------------------
+
+The ``config/headers.txt`` file has been removed and replaced by
+``config/headers.php``.  Any user-defined headers should be migrated to this
+file.  The new file has the advantage of allowing any valid PHP expression
+to be executed at run-time when generating the headers.  See the top of
+the ``headers.php`` file for the new format required.
+
+
+Removed Preferences
+-------------------
+
+The following preferences are no longer used and may be safely removed from
+your ``config/prefs.php`` file and your preferences backend::
+
+   'disposition_request_delivery'
+   'disposition_send_mdn'
+   'wrap_width'
+
+
+Upgrading IMP From 3.x To 4.0.x
+===============================
+
+This is a non-exhaustive, quick explanation of what has changed between an IMP
+3.x installation to IMP 4.0.x.
+
+
+Filters
+-------
+
+Filtering code has been removed from IMP.  To have the same features as the
+old code, you should install the Ingo_ module.  See the INSTALL_ file for more
+information.
+
+.. _Ingo: http://www.horde.org/ingo/
+.. _INSTALL: ?f=INSTALL.html

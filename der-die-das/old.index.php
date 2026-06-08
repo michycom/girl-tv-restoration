@@ -1,0 +1,16 @@
+<HEAD>
+<!--
+M. Heering, Marktstrasse 138a, 20357 Hamburg
+Phone: +49(0)40 824515
+-->
+<TITLE>CONTEMPORARY ART NETWORK AND CROSSOVER CONCEPTS | MEDIACULTURE OF THE 21TH CENTURY</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+</HEAD>
+<BODY BGCOLOR=#FFFFFF LEFTMARGIN=0 TOPMARGIN=0 MARGINWIDTH=0 MARGINHEIGHT=0>
+<!-- ImageReady Slices (Unbenannt-1) -->
+<a href="http://der-die-das.com" target="_blank"><IMG SRC="http://at.der-die-das.com/der-die-das.austria.jpg" WIDTH=818 HEIGHT=709 ALT="" border="0"></a>
+<!-- End ImageReady Slices -->
+<br>
+<pre>...stop making a difference between art and media art - the truth is in between. <b><a href="http://der-die-das.com/~girltv">~girl.tv</a></b></pre>
+</BODY>
+</HTML>

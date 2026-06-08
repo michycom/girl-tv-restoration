@@ -1,0 +1,1945 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Snippet Playlist PDF TTS – Prototype</title>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;700&family=Manrope:wght@400;500;600;700&display=swap");
+    :root {
+      --bg:#f5f1ea;
+      --panel:#ffffff;
+      --panel-soft:#f7f3ed;
+      --muted:#5f6b7a;
+      --text:#1b2533;
+      --text-invert:#f4f7fb;
+      --accent:#2f8b9c;
+      --accent-strong:#24788a;
+      --danger:#e15953;
+      --border:rgba(27,37,51,.12);
+      --border-strong:rgba(27,37,51,.18);
+      --shadow:0 14px 34px rgba(20,30,45,.08);
+      --glow:rgba(47,139,156,.2);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin:0;
+      font-family: "Manrope", "Segoe UI", Tahoma, sans-serif;
+      background: radial-gradient(1100px 420px at 8% -10%, #ffffff 0, #f7f2eb 42%, #efe7de 100%);
+      color:var(--text);
+      color-scheme: light;
+    }
+    header {
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      background: rgba(255,255,255,.85);
+      backdrop-filter: blur(6px);
+    }
+    header .left { display:flex; gap:12px; align-items:center; }
+    header h1 { margin:0; font-size:18px; font-weight:700; letter-spacing:.2px; font-family: "Fraunces", "Manrope", serif; }
+    header .sub { color:var(--muted); font-size:12px; }
+    main { padding:14px 12px; max-width:1200px; margin:0 auto; }
+    .panel { background:var(--panel); border:1px solid var(--border); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; box-shadow:var(--shadow); }
+    .panel .bar { padding:10px 12px; border-bottom:1px solid var(--border); display:flex; gap:10px; align-items:center; justify-content:space-between; background:var(--panel-soft); }
+    .panel .bar .title { font-size:14px; font-weight:650; }
+    .panel .bar .meta { color:var(--muted); font-size:12px; }
+    .panel .content { padding:10px 12px; overflow:auto; }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    button, input[type="text"], select {
+      background: #fff;
+      border:1px solid var(--border-strong);
+      color:var(--text);
+      border-radius:12px;
+      padding:8px 10px;
+      font-size:12px;
+      outline:none;
+      transition: transform .08s ease, box-shadow .18s ease, border-color .18s ease, background .18s ease;
+    }
+    button { cursor:pointer; font-weight:600; }
+    button:hover { border-color: var(--accent-strong); box-shadow: 0 6px 16px rgba(47,139,156,.15); }
+    button:active { transform: translateY(1px); }
+    button.primary { background: linear-gradient(180deg, #3296a9, var(--accent-strong)); border-color: var(--accent-strong); color:#fff; }
+    button.danger { background: linear-gradient(180deg, #e66f68, var(--danger)); border-color: var(--danger); color:#fff; }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    input[type="file"] { color:var(--muted); font-size:12px; }
+    .split { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size:11px; padding:2px 6px; border:1px solid var(--border); border-radius:6px; color:var(--muted); background:#fff; }
+    .docList, .playlist { display:flex; flex-direction:column; gap:8px; }
+    .card {
+      padding:10px; border:1px solid var(--border); border-radius:14px;
+      background: var(--panel-soft);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.7);
+    }
+    .card .top { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+    .card .name { font-size:13px; font-weight:650; }
+    .card .small { color:var(--muted); font-size:11px; line-height:1.35; }
+    .card .actions { display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+    .pill { display:inline-flex; gap:6px; align-items:center; padding:3px 8px; border-radius:999px; border:1px solid var(--border); color:var(--muted); font-size:11px; background:#fff; }
+    .readerText {
+      line-height:1.6;
+      font-size:14px;
+      white-space:pre-wrap;
+      user-select:text;
+    }
+    .readerText mark { background: rgba(47,139,156,.2); color:var(--text); padding:0 2px; border-radius:4px; }
+    .toast { position: fixed; bottom: 12px; left: 12px; right: 12px; display:flex; justify-content:center; pointer-events:none; }
+    .toast .box {
+      pointer-events:auto;
+      max-width: 980px; width:100%;
+      padding:10px 12px; border-radius:12px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.92);
+      color: var(--text);
+      display:none;
+    }
+    .dragHint { color:var(--muted); font-size:11px; }
+    .draggable { cursor:grab; }
+    .draggable.dragging { opacity:.6; }
+    .nowPlaying { border-color: var(--accent); box-shadow: 0 0 0 1px var(--glow) inset; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .hr { height:1px; background: var(--border); margin:10px 0; }
+
+    /* Tabs */
+    .tabBar {
+      display:flex;
+      gap:8px;
+      padding:8px 12px;
+      border-bottom:1px solid var(--border);
+      background: rgba(255,255,255,.86);
+      position: sticky;
+      top: 0;
+      z-index: 900;
+      backdrop-filter: blur(8px);
+    }
+    .tabBtn { padding:8px 12px; border-radius:999px; }
+    .tabBtn.active { background: rgba(47,139,156,.18); border-color: rgba(47,139,156,.35); }
+    .tabPane { display:none; }
+    .tabPane.active { display:flex; }
+
+    /* Player control grouping */
+    .controlRows { display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
+    .controlRows .row { justify-content:flex-end; }
+
+    /* Fullscreen Now Reading */
+    .fullscreenOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(23,29,40,.96);
+      color: var(--text-invert);
+      z-index: 1200;
+      display: none;
+      flex-direction: column;
+    }
+    .fullscreenOverlay.active { display: flex; }
+    .fullscreenOverlay .topbar {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:12px 14px;
+      border-bottom:1px solid rgba(255,255,255,.12);
+    }
+    .fullscreenOverlay .body {
+      flex: 1;
+      overflow: auto;
+      padding: 16px 18px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .fullscreenOverlay .nowText {
+      font-size: 20px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .fullscreenOverlay .nowText .w {
+      padding: 0 2px;
+      border-radius: 4px;
+    }
+    .fullscreenOverlay .nowText .w.active {
+      background: rgba(74,163,255,.28);
+      box-shadow: 0 0 0 1px rgba(74,163,255,.25) inset;
+    }
+    .fullscreenOverlay .controls {
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      align-items:stretch;
+    }
+    .fullscreenOverlay .controls .row { justify-content:center; }
+    .fullscreenOverlay .controls button, .fullscreenOverlay .controls select {
+      padding: 10px 12px;
+      font-size: 13px;
+      border-radius: 12px;
+    }
+
+    /* Now Reading panel */
+    .nowReading {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+    }
+    .nowReading .label { color: var(--muted); font-size: 11px; }
+    .nowReading .text {
+      margin-top: 6px;
+      line-height: 1.6;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .nowReading .text .w {
+      padding: 0 2px;
+      border-radius: 4px;
+    }
+    .nowReading .text .w.active {
+      background: rgba(47,139,156,.2);
+      box-shadow: 0 0 0 1px rgba(47,139,156,.2) inset;
+    }
+
+    /* Mobile bottom toolbar */
+    .mobileToolbar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1000;
+      padding: 10px 12px;
+      border-top: 1px solid var(--border);
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(10px);
+      display: none;
+    }
+    .mobileToolbar .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.2fr 1fr 1fr;
+      gap: 8px;
+      align-items: center;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+    .mobileToolbar button {
+      width: 100%;
+      padding: 12px 12px;
+      font-size: 12px;
+      border-radius: 12px;
+    }
+    .mobileToolbar .center {
+      text-align: center;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    /* Collapsible snippets (mobile-only) */
+    .snippetBody {
+      display: block;
+      margin-top: 8px;
+    }
+    /* On desktop we keep bodies visible even if the class is present */
+    .snippetBody.collapsed {
+      display: block;
+    }
+    /* Toggle button is only shown on mobile */
+    .snippetToggle {
+      display: none;
+      background: #fff;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .snippetDetails {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      background: #fff;
+    }
+    .snippetDetails summary {
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      list-style: none;
+    }
+    .snippetDetails summary::-webkit-details-marker { display: none; }
+    .snippetDetails[open] summary { color: var(--text); }
+    .snippetDetails .row { margin-top: 8px; }
+
+    button:focus-visible, input[type="text"]:focus-visible, select:focus-visible {
+      outline: 2px solid var(--glow);
+      outline-offset: 2px;
+    }
+
+    @media (max-width: 980px) {
+      .snippetToggle { display: inline-flex; }
+      .snippetBody.collapsed { display: none; }
+    }
+
+    @media (max-width: 980px) {
+      /* show mobile toolbar + reserve space so it doesn't cover content */
+      .mobileToolbar { display: block; }
+      body { padding-bottom: 86px; }
+      footer { padding-bottom: 14px; }
+      .tabBar { position: sticky; top: 0; }
+    }
+
+    /* Footer / License */
+    footer {
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 11px;
+      border-top: 1px solid var(--border);
+      background: rgba(255,255,255,.78);
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* Mobile / small screens */
+    @media (max-width: 980px) {
+      header { flex-direction: column; align-items: flex-start; gap: 8px; }
+      header .row { width: 100%; }
+      .split { grid-template-columns: 1fr; }
+      .panel .bar { flex-direction: column; align-items: stretch; gap: 10px; }
+      .panel .bar .meta { margin-top: 2px; }
+      .panel .bar .row { width: 100%; }
+      button, input[type="text"], select { width: 100%; }
+      input[type="file"] { width: 100%; }
+      .card .top { flex-direction: column; align-items: stretch; }
+      .card .actions { justify-content: flex-start; }
+      .kbd { display: none; }
+    }
+
+    @media (max-width: 520px) {
+      body { font-size: 14px; }
+      header h1 { font-size: 15px; }
+      .panel .content { padding: 10px; }
+      .readerText { font-size: 14px; }
+      button { padding: 10px 12px; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="left">
+    <h1>Snippet Playlist PDF TTS – Prototype</h1>
+    <div class="sub">PDF → Markierung → Snippet → Playlist → Satz/Absatz/Snippet Navigation</div>
+  </div>
+  <div class="row">
+    <span class="kbd">Space</span><span class="sub">Play/Pause</span>
+    <span class="kbd">←/→</span><span class="sub">Prev/Next Satz</span>
+    <span class="kbd">↑/↓</span><span class="sub">Prev/Next Snippet</span>
+  </div>
+</header>
+
+<div class="tabBar" id="tabBar">
+  <button class="tabBtn active" data-tab="reader">Choose PDF / Snippet</button>
+  <button class="tabBtn" data-tab="playlist">Read / Organize Playlist</button>
+</div>
+
+<main>
+  <!-- LEFT: PDF Reader -->
+  <section class="panel tabPane active" id="readerPanel" data-tab="reader">
+    <div class="bar">
+      <div>
+        <div class="title">Reader</div>
+        <div class="meta" id="readerMeta">Kein Dokument geladen.</div>
+      </div>
+      <div class="row">
+        <input id="pdfFile" type="file" accept="application/pdf" />
+        <button class="primary" id="btnLoadPdf">PDF laden</button>
+        <select id="fromSelect" disabled title="Von-Seite"></select>
+        <select id="toSelect" disabled title="Bis-Seite"></select>
+        <button id="btnShowRange" disabled>Range anzeigen</button>
+        <button id="btnAddRange" disabled>Weitere Range hinzufügen</button>
+        <button id="btnSaveSnippet" class="primary" disabled>Markierung → Snippet</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="split">
+        <div class="card">
+          <div class="name">Dokumente</div>
+          <div class="small">Mehrere PDFs möglich. Snippets referenzieren immer die Quelle.</div>
+          <div class="hr"></div>
+          <div class="docList" id="docList"></div>
+        </div>
+
+        <div class="card">
+          <div class="name">Aktuelle Seite/n (Text)</div>
+          <div class="small">Markiere Text mit der Maus. Danach: „Markierung → Snippet“</div>
+          <div class="hr"></div>
+          <div class="readerText" id="pageText">(PDF laden, dann Seite wählen)</div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="card">
+        <div class="top">
+          <div>
+            <div class="name">Markierung / Snippet-Preview</div>
+            <div class="small">Wird als immutable Text-Snapshot gespeichert. Quelle wird angezeigt.</div>
+          </div>
+        </div>
+        <div class="hr"></div>
+        <div class="small mono" id="selectionInfo">Keine Markierung.</div>
+        <div class="hr"></div>
+        <div class="readerText" id="selectionPreview"></div>
+        <div class="hr"></div>
+        <details class="snippetDetails">
+          <summary>Snippet-Details (Titel / Tags)</summary>
+          <div class="row">
+            <input type="text" id="snippetTitle" placeholder="Snippet Titel (optional)" style="min-width:220px;" />
+            <input type="text" id="snippetTags" placeholder="Tags: komma-getrennt" style="min-width:220px;" />
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT: Playlist + Player -->
+  <section class="panel tabPane" id="playlistPanel" data-tab="playlist">
+    <div class="bar">
+      <div>
+        <div class="title">Playlist / Player</div>
+        <div class="meta" id="playerMeta">Bereit. Keine Snippets.</div>
+      </div>
+      <div class="row">
+        <button id="btnNewPlaylist">Neue Playlist</button>
+        <input type="text" id="playlistTitle" placeholder="Playlist Titel" style="min-width:160px;" />
+        <button class="danger" id="btnClearAll">Reset (localStorage)</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="card">
+        <div class="top">
+          <div>
+            <div class="name">Player Controls</div>
+            <div class="small">Navigation ist segmentbasiert (Satz/Absatz) statt Timecode.</div>
+          </div>
+          <div class="actions controlRows">
+            <div class="row">
+              <button id="btnPlayPause" class="primary" disabled>Play</button>
+              <button id="btnStop" disabled>Stop</button>
+              <select id="repeatMode">
+                <option value="off">Repeat: aus</option>
+                <option value="all">Repeat: alle</option>
+                <option value="one">Repeat: eins</option>
+              </select>
+            </div>
+            <div class="row">
+              <select id="segmentMode">
+                <option value="sentence">Satz</option>
+                <option value="paragraph">Absatz</option>
+              </select>
+              <button id="btnPrevSeg" disabled>Prev Satz</button>
+              <button id="btnNextSeg" disabled>Next Satz</button>
+            </div>
+            <div class="row">
+              <button id="btnPrevSnippet" disabled>Prev Snip</button>
+              <button id="btnNextSnippet" disabled>Next Snip</button>
+            </div>
+          </div>
+        </div>
+        <div class="hr"></div>
+        <div class="small" id="nowPlayingInfo">Kein Snippet ausgewählt.</div>
+        <div class="nowReading" id="nowReadingPanel">
+          <div class="row" style="justify-content:space-between;">
+            <div class="label">Now Reading (aktuelles Segment)</div>
+            <button id="btnFullscreen">Fullscreen</button>
+          </div>
+          <div class="text" id="nowReadingText">—</div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="card">
+        <div class="top">
+          <div>
+            <div class="name">Snippets</div>
+            <div class="small dragHint">Drag & Drop: Reihenfolge ändern. Klick: als „Now Playing“ setzen.</div>
+          </div>
+          <div class="actions">
+            <button id="btnExport" title="Export JSON (für Debug/Port)">Export JSON</button>
+            <button id="btnImport" title="Import JSON (paste)">Import JSON</button>
+          </div>
+        </div>
+        <div class="hr"></div>
+        <div class="playlist" id="playlistList"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Open-Source Hinweis (nur verwendete Bibliothek): Dieses Projekt nutzt <b>PDF.js</b> (pdfjs-dist 4.10.38) unter der <b>Apache License 2.0</b>.
+  Die Lizenz bezieht sich nicht auf den restlichen Prototype-Code.
+  Lizenztext: <a href="./vendor/pdfjs/4.10.38/LICENSE.txt" target="_blank" rel="noopener">LICENSE.txt</a>
+</footer>
+
+<div class="mobileToolbar" id="mobileToolbar">
+  <div class="grid">
+    <button id="mPrevSnippet" disabled>◀ Snip</button>
+    <button id="mPrevSeg" disabled>◀ Satz</button>
+    <button id="mPlayPause" class="primary" disabled>Play</button>
+    <button id="mNextSeg" disabled>Satz ▶</button>
+    <button id="mNextSnippet" disabled>Snip ▶</button>
+  </div>
+  <div class="center" id="mNowMeta">—</div>
+</div>
+
+<div class="fullscreenOverlay" id="fullscreenOverlay" aria-hidden="true">
+  <div class="topbar">
+    <div class="label">Now Reading</div>
+    <button id="btnCloseFullscreen">Close</button>
+  </div>
+  <div class="body">
+    <div class="nowText" id="nowReadingTextFs">—</div>
+    <div class="controls">
+      <div class="row">
+        <button id="fsPlayPause" class="primary" disabled>Play</button>
+        <button id="fsStop" disabled>Stop</button>
+      </div>
+      <div class="row">
+        <button id="fsPrevSeg" disabled>Prev Satz</button>
+        <button id="fsNextSeg" disabled>Next Satz</button>
+      </div>
+      <div class="row">
+        <button id="fsPrevSnippet" disabled>Prev Snip</button>
+        <button id="fsNextSnippet" disabled>Next Snip</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><div class="box" id="toastBox"></div></div>
+
+<!-- PDF.js (ESM build) -->
+<script type="module">
+  import * as pdfjsLib from "./vendor/pdfjs/4.10.38/pdf.min.mjs";
+  // IMPORTANT: worker must match the same pdfjs-dist version
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "./vendor/pdfjs/4.10.38/pdf.worker.min.mjs";
+  // Expose for the rest of the prototype code (keeps the Swift-portable architecture)
+  window.pdfjsLib = pdfjsLib;
+</script>
+
+<script type="module">
+/**
+ * =========================
+ * Models
+ * =========================
+ */
+class DocumentModel {
+  constructor({ id, name, pageCount, pagesText }) {
+    this.id = id;
+    this.name = name;
+    this.pageCount = pageCount;
+    this.pagesText = pagesText; // Array<string> page text
+    this.createdAt = Date.now();
+  }
+}
+
+class SnippetModel {
+  constructor({
+    id, documentId, documentName,
+    pageNumber, text,
+    title, tags,
+    locator,
+    pageRange,
+    pageRanges
+  }) {
+    this.id = id;
+    this.documentId = documentId;
+    this.documentName = documentName;
+    this.pageNumber = pageNumber; // 1-based
+    this.text = text; // immutable snapshot
+    this.title = title || "";
+    this.tags = tags || [];
+    this.locator = locator; // {prefix,start,suffix,normalizedHash}
+    this.pageRanges = Array.isArray(pageRanges) ? pageRanges : (pageRange ? [pageRange] : null);
+    this.pageRange = pageRange || (this.pageRanges ? this.pageRanges[0] : null); // legacy single-range
+    this.createdAt = Date.now();
+  }
+}
+
+class PlaylistModel {
+  constructor({ id, title, snippetIds }) {
+    this.id = id;
+    this.title = title || "Playlist";
+    this.snippetIds = snippetIds || [];
+    this.createdAt = Date.now();
+  }
+}
+
+class PlayerState {
+  constructor() {
+    this.playlistId = null;
+    this.currentSnippetId = null;
+    this.segmentMode = "sentence"; // 'sentence' | 'paragraph'
+    this.segmentIndex = 0;
+    this.isPlaying = false;
+    this.isPaused = false;
+    this.repeatMode = "off"; // 'off' | 'all' | 'one'
+    this.playToken = 0;
+  }
+}
+
+/**
+ * =========================
+ * Utilities
+ * =========================
+ */
+const uid = () => crypto.randomUUID();
+const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+const normalizeText = (s) => (s || "")
+  .normalize("NFKC")
+  .replace(/\r\n/g, "\n")
+  .replace(/[ \t]+/g, " ")
+  .replace(/-\n/g, "")         // naive de-hyphenation across line breaks
+  .replace(/\n{3,}/g, "\n\n")
+  .trim();
+
+async function sha256Hex(input) {
+  const enc = new TextEncoder().encode(input);
+  const buf = await crypto.subtle.digest("SHA-256", enc);
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,"0")).join("");
+}
+
+function toast(msg) {
+  const box = document.getElementById("toastBox");
+  const wrap = document.getElementById("toast");
+  box.textContent = msg;
+  box.style.display = "block";
+  wrap.style.pointerEvents = "auto";
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => {
+    box.style.display = "none";
+    wrap.style.pointerEvents = "none";
+  }, 1600);
+}
+
+/**
+ * =========================
+ * Store (state + persistence)
+ * =========================
+ */
+class AppStore {
+  constructor() {
+    this.documents = new Map();   // id -> DocumentModel
+    this.snippets = new Map();    // id -> SnippetModel
+    this.playlists = new Map();   // id -> PlaylistModel
+    this.player = new PlayerState();
+
+    this.currentDocumentId = null;
+    this.currentPageNumber = 1;
+    this.currentPageRanges = []; // Array<{from,to}>
+    this.uiTab = "reader";
+
+    this._load();
+    if (this.playlists.size === 0) {
+      const pl = new PlaylistModel({ id: uid(), title: "Default", snippetIds: [] });
+      this.playlists.set(pl.id, pl);
+      this.player.playlistId = pl.id;
+      this._save();
+    } else {
+      // pick first playlist
+      const first = [...this.playlists.values()][0];
+      this.player.playlistId = first.id;
+    }
+  }
+
+  _serialize() {
+    return {
+      documents: [...this.documents.values()],
+      snippets: [...this.snippets.values()],
+      playlists: [...this.playlists.values()],
+      player: this.player,
+      currentDocumentId: this.currentDocumentId,
+      currentPageNumber: this.currentPageNumber,
+      currentPageRanges: this.currentPageRanges,
+      uiTab: this.uiTab
+    };
+  }
+
+  _save() {
+    localStorage.setItem("snippet_tts_prototype_v1", JSON.stringify(this._serialize()));
+  }
+
+  _load() {
+    const raw = localStorage.getItem("snippet_tts_prototype_v1");
+    if (!raw) return;
+    try {
+      const data = JSON.parse(raw);
+      (data.documents || []).forEach(d => this.documents.set(d.id, new DocumentModel(d)));
+      (data.snippets || []).forEach(s => this.snippets.set(s.id, new SnippetModel(s)));
+      (data.playlists || []).forEach(p => this.playlists.set(p.id, new PlaylistModel(p)));
+      if (data.player) Object.assign(this.player, data.player);
+      if (!this.player.repeatMode) this.player.repeatMode = "off";
+      if (typeof this.player.isPaused !== "boolean") this.player.isPaused = false;
+      if (typeof this.player.playToken !== "number") this.player.playToken = 0;
+      this.currentDocumentId = data.currentDocumentId || this.currentDocumentId;
+      this.currentPageNumber = data.currentPageNumber || this.currentPageNumber;
+      if (Array.isArray(data.currentPageRanges)) {
+        this.currentPageRanges = data.currentPageRanges;
+      } else if (data.currentPageRange) {
+        this.currentPageRanges = [data.currentPageRange];
+      }
+      this.uiTab = data.uiTab || this.uiTab;
+    } catch (e) {
+      console.warn("Store load failed:", e);
+    }
+  }
+
+  resetAll() {
+    localStorage.removeItem("snippet_tts_prototype_v1");
+    location.reload();
+  }
+}
+
+const store = new AppStore();
+
+function getRangeBounds(doc, range) {
+  if (!doc || !range) return null;
+  const fromRaw = clamp(range.from || 1, 1, doc.pageCount);
+  const toRaw = clamp(range.to || 1, 1, doc.pageCount);
+  const from = Math.min(fromRaw, toRaw);
+  const to = Math.max(fromRaw, toRaw);
+  return { from, to };
+}
+
+function getActiveRanges(doc, rangesOverride = null) {
+  if (!doc) return [];
+  const ranges = rangesOverride !== null ? rangesOverride : store.currentPageRanges;
+  if (!Array.isArray(ranges)) return [];
+  return ranges.map(r => getRangeBounds(doc, r)).filter(Boolean);
+}
+
+function formatRangesList(ranges) {
+  return ranges.map(r => (r.from === r.to ? String(r.from) : `${r.from}-${r.to}`)).join(", ");
+}
+
+function getReaderText(doc, rangesOverride = null) {
+  if (!doc) return "";
+  const ranges = getActiveRanges(doc, rangesOverride);
+  if (ranges.length) {
+    const joined = ranges
+      .map(r => doc.pagesText.slice(r.from - 1, r.to).join("\n\n"))
+      .join("\n\n");
+    return normalizeText(joined);
+  }
+  return doc.pagesText[store.currentPageNumber - 1] || "";
+}
+
+function formatPageLabel(pageNumber, pageRanges) {
+  if (pageRanges && pageRanges.length) {
+    if (pageRanges.length === 1) {
+      const r = pageRanges[0];
+      if (r.from === r.to) return `Seite ${r.from}`;
+      return `Seiten ${r.from}-${r.to}`;
+    }
+    return `Seiten ${formatRangesList(pageRanges)}`;
+  }
+  return `Seite ${pageNumber}`;
+}
+
+function getSnippetRanges(snip) {
+  if (!snip) return [];
+  if (Array.isArray(snip.pageRanges) && snip.pageRanges.length) return snip.pageRanges;
+  if (snip.pageRange) return [snip.pageRange];
+  return [];
+}
+
+const selectionCache = {
+  text: "",
+  ranges: [],
+  scopeKey: "",
+  updatedAt: 0
+};
+
+function getSelectionScopeKey(doc) {
+  if (!doc) return "";
+  const ranges = getActiveRanges(doc);
+  if (ranges.length) return `${doc.id}|ranges:${formatRangesList(ranges)}`;
+  return `${doc.id}|page:${store.currentPageNumber}`;
+}
+
+function getSelectionSnapshotFromReader() {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return null;
+  const text = normalizeText(sel.toString());
+  if (!text) return null;
+  const reader = document.getElementById("pageText");
+  if (!reader) return null;
+  const range = sel.getRangeAt(0);
+  const container = range.commonAncestorContainer;
+  if (!reader.contains(container)) return null;
+
+  const doc = store.currentDocumentId ? store.documents.get(store.currentDocumentId) : null;
+  if (!doc) return null;
+  const ranges = getActiveRanges(doc);
+  return { text, ranges, scopeKey: getSelectionScopeKey(doc) };
+}
+
+function updateSelectionCacheFromDOM() {
+  const snap = getSelectionSnapshotFromReader();
+  if (!snap) return;
+  selectionCache.text = snap.text;
+  selectionCache.ranges = snap.ranges;
+  selectionCache.scopeKey = snap.scopeKey;
+  selectionCache.updatedAt = Date.now();
+}
+
+function getCachedSelectionForCurrent() {
+  const doc = store.currentDocumentId ? store.documents.get(store.currentDocumentId) : null;
+  if (!doc) return null;
+  const key = getSelectionScopeKey(doc);
+  if (!selectionCache.text || selectionCache.scopeKey !== key) return null;
+  return { text: selectionCache.text, ranges: selectionCache.ranges };
+}
+
+function getSelectionSnapshotForSave() {
+  const live = getSelectionSnapshotFromReader();
+  if (live) {
+    updateSelectionCacheFromDOM();
+    return live;
+  }
+  return getCachedSelectionForCurrent();
+}
+
+function clearSelectionCache() {
+  selectionCache.text = "";
+  selectionCache.ranges = [];
+  selectionCache.scopeKey = "";
+  selectionCache.updatedAt = 0;
+}
+
+/**
+ * =========================
+ * Services
+ * =========================
+ */
+class PDFService {
+  constructor() {
+    // PDF.js worker config
+    if (window.pdfjsLib?.GlobalWorkerOptions) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "./vendor/pdfjs/4.10.38/pdf.worker.min.mjs";
+    }
+  }
+
+  async loadPdfFromFile(file) {
+    const ab = await file.arrayBuffer();
+    const pdf = await window.pdfjsLib.getDocument({ data: ab }).promise;
+
+    const pageCount = pdf.numPages;
+    const pagesText = [];
+    for (let i = 1; i <= pageCount; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      // join items with spaces; keep rough line breaks
+      const strings = content.items.map(it => it.str);
+      const text = normalizeText(strings.join(" "));
+      pagesText.push(text);
+    }
+    return new DocumentModel({
+      id: uid(),
+      name: file.name,
+      pageCount,
+      pagesText
+    });
+  }
+}
+
+class SegmentService {
+  segment(text, mode) {
+    const s = (text || "").trim();
+    if (!s) return [];
+
+    if (mode === "paragraph") {
+      // simple paragraph split: double newline or strong breaks
+      return s.split(/\n{2,}/).map(x => x.trim()).filter(Boolean);
+    }
+
+    // sentence mode: Intl.Segmenter if available; fallback regex
+    if (window.Intl && Intl.Segmenter) {
+      const seg = new Intl.Segmenter("de", { granularity: "sentence" });
+      return [...seg.segment(s)].map(x => x.segment.trim()).filter(Boolean);
+    }
+
+    // fallback: naive split
+    return s.split(/(?<=[.!?])\s+/).map(x => x.trim()).filter(Boolean);
+  }
+}
+
+class SpeechService {
+  constructor() {
+    this.synth = window.speechSynthesis;
+    this.voice = null;
+    this.rate = 1.0;
+    this.pitch = 1.0;
+
+    // load voices
+    this._loadVoices();
+    window.speechSynthesis.onvoiceschanged = () => this._loadVoices();
+  }
+
+  _loadVoices() {
+    const voices = this.synth.getVoices() || [];
+    // prefer German
+    this.voice = voices.find(v => (v.lang || "").toLowerCase().startsWith("de")) || voices[0] || null;
+  }
+
+  stop() {
+    this.synth.cancel();
+  }
+
+  pause() {
+    this.synth.pause();
+  }
+
+  resume() {
+    this.synth.resume();
+  }
+
+  speak(text, { onEnd, onError, onBoundary } = {}) {
+    this.stop();
+    const u = new SpeechSynthesisUtterance(text);
+    if (this.voice) u.voice = this.voice;
+    u.rate = this.rate;
+    u.pitch = this.pitch;
+
+    // NOTE: 'boundary' events are not consistently supported across all browsers/voices.
+    // We use them opportunistically to highlight the current word in the "Now Reading" panel.
+    u.onboundary = (ev) => {
+      try { onBoundary && onBoundary(ev); } catch (_) {}
+    };
+
+    u.onend = () => onEnd && onEnd();
+    u.onerror = (e) => onError && onError(e);
+    this.synth.speak(u);
+  }
+}
+
+const pdfService = new PDFService();
+const segmentService = new SegmentService();
+const speechService = new SpeechService();
+
+/**
+ * =========================
+ * Controller (Actions)
+ * =========================
+ */
+const Actions = {
+  async importPdf(file) {
+    const doc = await pdfService.loadPdfFromFile(file);
+    store.documents.set(doc.id, doc);
+    store.currentDocumentId = doc.id;
+    store.currentPageNumber = 1;
+    store.currentPageRanges = [];
+    clearSelectionCache();
+    store._save();
+    toast("PDF importiert: " + doc.name);
+    UI.renderAll();
+  },
+
+  selectDocument(docId) {
+    store.currentDocumentId = docId;
+    store.currentPageNumber = 1;
+    store.currentPageRanges = [];
+    clearSelectionCache();
+    store._save();
+    UI.renderAll();
+  },
+
+  selectPage(pageNumber) {
+    store.currentPageNumber = pageNumber;
+    store.currentPageRanges = [];
+    clearSelectionCache();
+    store._save();
+    UI.renderReader();
+  },
+
+  setPageRange(from, to) {
+    const doc = store.currentDocumentId ? store.documents.get(store.currentDocumentId) : null;
+    if (!doc) return;
+    const bounds = getRangeBounds(doc, { from, to });
+    if (!bounds) return;
+    store.currentPageRanges = [bounds];
+    store.currentPageNumber = bounds.from;
+    clearSelectionCache();
+    store._save();
+    UI.renderReader();
+    UI.renderSelection();
+  },
+
+  addPageRange(from, to) {
+    const doc = store.currentDocumentId ? store.documents.get(store.currentDocumentId) : null;
+    if (!doc) return;
+    const bounds = getRangeBounds(doc, { from, to });
+    if (!bounds) return;
+    const existing = getActiveRanges(doc);
+    store.currentPageRanges = [...existing, bounds];
+    store.currentPageNumber = store.currentPageRanges[0]?.from || store.currentPageNumber;
+    clearSelectionCache();
+    store._save();
+    UI.renderReader();
+    UI.renderSelection();
+  },
+
+  async createSnippetFromSelection({ title, tags }) {
+    const snap = getSelectionSnapshotForSave();
+    const text = normalizeText(snap?.text || "");
+
+    const doc = store.documents.get(store.currentDocumentId);
+    if (!doc) { toast("Kein Dokument aktiv."); return; }
+    if (!text || text.length < 5) { toast("Markiere erst etwas Text (mind. 5 Zeichen)."); return; }
+
+    const activeRanges = snap?.ranges?.length ? snap.ranges : getActiveRanges(doc);
+    const pageText = getReaderText(doc, activeRanges);
+    const normPage = normalizeText(pageText);
+    const normSnippet = normalizeText(text);
+
+    // build anchors from page text around first occurrence (best-effort)
+    const idx = normPage.indexOf(normSnippet.slice(0, Math.min(160, normSnippet.length)));
+    const anchorIndex = idx >= 0 ? idx : 0;
+    const prefix = normPage.slice(Math.max(0, anchorIndex - 80), anchorIndex);
+    const start = normSnippet.slice(0, 140);
+    const suffix = normPage.slice(anchorIndex + start.length, anchorIndex + start.length + 80);
+
+    const normalizedHash = await sha256Hex(normSnippet);
+
+    const snippet = new SnippetModel({
+      id: uid(),
+      documentId: doc.id,
+      documentName: doc.name,
+      pageNumber: activeRanges.length ? activeRanges[0].from : store.currentPageNumber,
+      text,
+      title: (title || "").trim(),
+      tags: (tags || "").split(",").map(t => t.trim()).filter(Boolean),
+      locator: { prefix, start, suffix, normalizedHash },
+      pageRange: activeRanges.length ? { from: activeRanges[0].from, to: activeRanges[0].to } : null,
+      pageRanges: activeRanges.length ? activeRanges : null
+    });
+
+    store.snippets.set(snippet.id, snippet);
+
+    const pl = store.playlists.get(store.player.playlistId);
+    pl.snippetIds.push(snippet.id);
+
+    // if nothing playing, set as current
+    if (!store.player.currentSnippetId) {
+      store.player.currentSnippetId = snippet.id;
+      store.player.segmentIndex = 0;
+    }
+
+    store._save();
+    clearSelectionCache();
+    toast("Snippet gespeichert.");
+    UI.renderAll();
+  },
+
+  newPlaylist(title) {
+    const pl = new PlaylistModel({ id: uid(), title: (title || "Playlist").trim() || "Playlist", snippetIds: [] });
+    store.playlists.set(pl.id, pl);
+    store.player.playlistId = pl.id;
+    store.player.currentSnippetId = null;
+    store.player.segmentIndex = 0;
+    store._save();
+    toast("Playlist erstellt.");
+    UI.renderAll();
+  },
+
+  setNowPlaying(snippetId) {
+    if (store.player.isPaused) {
+      Actions.stopPlayback();
+    }
+    store.player.currentSnippetId = snippetId;
+    store.player.segmentIndex = 0;
+    store._save();
+    UI.renderPlayer();
+    UI.renderPlaylist();
+  },
+
+  showSnippetInText(snippetId) {
+    const snip = store.snippets.get(snippetId);
+    if (!snip) return;
+    const doc = store.documents.get(snip.documentId);
+    if (!doc) { toast("Quelle nicht gefunden."); return; }
+
+    const ranges = getSnippetRanges(snip).map(r => getRangeBounds(doc, r)).filter(Boolean);
+    store.currentDocumentId = doc.id;
+    store.currentPageNumber = ranges[0]?.from || snip.pageNumber;
+    store.currentPageRanges = ranges;
+    store.uiTab = "reader";
+    store._save();
+    UI.renderAll();
+    UI.highlightSnippetInReader(snip);
+  },
+
+  reorderSnippet(draggedId, targetId) {
+    const pl = store.playlists.get(store.player.playlistId);
+    const a = pl.snippetIds;
+    const from = a.indexOf(draggedId);
+    const to = a.indexOf(targetId);
+    if (from < 0 || to < 0 || from === to) return;
+    a.splice(to, 0, a.splice(from, 1)[0]);
+    store._save();
+    UI.renderPlaylist();
+  },
+
+  removeSnippet(snippetId) {
+    const pl = store.playlists.get(store.player.playlistId);
+    pl.snippetIds = pl.snippetIds.filter(id => id !== snippetId);
+    store.snippets.delete(snippetId);
+
+    if (store.player.currentSnippetId === snippetId) {
+      store.player.currentSnippetId = pl.snippetIds[0] || null;
+      store.player.segmentIndex = 0;
+      speechService.stop();
+      store.player.isPlaying = false;
+    }
+
+    store._save();
+    UI.renderAll();
+  },
+
+  setSegmentMode(mode) {
+    store.player.segmentMode = mode;
+    store.player.segmentIndex = 0;
+    store._save();
+    UI.renderPlayer();
+  },
+
+  setRepeatMode(mode) {
+    store.player.repeatMode = mode;
+    store._save();
+    UI.renderPlayer();
+  },
+
+  setActiveTab(tab) {
+    if (!["reader", "playlist"].includes(tab)) return;
+    store.uiTab = tab;
+    store._save();
+    UI.renderTabs();
+  },
+
+  stopPlayback() {
+    Controller._invalidateSpeech();
+    speechService.stop();
+    store.player.isPlaying = false;
+    store.player.isPaused = false;
+    store._save();
+    UI.renderPlayer();
+  },
+
+  playPause() {
+    const pl = store.playlists.get(store.player.playlistId);
+    if (!pl || pl.snippetIds.length === 0) return;
+
+    if (!store.player.currentSnippetId) {
+      store.player.currentSnippetId = pl.snippetIds[0];
+      store.player.segmentIndex = 0;
+    }
+
+    if (store.player.isPlaying) {
+      if (store.player.isPaused) {
+        speechService.resume();
+        store.player.isPaused = false;
+        store._save();
+        UI.renderPlayer();
+        return;
+      }
+      speechService.pause();
+      store.player.isPaused = true;
+      store._save();
+      UI.renderPlayer();
+      return;
+    }
+
+    // Play current segment
+    store.player.isPlaying = true;
+    store.player.isPaused = false;
+    store._save();
+    Controller._speakCurrentSegment();
+    UI.renderPlayer();
+  }
+};
+
+const Controller = {
+  _invalidateSpeech() {
+    store.player.playToken = (store.player.playToken || 0) + 1;
+    return store.player.playToken;
+  },
+
+  _getCurrentSnippet() {
+    const id = store.player.currentSnippetId;
+    return id ? store.snippets.get(id) : null;
+  },
+
+  _getSegments(snippet) {
+    return segmentService.segment(snippet.text, store.player.segmentMode);
+  },
+
+  _speakCurrentSegment() {
+    const snippet = this._getCurrentSnippet();
+    if (!snippet) { Actions.stopPlayback(); return; }
+
+    const segments = this._getSegments(snippet);
+    if (segments.length === 0) { Actions.stopPlayback(); return; }
+
+    store.player.segmentIndex = clamp(store.player.segmentIndex, 0, segments.length - 1);
+    store.player.isPaused = false;
+    store._save();
+
+    const segText = segments[store.player.segmentIndex];
+    // Render segment immediately (without word highlight). Word highlight may update via boundary events.
+    renderNowReading(segText, -1);
+
+    const token = this._invalidateSpeech();
+    speechService.speak(segText, {
+      onBoundary: (ev) => {
+        if (token !== store.player.playToken) return;
+        // Some engines report boundary at word start; use charIndex when available.
+        const idx = (typeof ev.charIndex === "number") ? ev.charIndex : -1;
+        if (idx >= 0) renderNowReading(segText, idx);
+      },
+      onEnd: () => {
+        if (token !== store.player.playToken) return;
+        if (!store.player.isPlaying) return;
+        if (store.player.isPaused) return;
+        // auto-advance to next segment; if last, go next snippet
+        const nextIndex = store.player.segmentIndex + 1;
+        if (nextIndex < segments.length) {
+          store.player.segmentIndex = nextIndex;
+          store._save();
+          UI.renderPlayer();
+          this._speakCurrentSegment();
+        } else {
+          this._advanceAfterSnippetEnd();
+        }
+      },
+      onError: (e) => {
+        if (token !== store.player.playToken) return;
+        console.warn("Speech error:", e);
+        Actions.stopPlayback();
+      }
+    });
+    UI.renderPlayer();
+  },
+
+  _advanceAfterSnippetEnd() {
+    const pl = store.playlists.get(store.player.playlistId);
+    if (!pl || pl.snippetIds.length === 0) { Actions.stopPlayback(); return; }
+
+    const curId = store.player.currentSnippetId;
+    const curIndex = curId ? pl.snippetIds.indexOf(curId) : -1;
+    const atLast = curIndex >= pl.snippetIds.length - 1;
+
+    if (store.player.repeatMode === "one") {
+      store.player.segmentIndex = 0;
+      store.player.isPaused = false;
+      store._save();
+      this._speakCurrentSegment();
+      return;
+    }
+
+    if (!atLast && curIndex >= 0) {
+      this._jumpToSnippet(pl.snippetIds[curIndex + 1], { autoPlay: true });
+      return;
+    }
+
+    if (store.player.repeatMode === "all" && pl.snippetIds.length > 0) {
+      this._jumpToSnippet(pl.snippetIds[0], { autoPlay: true });
+      return;
+    }
+
+    Actions.stopPlayback();
+  },
+
+  _jumpToSnippet(snippetId, { autoPlay = false } = {}) {
+    if (!snippetId) return;
+    const shouldPlay = autoPlay || (store.player.isPlaying && !store.player.isPaused);
+    const wasPaused = store.player.isPaused;
+
+    store.player.currentSnippetId = snippetId;
+    store.player.segmentIndex = 0;
+    store.player.isPaused = false;
+
+    if (shouldPlay) {
+      store.player.isPlaying = true;
+      this._invalidateSpeech();
+      speechService.stop();
+      store._save();
+      UI.renderPlaylist();
+      this._speakCurrentSegment();
+      return;
+    }
+
+    if (wasPaused) {
+      this._invalidateSpeech();
+      speechService.stop();
+      store.player.isPlaying = false;
+    }
+
+    store._save();
+    UI.renderAll();
+  },
+
+  prevSegment() {
+    const snippet = this._getCurrentSnippet();
+    if (!snippet) return;
+    const segs = this._getSegments(snippet);
+    if (segs.length === 0) return;
+
+    store.player.segmentIndex = clamp(store.player.segmentIndex - 1, 0, segs.length - 1);
+    store._save();
+    if (store.player.isPlaying && !store.player.isPaused) this._speakCurrentSegment();
+    UI.renderPlayer();
+  },
+
+  nextSegment() {
+    const snippet = this._getCurrentSnippet();
+    if (!snippet) return;
+    const segs = this._getSegments(snippet);
+    if (segs.length === 0) return;
+
+    store.player.segmentIndex = clamp(store.player.segmentIndex + 1, 0, segs.length - 1);
+    store._save();
+    if (store.player.isPlaying && !store.player.isPaused) this._speakCurrentSegment();
+    UI.renderPlayer();
+  },
+
+  prevSnippet(autoPlay = false) {
+    const pl = store.playlists.get(store.player.playlistId);
+    if (!pl || pl.snippetIds.length === 0) return;
+
+    const cur = store.player.currentSnippetId;
+    const i = cur ? pl.snippetIds.indexOf(cur) : 0;
+    const ni = clamp(i - 1, 0, pl.snippetIds.length - 1);
+    this._jumpToSnippet(pl.snippetIds[ni], { autoPlay });
+  },
+
+  nextSnippet(autoPlay = false) {
+    const pl = store.playlists.get(store.player.playlistId);
+    if (!pl || pl.snippetIds.length === 0) return;
+
+    const cur = store.player.currentSnippetId;
+    const i = cur ? pl.snippetIds.indexOf(cur) : -1;
+    const ni = clamp(i + 1, 0, pl.snippetIds.length - 1);
+    this._jumpToSnippet(pl.snippetIds[ni], { autoPlay });
+  }
+};
+
+/**
+ * =========================
+ * UI Rendering
+ * =========================
+ */
+const UI = {
+  init() {
+    // PDF Load
+    document.getElementById("btnLoadPdf").addEventListener("click", async () => {
+      const input = document.getElementById("pdfFile");
+      const file = input.files && input.files[0];
+      if (!file) return toast("Bitte PDF auswählen.");
+      try {
+        await Actions.importPdf(file);
+        input.value = "";
+      } catch (e) {
+        console.error(e);
+        toast("PDF Laden fehlgeschlagen (PDF.js).");
+      }
+    });
+
+    // Save Snippet
+    document.getElementById("btnSaveSnippet").addEventListener("click", async () => {
+      const title = document.getElementById("snippetTitle").value;
+      const tags = document.getElementById("snippetTags").value;
+      await Actions.createSnippetFromSelection({ title, tags });
+      document.getElementById("snippetTitle").value = "";
+      document.getElementById("snippetTags").value = "";
+      window.getSelection()?.removeAllRanges();
+      this.renderSelection();
+    });
+
+    // Selection change preview
+    document.addEventListener("selectionchange", () => this.renderSelection());
+    const pageText = document.getElementById("pageText");
+    ["pointerup", "touchend"].forEach(evt => {
+      pageText?.addEventListener(evt, () => this.renderSelection());
+    });
+    ["mouseup", "touchend"].forEach(evt => {
+      document.addEventListener(evt, () => this.renderSelection(), { passive: true });
+    });
+
+    // Page range
+    document.getElementById("btnShowRange").addEventListener("click", () => {
+      const from = parseInt(document.getElementById("fromSelect").value, 10);
+      const to = parseInt(document.getElementById("toSelect").value, 10);
+      Actions.setPageRange(from, to);
+      window.getSelection()?.removeAllRanges();
+      UI.renderSelection();
+    });
+    document.getElementById("btnAddRange").addEventListener("click", () => {
+      const from = parseInt(document.getElementById("fromSelect").value, 10);
+      const to = parseInt(document.getElementById("toSelect").value, 10);
+      Actions.addPageRange(from, to);
+      window.getSelection()?.removeAllRanges();
+      UI.renderSelection();
+    });
+
+    // Playlist buttons
+    document.getElementById("btnNewPlaylist").addEventListener("click", () => {
+      const title = document.getElementById("playlistTitle").value;
+      Actions.newPlaylist(title);
+      document.getElementById("playlistTitle").value = "";
+    });
+
+    document.getElementById("btnClearAll").addEventListener("click", () => {
+      if (confirm("Wirklich alles löschen (localStorage Reset)?")) store.resetAll();
+    });
+
+    // Player controls
+    document.getElementById("segmentMode").addEventListener("change", (e) => Actions.setSegmentMode(e.target.value));
+    document.getElementById("repeatMode").addEventListener("change", (e) => Actions.setRepeatMode(e.target.value));
+    document.getElementById("btnPlayPause").addEventListener("click", () => Actions.playPause());
+    document.getElementById("btnStop").addEventListener("click", () => Actions.stopPlayback());
+    document.getElementById("btnPrevSeg").addEventListener("click", () => Controller.prevSegment());
+    document.getElementById("btnNextSeg").addEventListener("click", () => Controller.nextSegment());
+    document.getElementById("btnPrevSnippet").addEventListener("click", () => Controller.prevSnippet());
+    document.getElementById("btnNextSnippet").addEventListener("click", () => Controller.nextSnippet());
+    document.getElementById("btnFullscreen").addEventListener("click", () => UI.setFullscreen(true));
+
+    // Mobile toolbar controls (same actions as desktop controls)
+    document.getElementById("mPlayPause").addEventListener("click", () => Actions.playPause());
+    document.getElementById("mPrevSeg").addEventListener("click", () => Controller.prevSegment());
+    document.getElementById("mNextSeg").addEventListener("click", () => Controller.nextSegment());
+    document.getElementById("mPrevSnippet").addEventListener("click", () => Controller.prevSnippet());
+    document.getElementById("mNextSnippet").addEventListener("click", () => Controller.nextSnippet());
+
+    // Fullscreen overlay controls
+    document.getElementById("btnCloseFullscreen").addEventListener("click", () => UI.setFullscreen(false));
+    document.getElementById("fsPlayPause").addEventListener("click", () => Actions.playPause());
+    document.getElementById("fsStop").addEventListener("click", () => Actions.stopPlayback());
+    document.getElementById("fsPrevSeg").addEventListener("click", () => Controller.prevSegment());
+    document.getElementById("fsNextSeg").addEventListener("click", () => Controller.nextSegment());
+    document.getElementById("fsPrevSnippet").addEventListener("click", () => Controller.prevSnippet());
+    document.getElementById("fsNextSnippet").addEventListener("click", () => Controller.nextSnippet());
+
+    // Tab buttons
+    document.querySelectorAll(".tabBtn").forEach(btn => {
+      btn.addEventListener("click", () => Actions.setActiveTab(btn.dataset.tab));
+    });
+
+    // Export/Import
+    document.getElementById("btnExport").addEventListener("click", () => {
+      const json = JSON.stringify(store._serialize(), null, 2);
+      navigator.clipboard.writeText(json).then(() => toast("JSON in Clipboard kopiert."));
+    });
+    document.getElementById("btnImport").addEventListener("click", async () => {
+      const raw = prompt("JSON hier einfügen:");
+      if (!raw) return;
+      try {
+        const data = JSON.parse(raw);
+        // crude import: overwrite localStorage
+        localStorage.setItem("snippet_tts_prototype_v1", JSON.stringify(data));
+        toast("Import ok. Reload…");
+        setTimeout(() => location.reload(), 600);
+      } catch (e) {
+        toast("Import fehlgeschlagen (JSON invalid).");
+      }
+    });
+
+    // Keyboard shortcuts
+    window.addEventListener("keydown", (e) => {
+      if (e.target && ["INPUT","TEXTAREA","SELECT"].includes(e.target.tagName)) return;
+      if (e.code === "Space") { e.preventDefault(); Actions.playPause(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); Controller.prevSegment(); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); Controller.nextSegment(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); Controller.prevSnippet(); }
+      else if (e.key === "ArrowDown") { e.preventDefault(); Controller.nextSnippet(); }
+    });
+
+    this.renderAll();
+  },
+
+  renderAll() {
+    this.renderTabs();
+    this.renderDocs();
+    this.renderReader();
+    this.renderSelection();
+    this.renderPlaylist();
+    this.renderPlayer();
+  },
+
+  renderTabs() {
+    const tab = ["reader","playlist"].includes(store.uiTab) ? store.uiTab : "reader";
+    document.querySelectorAll(".tabPane").forEach(pane => {
+      pane.classList.toggle("active", pane.dataset.tab === tab);
+    });
+    document.querySelectorAll(".tabBtn").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.tab === tab);
+    });
+  },
+
+  setFullscreen(isOpen) {
+    const overlay = document.getElementById("fullscreenOverlay");
+    if (!overlay) return;
+    overlay.classList.toggle("active", !!isOpen);
+    overlay.setAttribute("aria-hidden", isOpen ? "false" : "true");
+    document.body.style.overflow = isOpen ? "hidden" : "";
+  },
+
+  renderDocs() {
+    const docList = document.getElementById("docList");
+    docList.innerHTML = "";
+
+    const docs = [...store.documents.values()].sort((a,b) => b.createdAt - a.createdAt);
+    if (docs.length === 0) {
+      docList.innerHTML = `<div class="small">Noch keine PDFs importiert.</div>`;
+      return;
+    }
+
+    docs.forEach(doc => {
+      const card = document.createElement("div");
+      card.className = "card";
+      const active = store.currentDocumentId === doc.id;
+
+      card.innerHTML = `
+        <div class="top">
+          <div>
+            <div class="name">${doc.name}</div>
+            <div class="small">Seiten: ${doc.pageCount} · ID: <span class="mono">${doc.id.slice(0,8)}</span></div>
+          </div>
+          <div class="actions">
+            <button class="${active ? "primary" : ""}">${active ? "Aktiv" : "Wählen"}</button>
+          </div>
+        </div>
+      `;
+      card.querySelector("button").addEventListener("click", () => Actions.selectDocument(doc.id));
+      docList.appendChild(card);
+    });
+  },
+
+  renderReader() {
+    const meta = document.getElementById("readerMeta");
+    const fromSelect = document.getElementById("fromSelect");
+    const toSelect = document.getElementById("toSelect");
+    const btnShowRange = document.getElementById("btnShowRange");
+    const btnAddRange = document.getElementById("btnAddRange");
+    const pageText = document.getElementById("pageText");
+    const btnSave = document.getElementById("btnSaveSnippet");
+
+    const doc = store.currentDocumentId ? store.documents.get(store.currentDocumentId) : null;
+
+    if (!doc) {
+      meta.textContent = "Kein Dokument geladen.";
+      fromSelect.disabled = true;
+      toSelect.disabled = true;
+      btnShowRange.disabled = true;
+      btnAddRange.disabled = true;
+      btnSave.disabled = true;
+      fromSelect.innerHTML = "";
+      toSelect.innerHTML = "";
+      pageText.textContent = "(PDF laden, dann Seite wählen)";
+      return;
+    }
+
+    const ranges = getActiveRanges(doc);
+    const label = ranges.length ? formatPageLabel(store.currentPageNumber, ranges) : `Seite ${store.currentPageNumber}`;
+    meta.textContent = `${doc.name} · ${label}/${doc.pageCount}`;
+    fromSelect.disabled = false;
+    toSelect.disabled = false;
+    btnShowRange.disabled = false;
+    btnAddRange.disabled = false;
+    btnSave.disabled = false;
+
+    // fill range selects
+    const fillSelect = (select, selected) => {
+      select.innerHTML = "";
+      for (let p=1; p<=doc.pageCount; p++) {
+        const opt = document.createElement("option");
+        opt.value = String(p);
+        opt.textContent = "Seite " + p;
+        if (p === selected) opt.selected = true;
+        select.appendChild(opt);
+      }
+    };
+
+    const lastRange = ranges.length ? ranges[ranges.length - 1] : null;
+    fillSelect(fromSelect, lastRange ? lastRange.from : store.currentPageNumber);
+    fillSelect(toSelect, lastRange ? lastRange.to : store.currentPageNumber);
+
+    const text = getReaderText(doc);
+    pageText.textContent = text || "(Keine Textdaten extrahiert – PDF evtl. bildbasiert.)";
+  },
+
+  highlightSnippetInReader(snip) {
+    const pageTextEl = document.getElementById("pageText");
+    const doc = store.currentDocumentId ? store.documents.get(store.currentDocumentId) : null;
+    if (!pageTextEl || !doc || !snip) return;
+
+    const pageText = getReaderText(doc);
+    if (!pageText) {
+      pageTextEl.textContent = "(Keine Textdaten extrahiert – PDF evtl. bildbasiert.)";
+      return;
+    }
+
+    const needle = normalizeText((snip.text || "").slice(0, 120));
+    if (!needle) {
+      pageTextEl.textContent = pageText;
+      return;
+    }
+
+    const idx = pageText.indexOf(needle);
+    if (idx >= 0) {
+      const before = escapeHtml(pageText.slice(0, idx));
+      const match = escapeHtml(pageText.slice(idx, idx + needle.length));
+      const after = escapeHtml(pageText.slice(idx + needle.length));
+      pageTextEl.innerHTML = `${before}<mark id="snippetMark">${match}</mark>${after}`;
+      const markEl = pageTextEl.querySelector("#snippetMark");
+      markEl?.scrollIntoView({ behavior: "smooth", block: "center" });
+    } else {
+      pageTextEl.textContent = pageText;
+      toast("Stelle nicht eindeutig gefunden");
+      pageTextEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  },
+
+  renderSelection() {
+    const info = document.getElementById("selectionInfo");
+    const preview = document.getElementById("selectionPreview");
+
+    const live = getSelectionSnapshotFromReader();
+
+    if (!live) {
+      const cached = getCachedSelectionForCurrent();
+      if (!cached) {
+        info.textContent = "Keine Markierung.";
+        preview.textContent = "";
+        return;
+      }
+      const doc = store.currentDocumentId ? store.documents.get(store.currentDocumentId) : null;
+      const src = doc
+        ? `${doc.name} – ${formatPageLabel(store.currentPageNumber, cached.ranges)}`
+        : "(keine Quelle)";
+      info.textContent = `Letzte Markierung (gespeichert): ${src} · Länge: ${cached.text.length} Zeichen`;
+      preview.textContent = cached.text.slice(0, 5000);
+      return;
+    }
+
+    updateSelectionCacheFromDOM();
+    const doc = store.currentDocumentId ? store.documents.get(store.currentDocumentId) : null;
+    const src = doc
+      ? `${doc.name} – ${formatPageLabel(store.currentPageNumber, live.ranges)}`
+      : "(keine Quelle)";
+
+    info.textContent = `Quelle: ${src} · Länge: ${live.text.length} Zeichen`;
+    preview.textContent = live.text.slice(0, 5000);
+  },
+
+  renderPlaylist() {
+    const plEl = document.getElementById("playlistList");
+    plEl.innerHTML = "";
+
+    const pl = store.playlists.get(store.player.playlistId);
+    if (!pl) return;
+
+    const ids = pl.snippetIds.slice();
+    if (ids.length === 0) {
+      plEl.innerHTML = `<div class="small">Keine Snippets in dieser Playlist. Markiere Text im Reader und speichere ihn.</div>`;
+      return;
+    }
+
+    ids.forEach(snippetId => {
+      const snip = store.snippets.get(snippetId);
+      if (!snip) return;
+
+      const card = document.createElement("div");
+      const isNow = store.player.currentSnippetId === snip.id;
+      card.className = "card draggable" + (isNow ? " nowPlaying" : "");
+      card.draggable = true;
+      card.dataset.snipId = snip.id;
+
+      const title = snip.title || snip.text.slice(0, 64).replace(/\s+/g, " ") + (snip.text.length > 64 ? "…" : "");
+      const tagStr = snip.tags.length ? snip.tags.join(", ") : "—";
+      const pageLabel = formatPageLabel(snip.pageNumber, getSnippetRanges(snip));
+
+      card.innerHTML = `
+        <div class="top">
+          <div style="min-width:0;">
+            <div class="name">${escapeHtml(title)}</div>
+            <div class="small">Quelle: ${escapeHtml(snip.documentName)} · ${pageLabel}</div>
+            <div class="small">Tags: ${escapeHtml(tagStr)}</div>
+          </div>
+          <div class="actions">
+            <span class="pill mono">#${snip.id.slice(0,6)}</span>
+            <button class="showInText">Im Text anzeigen</button>
+            <button class="danger">Löschen</button>
+          </div>
+        </div>
+        <div class="hr"></div>
+        <div class="row">
+          <button class="snippetToggle" type="button">Details</button>
+        </div>
+        <div class="snippetBody collapsed">
+          <div class="small">${escapeHtml(snip.text.slice(0, 800).replace(/\s+/g, " "))}${snip.text.length>800?"…":""}</div>
+        </div>
+      `;
+
+      card.addEventListener("click", (e) => {
+        if (e.target && e.target.tagName === "BUTTON") return;
+        Actions.setNowPlaying(snip.id);
+      });
+
+      card.addEventListener("dblclick", (e) => {
+        if (e.target && e.target.tagName === "BUTTON") return;
+        Controller._jumpToSnippet(snip.id, { autoPlay: true });
+      });
+
+      card.querySelector("button.danger").addEventListener("click", (e) => {
+        e.stopPropagation();
+        Actions.removeSnippet(snip.id);
+      });
+
+      card.querySelector("button.showInText").addEventListener("click", (e) => {
+        e.stopPropagation();
+        Actions.showSnippetInText(snip.id);
+      });
+
+      // Collapsible details (mobile)
+      const toggleBtn = card.querySelector("button.snippetToggle");
+      const bodyEl = card.querySelector(".snippetBody");
+      if (toggleBtn && bodyEl) {
+        toggleBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          bodyEl.classList.toggle("collapsed");
+          toggleBtn.textContent = bodyEl.classList.contains("collapsed") ? "Details" : "Weniger";
+        });
+      }
+
+      // DnD
+      card.addEventListener("dragstart", (e) => {
+        card.classList.add("dragging");
+        e.dataTransfer.setData("text/plain", snip.id);
+      });
+      card.addEventListener("dragend", () => card.classList.remove("dragging"));
+      card.addEventListener("dragover", (e) => e.preventDefault());
+      card.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const draggedId = e.dataTransfer.getData("text/plain");
+        Actions.reorderSnippet(draggedId, snip.id);
+      });
+
+      plEl.appendChild(card);
+    });
+  },
+
+  renderPlayer() {
+    const meta = document.getElementById("playerMeta");
+    const now = document.getElementById("nowPlayingInfo");
+    const btnPlay = document.getElementById("btnPlayPause");
+    const btnStop = document.getElementById("btnStop");
+    const btnPrevSeg = document.getElementById("btnPrevSeg");
+    const btnNextSeg = document.getElementById("btnNextSeg");
+    const btnPrevSnip = document.getElementById("btnPrevSnippet");
+    const btnNextSnip = document.getElementById("btnNextSnippet");
+    const btnFullscreen = document.getElementById("btnFullscreen");
+
+    document.getElementById("segmentMode").value = store.player.segmentMode;
+    document.getElementById("repeatMode").value = store.player.repeatMode;
+
+    const pl = store.playlists.get(store.player.playlistId);
+    const snip = store.player.currentSnippetId ? store.snippets.get(store.player.currentSnippetId) : null;
+
+    const count = pl ? pl.snippetIds.length : 0;
+    meta.textContent = `Playlist: ${(pl?.title)||"—"} · Snippets: ${count}`;
+
+    const enabled = count > 0;
+    const playLabel = store.player.isPlaying ? (store.player.isPaused ? "Resume" : "Pause") : "Play";
+    document.getElementById("repeatMode").disabled = !enabled;
+    btnPlay.disabled = !enabled;
+    btnStop.disabled = !enabled;
+    btnPrevSeg.disabled = !enabled;
+    btnNextSeg.disabled = !enabled;
+    btnPrevSnip.disabled = !enabled;
+    btnNextSnip.disabled = !enabled;
+    if (btnFullscreen) btnFullscreen.disabled = !enabled;
+
+    btnPlay.textContent = playLabel;
+
+    if (!snip) {
+      now.textContent = "Kein Snippet ausgewählt.";
+      // Reset Now Reading panel
+      renderNowReading("", -1);
+      // Mobile toolbar sync
+      const mPlay = document.getElementById("mPlayPause");
+      const mPrevSeg = document.getElementById("mPrevSeg");
+      const mNextSeg = document.getElementById("mNextSeg");
+      const mPrevSnip = document.getElementById("mPrevSnippet");
+      const mNextSnip = document.getElementById("mNextSnippet");
+      const mMeta = document.getElementById("mNowMeta");
+      const fsPlay = document.getElementById("fsPlayPause");
+      const fsStop = document.getElementById("fsStop");
+      const fsPrevSeg = document.getElementById("fsPrevSeg");
+      const fsNextSeg = document.getElementById("fsNextSeg");
+      const fsPrevSnip = document.getElementById("fsPrevSnippet");
+      const fsNextSnip = document.getElementById("fsNextSnippet");
+
+      if (mPlay) mPlay.textContent = playLabel;
+      if (mPlay) mPlay.disabled = !enabled;
+      if (mPrevSeg) mPrevSeg.disabled = !enabled;
+      if (mNextSeg) mNextSeg.disabled = !enabled;
+      if (mPrevSnip) mPrevSnip.disabled = !enabled;
+      if (mNextSnip) mNextSnip.disabled = !enabled;
+      if (mMeta) mMeta.textContent = "—";
+
+      if (fsPlay) fsPlay.textContent = playLabel;
+      if (fsPlay) fsPlay.disabled = !enabled;
+      if (fsStop) fsStop.disabled = !enabled;
+      if (fsPrevSeg) fsPrevSeg.disabled = !enabled;
+      if (fsNextSeg) fsNextSeg.disabled = !enabled;
+      if (fsPrevSnip) fsPrevSnip.disabled = !enabled;
+      if (fsNextSnip) fsNextSnip.disabled = !enabled;
+      return;
+    }
+
+    const segs = segmentService.segment(snip.text, store.player.segmentMode);
+    const segCount = segs.length || 0;
+    const idx = clamp(store.player.segmentIndex, 0, Math.max(0, segCount - 1));
+    const currentSeg = segs[idx] || "";
+    // Keep the Now Reading panel useful even when paused or when the user navigates segments.
+    // When playing, word highlight (if supported) is driven by boundary events.
+    if (!store.player.isPlaying || store.player.isPaused) renderNowReading(currentSeg, -1);
+    const title = snip.title || snip.text.slice(0, 60).replace(/\s+/g," ") + (snip.text.length>60?"…":"");
+    const pageLabel = formatPageLabel(snip.pageNumber, getSnippetRanges(snip));
+
+    now.innerHTML = `
+      <div><b>Now Playing:</b> ${escapeHtml(title)}</div>
+      <div class="small">Quelle: ${escapeHtml(snip.documentName)} · ${pageLabel}</div>
+      <div class="small">Modus: ${store.player.segmentMode} · Segment: ${idx+1}/${segCount || 1}</div>
+      <div class="hr"></div>
+      <div class="small mono">${escapeHtml(currentSeg.slice(0, 260))}${currentSeg.length>260?"…":""}</div>
+    `;
+
+    // Mobile toolbar sync
+    const mPlay = document.getElementById("mPlayPause");
+    const mPrevSeg = document.getElementById("mPrevSeg");
+    const mNextSeg = document.getElementById("mNextSeg");
+    const mPrevSnip = document.getElementById("mPrevSnippet");
+    const mNextSnip = document.getElementById("mNextSnippet");
+    const mMeta = document.getElementById("mNowMeta");
+    const fsPlay = document.getElementById("fsPlayPause");
+    const fsStop = document.getElementById("fsStop");
+    const fsPrevSeg = document.getElementById("fsPrevSeg");
+    const fsNextSeg = document.getElementById("fsNextSeg");
+    const fsPrevSnip = document.getElementById("fsPrevSnippet");
+    const fsNextSnip = document.getElementById("fsNextSnippet");
+
+    if (mPlay) mPlay.textContent = playLabel;
+    if (mPlay) mPlay.disabled = !enabled;
+    if (mPrevSeg) mPrevSeg.disabled = !enabled;
+    if (mNextSeg) mNextSeg.disabled = !enabled;
+    if (mPrevSnip) mPrevSnip.disabled = !enabled;
+    if (mNextSnip) mNextSnip.disabled = !enabled;
+
+    if (mMeta) {
+      const t = snip ? (snip.title || snip.text.slice(0, 44).replace(/\s+/g, " ") + (snip.text.length > 44 ? "…" : "")) : "—";
+      const segs2 = snip ? segmentService.segment(snip.text, store.player.segmentMode) : [];
+      const segCount2 = segs2.length || 0;
+      const idx2 = snip ? clamp(store.player.segmentIndex, 0, Math.max(0, segCount2 - 1)) : 0;
+      const repeatMap = { off: "aus", all: "alle", one: "eins" };
+      const repeatLabel = repeatMap[store.player.repeatMode] || store.player.repeatMode;
+      mMeta.textContent = snip ? `${t} · ${store.player.segmentMode} ${idx2 + 1}/${segCount2 || 1} · Repeat ${repeatLabel}` : "—";
+    }
+
+    if (fsPlay) fsPlay.textContent = playLabel;
+    if (fsPlay) fsPlay.disabled = !enabled;
+    if (fsStop) fsStop.disabled = !enabled;
+    if (fsPrevSeg) fsPrevSeg.disabled = !enabled;
+    if (fsNextSeg) fsNextSeg.disabled = !enabled;
+    if (fsPrevSnip) fsPrevSnip.disabled = !enabled;
+    if (fsNextSnip) fsNextSnip.disabled = !enabled;
+  }
+};
+
+// PRODUCTION NOTE (iOS/Swift, max usability):
+// Use PDFKit (PDFDocument/PDFView). For each snippet, persist document identifier, page index,
+// and PDFSelection bounds/rects (PDF coordinates) so highlights are layout-true.
+// Playback: AVSpeechSynthesizer with range callbacks to drive word/segment progress.
+// Render: PDFView scroll/crop to stored rects and draw highlight overlays on top.
+// Goal: stable read-along directly in the PDF, without brittle text-to-layout matching.
+
+function tokenizeWordsWithOffsets(text) {
+  const tokens = [];
+  const re = /\S+/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    tokens.push({ word: m[0], start: m.index, end: m.index + m[0].length });
+  }
+  return tokens;
+}
+
+function renderNowReading(segmentText, activeCharIndex) {
+  const targets = [
+    document.getElementById("nowReadingText"),
+    document.getElementById("nowReadingTextFs")
+  ].filter(Boolean);
+  if (targets.length === 0) return;
+  const s = (segmentText || "").trim();
+  if (!s) {
+    targets.forEach(el => { el.textContent = "—"; });
+    return;
+  }
+
+  // If we don't have a reliable char index, render plain text for robustness.
+  if (typeof activeCharIndex !== "number" || !Number.isFinite(activeCharIndex) || activeCharIndex < 0) {
+    targets.forEach(el => { el.textContent = s; });
+    return;
+  }
+
+  const tokens = tokenizeWordsWithOffsets(s);
+  if (tokens.length === 0) {
+    targets.forEach(el => { el.textContent = s; });
+    return;
+  }
+
+  const activeIdx = tokens.findIndex(t => activeCharIndex >= t.start && activeCharIndex < t.end);
+  if (activeIdx < 0) {
+    targets.forEach(el => { el.textContent = s; });
+    return;
+  }
+
+  // Build HTML with minimal escaping and highlight on token spans.
+  const parts = [];
+  let cursor = 0;
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+    if (t.start > cursor) parts.push(escapeHtml(s.slice(cursor, t.start)));
+    const cls = i === activeIdx ? "w active" : "w";
+    parts.push(`<span class="${cls}">${escapeHtml(s.slice(t.start, t.end))}</span>`);
+    cursor = t.end;
+  }
+  if (cursor < s.length) parts.push(escapeHtml(s.slice(cursor)));
+  const html = parts.join("");
+  targets.forEach(el => { el.innerHTML = html; });
+}
+
+function escapeHtml(s) {
+  return (s || "").replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m]));
+}
+
+UI.init();
+</script>
+</body>
+</html>

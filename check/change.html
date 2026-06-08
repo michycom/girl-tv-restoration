@@ -1,0 +1,46 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<title>Changing Content in Modern Browsers</title>
+<style type="text/css">
+body { font: 12px/1.3 verdana, arial, helvetica, sans-serif; }
+h1 { font-size:16px }	
+a:link { color:#33c }	
+a:visited { color:#339 }	
+</style>
+<script type="text/javascript">
+
+
+function changeContent(id,shtml) {
+   if (document.getElementById || document.all) {
+      var el = document.getElementById? document.getElementById(id): document.all[id];
+      if (el && typeof el.innerHTML != "undefined") el.innerHTML = shtml;
+   }
+}
+
+var msg1 = '<span style="color:navy; font-style:italic">hi baby</span>';
+</script>
+</head>
+<body>
+
+<a href="innerhtml2.html">another example</a>.</p>
+
+
+<pre><form onkeypress="changeContent('para',hoho.value)">
+<a href="javascript:;" name="hihi" onmouseover="changeContent('lyr','New content for the div.')" onmouseout="changeContent('lyr','<textarea id=hoho type=text>')">Hover here</a> 
+<input type="submit" value="click" onclick="changeContent('para',hoho.value)">
+<a href="javascript:;" onclick="changeContent('para',hoho.value)">paragraph</a>  
+below. <a href="javascript:;" onmouseover="changeContent('td2','<img src=http://girl.tv/girltv-boy.gif>')" onmouseout="changeContent('td2','<img src=http://girl.tv/girl.TV-boys_copy.gif>')">Hover here</a> 
+
+
+<div id="lyr">A div here.</div>
+
+<p id="para">A paragraph here.</p>
+<table border="2" cellpadding="4">
+ <tr>
+  <td>cell one</td><td id="td2">cell two</td>
+ </tr>
+</table>
+</body>
+</html>
+

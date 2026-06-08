@@ -1,0 +1,155 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<meta name="author" content="girl.tv/turbo">
+<meta name="description" content="Girl.Tv/Turbocharge">
+<meta name="robots" content="index, follow">
+
+<style type="text/css">
+body
+{ margin:0px; }
+body
+{ background-color:#CA3C93; }
+body,table,.hp_form,.hp_button
+{ font-family:Arial, Helvetica;}
+body,table,.hp_form,.hp_button
+{ font-size:7pt; }
+body,table
+{ color:#000000; }
+a
+{ color:#000000; }
+a
+{ text-decoration:none; }
+div
+{ position:absolute; }
+img
+{ border-width:0px; }
+.hp_button,.hp_form
+{ border-width:1px; }
+</style>
+
+<script language="JavaScript" type="text/javascript">
+<!--
+var weight, eTime;
+var horsepower1, horsepower2, horsepower3, horsepower4;
+var temp1, temp2, temp3, temp4;
+var speed;
+var finalhp1, finalhp2, finalhp3, finalhp4, finalhp5, finalhp6;
+function create(form){
+eTime = form.elapsedTime.value;
+weight = form.vehicleWeight.value;
+temp1 = eTime / 5.825;
+temp1 = temp1 * temp1 * temp1;
+horsepower1 = weight / temp1;
+finalhp1 = roundOff(horsepower1, 2)
+horsepower2 = horsepower1 * 1.3;
+finalhp2 = roundOff(horsepower2, 2)
+text = "<HEAD><TITLE>1/4 Mile Method</TITLE></HEAD>";
+text += "<BODY style='background-color:#B9D5BC; color:#234726; font-family:Arial,Helvetica,sans-serif; font-size:7pt;'>";
+text += "<center><font style='font-size:9pt;'>Horsepower Results - 1/4 Mile Method</font></center><br>";
+text += "Your " +form.carModel.value;
+text += " weighs about " +form.vehicleWeight.value+ " pounds ";
+text += "and can complete a 1/4 mile in about ";
+text += form.elapsedTime.value;
+text += " seconds.<br>That means that you've got about <font style='color:#FFB502;'>" +finalhp1;
+text += "</font> HP at the wheels,<br>and about <font style='color:#FFB502;'>" + finalhp2;
+text += "</font> HP at the flywheel.<br><br>";
+text += "<form><input type=button onClick='self.close()' style='font-family:Arial,Helvetica,sans-serif; font-size:7pt; border-width:1px;'";
+text += "value='Close Window'";
+resultsWindow=window.open("", "displayWindow", "toolbar=no,menubar=no,scrollbar=auto,resizable=no,width=300,height=114,left=300,top=250")
+resultsWindow.document.writeln(text);
+resultsWindow.document.close();
+}
+function input1(form) {
+Ctrl = form.carModel;
+if (Ctrl.value == "") {
+validatePrompt (Ctrl, "Please Input a Car Model.")
+return (false);
+} else
+return (true);
+}
+function input2(form) {
+Ctrl = form.vehicleWeight;
+if (Ctrl.value == "") {
+validatePrompt (Ctrl, "Please enter Your Vehicle Weight in Pounds.")
+return (false);
+} else
+return (true);
+}
+function input3(form) {
+Ctrl = form.elapsedTime;
+if (Ctrl.value == "") {
+validatePrompt (Ctrl, "Please enter Your 1/4 mile trapspeed. You can estimate...")
+return (false);
+} else
+return (true);
+}
+function runSubmit (form, button)  {
+if (!input1(form)) return;
+if (!input2(form)) return;
+if (!input3(form)) return;
+create(form);       
+return;
+}
+function validatePrompt (Ctrl, PromptStr) {
+alert (PromptStr)
+Ctrl.focus();
+return;
+}
+function roundOff(value, precision) {
+value = "" + value;
+precision = parseInt(precision);
+var whole = "" + Math.round(value * Math.pow(10, precision));
+var decPoint = whole.length - precision;
+if(decPoint != 0) {
+result = whole.substring(0, decPoint);
+result += ".";
+result += whole.substring(decPoint, whole.length);
+}
+else {
+result = whole;
+}
+return result;
+}
+
+function why_turbocharge(why_turbocharge) 
+{
+	OpenWin = this.open(why_turbocharge, "why turbocharge", "toolbar=no,menubar=no,location=no,status=no,statusbar=no,scrollbars=no,width=470,height=570 border=0");
+	OpenWin.moveTo(500,140);
+	OpenWin.focus();
+}
+-->
+</script>
+
+<title>girl.tv/turbocharge</title>
+</head>
+<body>
+
+<div style="left:0px; top:0px; right:0px; bottom:0px;"><img src="data/porsche.jpg" width="100%" height="100%"></div>
+
+<div style="right:29%; bottom:20%; font-family:Monaco, Courier New, Courier; text-align:center;"><a href="javascript:why_turbocharge('data/whyturbocharge.htm')" onfocus="if(this.blur)this.blur()">Why Turbocharge ?</a></div>
+
+<div style="left:15%; top:15%;">
+<form name="hp" method=get>
+<table bgcolor="#6666666">
+<tr style="height:17px;" bgcolor="#909090">
+<td style="width:120px; text-align:right; vertical-align:middle">Car Model :</td>
+<td style="width:82px;"><INPUT class="hp_form" TYPE=text NAME="carModel" SIZE=16></td>
+</tr>
+<tr style="height:17px;" bgcolor="#909090">
+<td style="width:120px; text-align:right; vertical-align:middle">Vehicle Weight With Driver :</td>
+<td style="width:82px;"><INPUT class="hp_form" TYPE=text NAME="vehicleWeight" SIZE=8> pounds</td>
+</tr>
+<tr style="height:17px;" bgcolor="#909090">
+<td style="width:120px; text-align:right; vertical-align:middle">Quarter Mile time :</td>
+<td style="width:82px;"><INPUT class="hp_form" TYPE=text NAME="elapsedTime" SIZE=8> sec.</td>
+</tr>
+<tr style="height:17px;" bgcolor="#909090">
+<td style="width:120px; text-align:right; vertical-align:middle">&nbsp;</td>
+<td style="width:82px;"><input type=button onClick="runSubmit(form)" class="hp_button" name="HPcalc" value="Calculate Horsepower">
+</td>
+</tr>
+</table></form></div>
+
+</body>
+</html>

@@ -1,0 +1,43 @@
+
+
+.movie1{
+    position: absolute;
+    padding: 30px;
+    width: 160px;
+    height: 160px;
+    background-color: aqua;
+    z-index: 99;
+}
+.movie2{
+    position: absolute;
+    left: 300px;
+    padding: 30px;
+    width: 160px;
+    height: 160px;
+    background-color: red;
+    z-index: 99;
+}
+
+.play{
+    position: absolute;
+    top: 300px;
+    left: 20px;
+    width: 90px;
+    height: 90px;
+    border: 1px solid red;
+    z-index: 98;
+    
+}
+
+#show{
+    position: absolute;
+    top: 500px;
+    width: 400px;
+    height: 350px;
+    background-color: silver;
+
+}
+
+.close{
+    display: none;
+}

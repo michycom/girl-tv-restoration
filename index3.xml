@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="ISO-8859-1"?>
+ 
+<rss version="2.0">
+ 
+  <channel>
+    <title>hello..</title>
+    <link>http://girl.tv</link>
+    <description>YOUR GIRL.TV TODAY </description>
+    <language>de-de</language>
+    <copyright>all rights reserved</copyright>
+    <pubDate>2007/08</pubDate>
+    <image>
+      <url>http://girl.tv/</url>
+      <title>http://girl.tv/favicon.png</title>
+      <link>http://girl.tv/banner/frames.php</link>
+    </image>
+ 
+    <item>
+      <title>net.art 2.1.</title>
+      <description>net.art war nur ein Ersatz für girl.tv</description>
+      <link>http://girl.tv/rip/frames.php</link>
+      <author>MI</author>
+      <guid>1</guid>
+    </item>
+ 
+    <item>
+      <title>pussy me up!</title>
+      <description>
+        <![CDATA[
+        <h1>
+        ❁
+
+✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ ✝ 
+        
+        </h1>
+        <p>…</p>
+        ]]>
+      </description>
+      <author>art</author>
+      <guid>2</guid>
+      <link>http://girl.tv/rip</link>
+    </item>
+ 
+    …
+ 
+  </channel>
+ 
+</rss>

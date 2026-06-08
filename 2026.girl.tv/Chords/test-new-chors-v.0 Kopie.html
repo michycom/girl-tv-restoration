@@ -1,0 +1,1401 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>Magic Chords – Game Wheel</title>
+  <style>
+    :root{
+      color-scheme:dark;
+      --bg:#05060a;
+      --panel:#10131c;
+      --panel-soft:#141829;
+      --text:#f5f7fd;
+      --muted:#9aa3b8;
+      --accent:#4fd1ff;
+      --accent-soft:rgba(79,209,255,.16);
+      --radius:16px;
+      --shadow:0 18px 40px rgba(0,0,0,.7);
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:radial-gradient(circle at top,#181a26 0,#05060a 55%,#000 100%);
+      color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+    }
+    .app{
+      background:var(--panel);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px 18px 14px;
+      max-width:1180px;
+      width:96vw;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      margin-bottom:4px;
+    }
+    .title-block h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .title-block .subtitle{
+      margin-top:2px;
+      font-size:11px;
+      color:var(--muted);
+    }
+
+    .status-bar{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      gap:12px;
+      background:#0c0f18;
+      border-radius:10px;
+      padding:8px 10px;
+      font-size:11px;
+      color:var(--muted);
+    }
+    .status-block{
+      min-width:120px;
+    }
+    .status-label{
+      text-transform:uppercase;
+      letter-spacing:.1em;
+      font-size:10px;
+      margin-bottom:2px;
+    }
+    .status-value{
+      font-family:SFMono-Regular,ui-monospace,Menlo,Monaco,Consolas,"Courier New",monospace;
+      font-size:12px;
+      color:var(--text);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .game-shell{
+      margin-top:4px;
+      background:#050710;
+      border-radius:14px;
+      padding:10px;
+      display:grid;
+      grid-template-columns:minmax(420px,520px) minmax(260px,340px);
+      grid-template-rows:auto auto;
+      gap:12px;
+      align-items:start;
+      justify-content:center;
+    }
+
+    .wheel-shell{
+      grid-column:1/2;
+      grid-row:1/3;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    svg{
+      display:block;
+      background:radial-gradient(circle at top,#181c30 0,#05060b 70%);
+      border-radius:50%;
+    }
+
+    .legend{
+      font-size:11px;
+      color:var(--muted);
+      line-height:1.4;
+    }
+    .legend b{
+      color:var(--text);
+      font-weight:600;
+    }
+
+    .pattern-shell{
+      grid-column:2/3;
+      grid-row:2/3;
+      background:#070915;
+      border-radius:10px;
+      padding:8px 10px 10px;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .pattern-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      font-size:11px;
+      color:var(--muted);
+    }
+    .pattern-controls{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .pattern-controls label{
+      font-size:10px;
+      text-transform:uppercase;
+      letter-spacing:.1em;
+    }
+    .pattern-controls input[type="range"]{
+      width:110px;
+    }
+    .pattern-controls button{
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid var(--border-strong,#343a45);
+      background:#182030;
+      color:var(--text);
+      font-size:11px;
+      cursor:pointer;
+    }
+    .pattern-controls button.record-on{
+      background:radial-gradient(circle at 30% 30%,#ff4f6a,#a11234);
+      border-color:#ff8fa0;
+    }
+
+    .pattern-svg-wrap{
+      background:#050713;
+      border-radius:8px;
+      padding:4px 4px 6px;
+    }
+    #patternSvg{
+      width:100%;
+      height:120px;
+      background:#050713;
+      border-radius:6px;
+      display:block;
+    }
+
+    /* SVG styling – Wheel */
+    .bg-circle{
+      fill:#05060b;
+    }
+    .root-group{
+      transition:transform .16s ease, filter .16s ease, opacity .15s ease;
+      transform-origin:center;
+    }
+    .root-group.active-root{
+      filter:drop-shadow(0 10px 18px rgba(0,0,0,.6));
+    }
+    .root-group.faded-root{
+      opacity:0.18;
+    }
+    .root-group.root-emphasis{
+      filter:drop-shadow(0 14px 26px rgba(0,0,0,.95));
+    }
+
+    .root-circle{
+      fill:#252c3f;
+      stroke:rgba(255,255,255,0.4);
+      stroke-width:2;
+      cursor:pointer;
+    }
+    .root-circle.active-root-circle{
+      stroke:#ffffff;
+      stroke-width:2.6;
+    }
+    .root-label{
+      font-size:14px;
+      fill:#f7f9ff;
+      text-anchor:middle;
+      dominant-baseline:middle;
+      font-weight:800;
+      pointer-events:none;
+    }
+
+    .dot-circle{
+      r:5.5;
+      fill:#15192a;
+      stroke:#2c3350;
+      stroke-width:1;
+      cursor:pointer;
+      transition:fill .15s,stroke .15s,transform .1s,opacity .12s;
+    }
+    .dot-circle:hover{
+      fill:#20283c;
+      stroke:var(--accent);
+      transform:scale(1.12);
+    }
+    .dot-circle.disabled{
+      opacity:0.15;
+      cursor:default;
+    }
+    .dot-circle.active-dot{
+      fill:var(--accent);
+      stroke:#ffffff;
+      transform:scale(1.2);
+    }
+    .dot-circle.disallowed{
+      opacity:0.1;
+      cursor:default;
+    }
+    .dot-label{
+      font-size:8.5px;
+      fill:#d4d7e2;
+      text-anchor:middle;
+      dominant-baseline:middle;
+      pointer-events:none;
+    }
+    .dot-label-muted{
+      fill:var(--muted);
+    }
+
+    .center-root-circle{
+      fill:#151b2a;
+      stroke:#3b4762;
+      stroke-width:2;
+      cursor:pointer;
+    }
+    .center-root-circle.metronome-on{
+      stroke:var(--accent);
+      stroke-width:3;
+      filter:drop-shadow(0 0 10px rgba(79,209,255,.55));
+    }
+
+    .center-root{
+      font-size:32px;
+      fill:#ffffff;
+      text-anchor:middle;
+      dominant-baseline:central;
+      font-weight:700;
+      pointer-events:none;
+    }
+    .center-chord{
+      font-size:13px;
+      fill:var(--muted);
+      text-anchor:middle;
+      dominant-baseline:hanging;
+      pointer-events:none;
+    }
+    .center-caption{
+      font-size:10px;
+      fill:var(--muted);
+      text-anchor:middle;
+      dominant-baseline:baseline;
+      pointer-events:none;
+    }
+
+    /* Root-Star (do–ti) */
+    .root-star-group{
+      opacity:1;
+      pointer-events:visiblePainted;
+      transition:opacity .15s ease;
+    }
+    .root-star-group.inactive{
+      opacity:0;
+    }
+    .root-star-ray{
+      stroke:rgba(255,255,255,0.16);
+      stroke-width:1;
+    }
+    .root-star-node{
+      fill:#14192a;
+      stroke:#343c5c;
+      stroke-width:1;
+      opacity:0.25;
+      transition:opacity .12s ease, transform .12s ease, fill .12s ease, stroke .12s ease;
+      pointer-events:auto;
+      cursor:pointer;
+    }
+    .root-star-node.active-interval{
+      opacity:1;
+      fill:var(--accent);
+      stroke:#ffffff;
+      transform:scale(1.15);
+    }
+    .root-star-node.disallowed{
+      opacity:0.08;
+      cursor:default;
+    }
+    .root-star-label{
+      font-size:7px;
+      fill:#dfe3f0;
+      text-anchor:middle;
+      dominant-baseline:central;
+      pointer-events:none;
+    }
+
+    /* Quintenzirkel-Ring */
+    .key-group{
+      cursor:pointer;
+      opacity:0.55;
+      transition:opacity .12s ease, transform .12s ease;
+    }
+    .key-segment-rect{
+      rx:7;
+      ry:7;
+      fill:#141b26;
+      stroke:#283043;
+      stroke-width:1;
+    }
+    .key-segment-label{
+      font-size:8.5px;
+      fill:#d4dae7;
+      text-anchor:middle;
+      dominant-baseline:middle;
+    }
+    .key-group.active-key{
+      opacity:1;
+    }
+    .key-group.dominant-key{
+      opacity:0.9;
+    }
+    .key-group.subdominant-key{
+      opacity:0.9;
+    }
+    .key-group.active-key .key-segment-rect{
+      fill:#22344b;
+      stroke:var(--accent);
+    }
+    .key-group.dominant-key .key-segment-rect{
+      fill:#1c2638;
+      stroke:#7fe281;
+    }
+    .key-group.subdominant-key .key-segment-rect{
+      fill:#1c2638;
+      stroke:#ffb454;
+    }
+
+    /* Pattern grid */
+    .pat-grid-line{
+      stroke:#181c2a;
+      stroke-width:1;
+    }
+    .pat-grid-strong{
+      stroke:#262d3f;
+      stroke-width:1.2;
+    }
+    .pat-block{
+      fill:var(--accent-soft);
+      stroke:var(--accent);
+      stroke-width:1;
+      rx:3;
+      ry:3;
+    }
+
+    .muted{
+      opacity:0.45;
+    }
+
+    @media (max-width:1000px){
+      .game-shell{
+        grid-template-columns:minmax(420px,520px);
+        grid-template-rows:auto auto auto;
+      }
+      .wheel-shell{
+        grid-column:1/2;
+        grid-row:1/2;
+      }
+      .legend{
+        grid-column:1/2;
+        grid-row:2/3;
+      }
+      .pattern-shell{
+        grid-column:1/2;
+        grid-row:3/4;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="title-block">
+      <h1>Magic Chords – Wheel</h1>
+      <div class="subtitle">Root wählen · Dots klicken · Stern & Pattern formen Akkorde wie ein Spiel</div>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-block">
+      <div class="status-label">Akkord</div>
+      <div id="statusChord" class="status-value">–</div>
+    </div>
+    <div class="status-block">
+      <div class="status-label">Noten (eine Oktave)</div>
+      <div id="statusNotes" class="status-value">–</div>
+    </div>
+    <div class="status-block">
+      <div class="status-label">Intervalle (HT)</div>
+      <div id="statusIntervals" class="status-value">–</div>
+    </div>
+    <div class="status-block">
+      <div class="status-label">Tonart (Quintenzirkel)</div>
+      <div id="statusKey" class="status-value">C / Am · I–IV–V: C–F–G</div>
+    </div>
+    <div class="status-block">
+      <div class="status-label">Metronom · Pattern</div>
+      <div id="statusMetro" class="status-value">120 BPM · 4/4 · 4×4 Steps</div>
+    </div>
+  </div>
+
+  <div class="game-shell">
+
+    <div class="wheel-shell">
+      <!-- Größerer viewBox -->
+      <svg id="chordWheelSvg" viewBox="0 0 620 620" width="520" height="520"></svg>
+    </div>
+
+    <div class="legend">
+      <p><b>How to play:</b></p>
+      <p>
+        · Klick auf einen <b>Root-Kreis</b> → Grundton wählen.<br>
+        · Obere Dots: <b>me / mi / si / se / re / fa</b> = Moll, Dur, Aug, Dim, sus2, sus4 (exklusiv) + Power (sol).<br>
+        · Untere Dots: <b>la / te / ti / re / fa / la</b> = 6,7,maj7,9,11,13 (mit einfachen Harmonie-Regeln).<br>
+      </p>
+      <p>
+        · Stern: 12 Strahlen, Kreise = <b>do, di, re, me, mi, fa, fi, sol, si, la, te, ti</b>.<br>
+        · Klick auf den <b>Mittel-Kreis</b> → Metronom toggeln & Root-Ton spielen (halten = Ton halten).<br>
+        · <b>Record</b> aktiv: gedrückte Zeit wird als Block im Pattern unten aufgezeichnet.
+      </p>
+      <p class="muted">
+        – Nur sinnvolle Kombinationen: z.B. Powerchord ohne 7/9/11/13, Dim/Aug ohne 6/13, maj7 nicht mit sus.<br>
+        – Fi verlangt mi, ti verlangt te usw. (abhängige Solmisation im Stern).
+      </p>
+    </div>
+
+    <div class="pattern-shell">
+      <div class="pattern-header">
+        <div>Pattern · einfache Piano-Roll für den Root</div>
+        <div class="pattern-controls">
+          <label for="bpmControl">BPM</label>
+          <input type="range" id="bpmControl" min="40" max="200" value="120">
+          <span id="bpmValue">120</span>
+          <button id="recordToggleBtn">Record</button>
+          <button id="clearPatternBtn">Clear</button>
+        </div>
+      </div>
+      <div class="pattern-svg-wrap">
+        <svg id="patternSvg"></svg>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+"use strict";
+
+(function(){
+  const svgns = "http://www.w3.org/2000/svg";
+  const svg   = document.getElementById("chordWheelSvg");
+
+  const NOTES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+  const ROOTS = NOTES.slice();
+
+  const PITCH_MAP = {
+    "C":0,"B#":0,
+    "C#":1,"Db":1,
+    "D":2,
+    "D#":3,"Eb":3,
+    "E":4,"Fb":4,
+    "F":5,"E#":5,
+    "F#":6,"Gb":6,
+    "G":7,
+    "G#":8,"Ab":8,
+    "A":9,
+    "A#":10,"Bb":10,
+    "B":11,"Cb":11
+  };
+
+  const CIRCLE_KEYS = [
+    { maj:"C",  min:"Am" },
+    { maj:"G",  min:"Em" },
+    { maj:"D",  min:"Bm" },
+    { maj:"A",  min:"F#m" },
+    { maj:"E",  min:"C#m" },
+    { maj:"B",  min:"G#m" },
+    { maj:"F#", min:"D#m" },
+    { maj:"Db", min:"Bbm" },
+    { maj:"Ab", min:"Fm" },
+    { maj:"Eb", min:"Cm" },
+    { maj:"Bb", min:"Gm" },
+    { maj:"F",  min:"Dm" }
+  ];
+
+  const TRIADS = [
+    { id:"maj",  label:"mi",  title:"mi – große Terz (+4 HT, Dur-Dreiklang)" },
+    { id:"min",  label:"me",  title:"me – kleine Terz (+3 HT, Moll-Dreiklang)" },
+    { id:"aug",  label:"si",  title:"si – übermäßige Quinte (+8 HT, Augmented)" },
+    { id:"dim",  label:"se",  title:"se – verminderte Quinte (+6 HT, Dim)" },
+    { id:"sus2", label:"re",  title:"re – sus2 (+2 HT, Sekunde statt Terz)" },
+    { id:"sus4", label:"fa",  title:"fa – sus4 (+5 HT, Quarte statt Terz)" }
+  ];
+  const POWER_DOT = { id:"5", label:"sol", title:"sol – Powerchord (1 + reine Quinte)" };
+
+  const EXTS = [
+    { id:"6",    label:"la",  title:"la – hinzugefügte 6 (+9 HT, add6 / 13 ohne 7)" },
+    { id:"7",    label:"te",  title:"te – kleine Septime (+10 HT, Dominant-7)" },
+    { id:"maj7", label:"ti",  title:"ti – große Septime (+11 HT, maj7)" },
+    { id:"9",    label:"re",  title:"re – 9 (+14 HT, add9)" },
+    { id:"11",   label:"fa",  title:"fa – 11 (+17 HT, add11)" },
+    { id:"13",   label:"la",  title:"la – 13 (+21 HT, 6 eine Oktave höher)" }
+  ];
+
+  const DEG_SOLFEGE = ["do","di","re","me","mi","fa","fi","sol","si","la","te","ti"];
+
+  // Abhängigkeiten im Stern (fi braucht mi etc.)
+  const STAR_DEP_RULES = {
+    1:[0],  // di → do
+    6:[4],  // fi → mi
+    11:[10] // ti → te
+  };
+
+  // --- State ---
+  let currentRootIndex = 0;
+  let triadQuality = "maj";
+  let power5 = false;
+  let ext = { "6":false,"7":false,"maj7":false,"9":false,"11":false,"13":false };
+
+  let currentKeyIndex = 0;
+  let lastNormIntervals = [];
+  let isRootSolo = false;
+
+  const starManual = {}; // starManual[rootIndex][degree] = bool
+
+  // Metronom / Audio / Pattern
+  let audioCtx = null;
+  let chordOsc = null;
+  let chordGain = null;
+
+  let bpm = 120;
+  const beatsPerBar = 4;
+  const stepsPerBeat = 4;
+  const patternSteps = beatsPerBar * stepsPerBeat; // 16
+  let metronomeOn = false;
+  let metroTimer = null;
+  let metroStartTimeMs = null;
+  let lastTickStep = -1;
+
+  let recordOn = false;
+  let pendingEvent = null; // {startMs, rootIndex}
+  const patternEvents = [];
+
+  // DOM
+  const statusChord     = document.getElementById("statusChord");
+  const statusNotes     = document.getElementById("statusNotes");
+  const statusIntervals = document.getElementById("statusIntervals");
+  const statusKey       = document.getElementById("statusKey");
+  const statusMetro     = document.getElementById("statusMetro");
+
+  const bpmControl   = document.getElementById("bpmControl");
+  const bpmValue     = document.getElementById("bpmValue");
+  const recordBtn    = document.getElementById("recordToggleBtn");
+  const clearPatBtn  = document.getElementById("clearPatternBtn");
+  const patternSvg   = document.getElementById("patternSvg");
+
+  const centerX = 310;
+  const centerY = 310;
+  const bgRadius = 300;
+  const rootRadius = 215;
+  const rootCircleRadius = 50;
+  const keyRadius = 260;
+
+  function makeEl(tag, attrs){
+    const el = document.createElementNS(svgns, tag);
+    if(attrs){
+      for(const k in attrs) el.setAttribute(k, attrs[k]);
+    }
+    return el;
+  }
+
+  svg.addEventListener("mouseleave", ()=>{
+    if(isRootSolo){
+      isRootSolo = false;
+      updateVisuals();
+    }
+  });
+
+  let centerRootText, centerChordText, centerCaption, centerRootCircle;
+
+  const rootGroups = [];
+  const rootCircles = [];
+
+  const triadDots = {};
+  const triadLabels = {};
+  const powerDots = [];
+  const powerLabels = [];
+  const extDots = {};
+  const extLabels = {};
+
+  const starGroups = [];
+  const starNodes  = {};
+
+  const keyGroups  = [];
+
+  function buildWheel(){
+    svg.innerHTML = "";
+
+    svg.appendChild(makeEl("circle",{
+      cx:centerX, cy:centerY, r:bgRadius, class:"bg-circle"
+    }));
+
+    // Quintenzirkel-Ring
+    for(let i=0;i<CIRCLE_KEYS.length;i++){
+      const angleDeg = -90 + i*30;
+      const g = makeEl("g",{
+        class:"key-group",
+        "data-key-index":String(i),
+        transform:`translate(${centerX},${centerY}) rotate(${angleDeg}) translate(${keyRadius},0) rotate(${-angleDeg})`
+      });
+      g.addEventListener("click", ()=>setKey(i));
+
+      const rect = makeEl("rect",{
+        x:-28,y:-9,width:56,height:18,
+        class:"key-segment-rect"
+      });
+      g.appendChild(rect);
+
+      const label = makeEl("text",{
+        x:0,y:0,class:"key-segment-label"
+      });
+      label.textContent = CIRCLE_KEYS[i].maj + " / " + CIRCLE_KEYS[i].min;
+      g.appendChild(label);
+
+      svg.appendChild(g);
+      keyGroups[i] = g;
+    }
+
+    // Center Root Circle + Text
+    centerRootCircle = makeEl("circle",{
+      cx:centerX, cy:centerY, r:38,
+      class:"center-root-circle"
+    });
+    svg.appendChild(centerRootCircle);
+
+    centerRootCircle.addEventListener("mousedown", onCenterDown);
+    window.addEventListener("mouseup", onCenterUp);
+
+    centerRootText = makeEl("text",{
+      x:centerX, y:centerY-2, class:"center-root"
+    });
+    svg.appendChild(centerRootText);
+
+    centerChordText = makeEl("text",{
+      x:centerX, y:centerY+26, class:"center-chord"
+    });
+    svg.appendChild(centerChordText);
+
+    centerCaption = makeEl("text",{
+      x:centerX, y:centerY+46, class:"center-caption"
+    });
+    centerCaption.textContent = "Mitte: Root halten = Ton · Klick = Metronom On/Off";
+    svg.appendChild(centerCaption);
+
+    TRIADS.forEach(t=>{
+      triadDots[t.id] = {};
+      triadLabels[t.id] = {};
+    });
+    EXTS.forEach(e=>{
+      extDots[e.id] = {};
+      extLabels[e.id] = {};
+    });
+
+    // Root-Ring + Stern
+    for(let i=0;i<ROOTS.length;i++){
+      const angleDeg = -90 + i*30;
+      const group = makeEl("g",{
+        class:"root-group",
+        "data-root-index":String(i),
+        transform:`translate(${centerX},${centerY}) rotate(${angleDeg}) translate(${rootRadius},0) rotate(${-angleDeg})`
+      });
+
+      const rootCircle = makeEl("circle",{
+        cx:0, cy:0, r:rootCircleRadius,
+        class:"root-circle",
+        "data-root-index":String(i)
+      });
+      rootCircle.addEventListener("click", ()=>{
+        if(currentRootIndex === i && isRootSolo){
+          isRootSolo = false;
+        }else{
+          currentRootIndex = i;
+          isRootSolo = true;
+        }
+        updateAll();
+        // aktiven Root nach vorne holen
+        svg.appendChild(group);
+      });
+      group.appendChild(rootCircle);
+
+      const label = makeEl("text",{x:0,y:2,class:"root-label"});
+      label.textContent = ROOTS[i];
+      group.appendChild(label);
+
+      // Top row – Triads + Power (exklusiv: entweder Triad/Sus oder Power)
+      const topCount = TRIADS.length + 1;
+      const topY = -32;
+      const topSpacing = 15;
+      const topTotal = (topCount-1)*topSpacing;
+      const topStart = -topTotal/2;
+
+      TRIADS.forEach((t,idx)=>{
+        const x = topStart + idx*topSpacing;
+        const c = makeEl("circle",{
+          cx:x, cy:topY,
+          class:"dot-circle triad-dot",
+          "data-root-index":String(i),
+          "data-role":"triad",
+          "data-id":t.id
+        });
+        const tt = makeEl("title",{});
+        tt.textContent = t.title;
+        c.appendChild(tt);
+        c.addEventListener("click", onDotClick);
+        group.appendChild(c);
+
+        const tl = makeEl("text",{
+          x:x, y:topY-9,
+          class:"dot-label dot-label-muted"
+        });
+        tl.textContent = t.label;
+        group.appendChild(tl);
+
+        triadDots[t.id][i] = c;
+        triadLabels[t.id][i] = tl;
+      });
+
+      const powerX = topStart + (topCount-1)*topSpacing;
+      const pc = makeEl("circle",{
+        cx:powerX, cy:topY,
+        class:"dot-circle power-dot",
+        "data-root-index":String(i),
+        "data-role":"power",
+        "data-id":"5"
+      });
+      const pcTitle = makeEl("title",{});
+      pcTitle.textContent = POWER_DOT.title;
+      pc.appendChild(pcTitle);
+      pc.addEventListener("click", onDotClick);
+      group.appendChild(pc);
+
+      const pl = makeEl("text",{
+        x:powerX, y:topY-9,
+        class:"dot-label dot-label-muted"
+      });
+      pl.textContent = POWER_DOT.label;
+      group.appendChild(pl);
+
+      powerDots[i] = pc;
+      powerLabels[i] = pl;
+
+      // Bottom row – Extensions
+      const bottomCount = EXTS.length;
+      const bottomY = 34;
+      const bottomSpacing = 15;
+      const bottomTotal = (bottomCount-1)*bottomSpacing;
+      const bottomStart = -bottomTotal/2;
+
+      EXTS.forEach((e,idx)=>{
+        const x = bottomStart + idx*bottomSpacing;
+        const c = makeEl("circle",{
+          cx:x, cy:bottomY,
+          class:"dot-circle ext-dot",
+          "data-root-index":String(i),
+          "data-role":"ext",
+          "data-id":e.id
+        });
+        const tt = makeEl("title",{});
+        tt.textContent = e.title;
+        c.appendChild(tt);
+        c.addEventListener("click", onDotClick);
+        group.appendChild(c);
+
+        const tl = makeEl("text",{
+          x:x, y:bottomY+9,
+          class:"dot-label dot-label-muted"
+        });
+        tl.textContent = e.label;
+        group.appendChild(tl);
+
+        extDots[e.id][i] = c;
+        extLabels[e.id][i] = tl;
+      });
+
+      // Stern (do–ti)
+      const starGroup = makeEl("g",{
+        class:"root-star-group",
+        "data-root-index":String(i)
+      });
+      const rayLen = rootCircleRadius * 1.35;
+
+      if(!starNodes[i]) starNodes[i] = {};
+      if(!starManual[i]) starManual[i] = {};
+
+      for(let d=0; d<12; d++){
+        const angDeg2 = -90 + d*30;
+        const angRad = angDeg2 * Math.PI/180;
+        const x = Math.cos(angRad)*rayLen;
+        const y = Math.sin(angRad)*rayLen;
+
+        const ray = makeEl("line",{
+          x1:0,y1:0,x2:x,y2:y,
+          class:"root-star-ray",
+          "data-degree":String(d)
+        });
+        starGroup.appendChild(ray);
+
+        const node = makeEl("circle",{
+          cx:x,cy:y,r:7,
+          class:"root-star-node",
+          "data-degree":String(d),
+          "data-root-index":String(i)
+        });
+        const nodeTitle = makeEl("title",{});
+        nodeTitle.textContent = DEG_SOLFEGE[d] + " – +" + d + " HT";
+        node.appendChild(nodeTitle);
+        node.addEventListener("click",(ev)=>{
+          ev.stopPropagation();
+          toggleStarManual(i,d);
+          updateVisuals();
+        });
+        starGroup.appendChild(node);
+        starNodes[i][d] = node;
+
+        const label2 = makeEl("text",{
+          x:x,y:y,class:"root-star-label"
+        });
+        label2.textContent = DEG_SOLFEGE[d];
+        starGroup.appendChild(label2);
+      }
+
+      group.appendChild(starGroup);
+      starGroups[i] = starGroup;
+
+      svg.appendChild(group);
+      rootGroups[i] = group;
+      rootCircles[i] = rootCircle;
+    }
+
+    updateAll();
+  }
+
+  function toggleStarManual(rootIdx, degree){
+    if(!starManual[rootIdx]) starManual[rootIdx] = {};
+    const current = !!starManual[rootIdx][degree];
+    if(current){
+      starManual[rootIdx][degree] = false;
+      for(const dStr in STAR_DEP_RULES){
+        const d = Number(dStr);
+        const deps = STAR_DEP_RULES[d] || [];
+        if(deps.includes(degree) && starManual[rootIdx][d]){
+          starManual[rootIdx][d] = false;
+        }
+      }
+    }else{
+      starManual[rootIdx][degree] = true;
+      const deps = STAR_DEP_RULES[degree] || [];
+      deps.forEach(dep=>{
+        starManual[rootIdx][dep] = true;
+      });
+    }
+  }
+
+  // Harmonielehre-Logik
+  function sanitizeHarmony(){
+    // Exklusivität: entweder Triad (maj/min/aug/dim) ODER sus2/sus4 ODER Power
+    if(power5){
+      triadQuality = null;
+      for(const k in ext) ext[k] = false;
+      return;
+    }
+
+    // 7 vs maj7
+    if(ext["7"] && ext["maj7"]){
+      ext["7"] = false; // maj7 gewinnt
+    }
+
+    // 13 erzwingt eine Septime (7 oder maj7)
+    if(ext["13"] && !ext["7"] && !ext["maj7"]){
+      ext["7"] = true;
+    }
+
+    // Dim/Aug eher ohne 6/13
+    if(triadQuality === "dim" || triadQuality === "aug"){
+      ext["6"] = false;
+      ext["13"] = false;
+    }
+
+    // Sus lieber ohne maj7
+    if(triadQuality === "sus2" || triadQuality === "sus4"){
+      if(ext["maj7"]) ext["maj7"] = false;
+    }
+  }
+
+  function onDotClick(evt){
+    const role = evt.currentTarget.getAttribute("data-role");
+    const id   = evt.currentTarget.getAttribute("data-id");
+    const idx  = parseInt(evt.currentTarget.getAttribute("data-root-index"),10);
+
+    if(!Number.isNaN(idx) && idx !== currentRootIndex){
+      currentRootIndex = idx;
+    }
+
+    if(role === "triad"){
+      // Exklusiv: entweder Triad/Sus ODER Power
+      power5 = false;
+      triadQuality = (triadQuality === id ? null : id);
+    }else if(role === "power"){
+      power5 = !power5;
+      if(power5) triadQuality = null;
+    }else if(role === "ext"){
+      if(id === "7"){
+        ext["7"] = !ext["7"];
+        if(ext["7"]) ext["maj7"] = false;
+      }else if(id === "maj7"){
+        ext["maj7"] = !ext["maj7"];
+        if(ext["maj7"]) ext["7"] = false;
+      }else{
+        ext[id] = !ext[id];
+      }
+    }
+
+    sanitizeHarmony();
+    updateAll();
+  }
+
+  function setKey(keyIdx){
+    currentKeyIndex = keyIdx;
+    const majName = CIRCLE_KEYS[keyIdx].maj;
+    const rootIndex = PITCH_MAP[majName];
+    if(rootIndex !== undefined){
+      currentRootIndex = rootIndex;
+    }
+    triadQuality = "maj";
+    power5 = false;
+    for(const k in ext) ext[k] = false;
+    isRootSolo = false;
+    sanitizeHarmony();
+    updateAll();
+  }
+
+  function intervalsFromTriad(q, powerMode){
+    if(powerMode) return [0,7];
+    if(!q) return [0];
+    switch(q){
+      case "maj":  return [0,4,7];
+      case "min":  return [0,3,7];
+      case "aug":  return [0,4,8];
+      case "dim":  return [0,3,6];
+      case "sus2": return [0,2,7];
+      case "sus4": return [0,5,7];
+      default:     return [0];
+    }
+  }
+
+  function buildChordIntervals(){
+    let intervals = intervalsFromTriad(triadQuality, power5);
+    if(!power5){
+      if(ext["6"])    intervals.push(9);
+      if(ext["7"])    intervals.push(10);
+      if(ext["maj7"]) intervals.push(11);
+    }
+    if(ext["9"])  intervals.push(14);
+    if(ext["11"]) intervals.push(17);
+    if(ext["13"]) intervals.push(21);
+
+    const norm = Array.from(new Set(intervals.map(i => ((i%12)+12)%12))).sort((a,b)=>a-b);
+    return { all:intervals, norm };
+  }
+
+  function buildChordSymbol(){
+    const root = ROOTS[currentRootIndex];
+    let symbol = root;
+
+    if(power5){
+      symbol += "5";
+    }else{
+      if(triadQuality === "min")      symbol += "m";
+      else if(triadQuality === "aug") symbol += "+";
+      else if(triadQuality === "dim") symbol += "°";
+      else if(triadQuality === "sus2" || triadQuality === "sus4"){
+        symbol += triadQuality;
+      }
+    }
+
+    let coreTag = "";
+    if(!power5){
+      if(ext["6"]) coreTag = "6";
+      if(ext["7"]) coreTag = "7";
+      if(ext["maj7"]) coreTag = "maj7";
+    }
+    if(coreTag) symbol += coreTag;
+
+    const tensList = [];
+    if(ext["9"])  tensList.push("9");
+    if(ext["11"]) tensList.push("11");
+    if(ext["13"]) tensList.push("13");
+    if(tensList.length) symbol += "(" + tensList.join(",") + ")";
+
+    if(symbol === root) symbol += " (nur Grundton)";
+    return symbol;
+  }
+
+  function buildChordNotes(normIntervals){
+    return normIntervals.map(off=>{
+      const idx = (currentRootIndex + off + 1200) % 12;
+      return NOTES[idx];
+    });
+  }
+
+  function updateKeyStatus(){
+    const key = CIRCLE_KEYS[currentKeyIndex];
+    const tonic = key.maj;
+    const relMin = key.min;
+    const domIndex = (currentKeyIndex + 1) % 12;
+    const subIndex = (currentKeyIndex + 11) % 12;
+    const chordIV = CIRCLE_KEYS[subIndex].maj;
+    const chordV  = CIRCLE_KEYS[domIndex].maj;
+    statusKey.textContent = `${tonic} / ${relMin} · I–IV–V: ${tonic}–${chordIV}–${chordV}`;
+  }
+
+  function updateMetroStatus(){
+    statusMetro.textContent = `${bpm} BPM · 4/4 · ${patternSteps} Steps`;
+    bpmValue.textContent = bpm;
+  }
+
+  function updateVisuals(){
+    // Roots
+    rootGroups.forEach((g,idx)=>{
+      if(!g) return;
+      const isActive = idx === currentRootIndex;
+      const faded = isRootSolo && idx !== currentRootIndex;
+      g.classList.toggle("active-root", isActive);
+      g.classList.toggle("faded-root", faded);
+      if(isActive) g.classList.add("root-emphasis");
+      else         g.classList.remove("root-emphasis");
+    });
+
+    rootCircles.forEach((c,idx)=>{
+      if(!c) return;
+      c.classList.toggle("active-root-circle", idx === currentRootIndex);
+    });
+
+    // Triads
+    TRIADS.forEach(t=>{
+      const id = t.id;
+      for(const idx in triadDots[id]){
+        const c = triadDots[id][idx];
+        const l = triadLabels[id][idx];
+        const isActiveRoot = Number(idx) === currentRootIndex;
+        const isActive = isActiveRoot && !power5 && triadQuality === id;
+
+        c.classList.toggle("active-dot", isActive);
+        c.classList.toggle("disabled", !isActiveRoot);
+        c.classList.remove("disallowed");
+
+        if(l) l.classList.toggle("dot-label-muted", !isActive);
+      }
+    });
+
+    // Power
+    for(const idx in powerDots){
+      const c = powerDots[idx];
+      const l = powerLabels[idx];
+      const isActiveRoot = Number(idx) === currentRootIndex;
+      const isActive = isActiveRoot && power5;
+
+      c.classList.toggle("active-dot", isActive);
+      c.classList.toggle("disabled", !isActiveRoot);
+      c.classList.remove("disallowed");
+      if(l) l.classList.toggle("dot-label-muted", !isActive);
+    }
+
+    // Extensions, mit disallowed nach einfacher Logik
+    EXTS.forEach(e=>{
+      const id = e.id;
+      for(const idx in extDots[id]){
+        const c = extDots[id][idx];
+        const l = extLabels[id][idx];
+        const isActiveRoot = Number(idx) === currentRootIndex;
+        const isActive = isActiveRoot && !!ext[id];
+
+        let disallowed = false;
+        if(power5) disallowed = true;
+        if(triadQuality === "dim" || triadQuality === "aug"){
+          if(id === "6" || id === "13") disallowed = true;
+        }
+        if((triadQuality === "sus2" || triadQuality === "sus4") && id === "maj7"){
+          disallowed = true;
+        }
+
+        c.classList.toggle("active-dot", isActive);
+        c.classList.toggle("disabled", !isActiveRoot);
+        c.classList.toggle("disallowed", disallowed);
+        if(l) l.classList.toggle("dot-label-muted", !isActive);
+      }
+    });
+
+    // Root-Star sichtbarkeit
+    starGroups.forEach((g,idx)=>{
+      if(!g) return;
+      const isActiveRoot = idx === currentRootIndex;
+      g.classList.toggle("inactive", !isActiveRoot);
+    });
+
+    for(const rootIdx in starNodes){
+      const idxNum = Number(rootIdx);
+      const nodesForRoot = starNodes[rootIdx];
+      const isActiveRoot = idxNum === currentRootIndex;
+      for(let d=0; d<12; d++){
+        const node = nodesForRoot[d];
+        if(!node) continue;
+        const manual = starManual[idxNum] && !!starManual[idxNum][d];
+        const on = isActiveRoot && (lastNormIntervals.includes(d) || manual);
+
+        // einfache „Harmonie“-Maske: bei Power nur 0 (=do) und 7 (=sol) wirklich erlaubt
+        let disallowed = false;
+        if(power5 && d !== 0 && d !== 7) disallowed = true;
+
+        node.classList.toggle("active-interval", on && !disallowed);
+        node.classList.toggle("disallowed", disallowed && !on);
+      }
+    }
+
+    // Quintenzirkel
+    const domIndex = (currentKeyIndex + 1) % 12;
+    const subIndex = (currentKeyIndex + 11) % 12;
+    keyGroups.forEach((g,idx)=>{
+      if(!g) return;
+      g.classList.remove("active-key","dominant-key","subdominant-key");
+      if(idx === currentKeyIndex) g.classList.add("active-key");
+      else if(idx === domIndex)   g.classList.add("dominant-key");
+      else if(idx === subIndex)   g.classList.add("subdominant-key");
+    });
+
+    centerRootCircle.classList.toggle("metronome-on", metronomeOn);
+  }
+
+  function updateAll(){
+    sanitizeHarmony();
+    const { norm } = buildChordIntervals();
+    const notes = buildChordNotes(norm);
+    const symbol = buildChordSymbol();
+
+    lastNormIntervals = norm;
+
+    centerRootText.textContent = ROOTS[currentRootIndex];
+    centerChordText.textContent = symbol;
+    statusChord.textContent = symbol;
+    statusNotes.textContent = notes.length ? notes.join(" – ") : "–";
+    statusIntervals.textContent = norm.length ? norm.map(i=>i+" HT").join(", ") : "–";
+
+    updateKeyStatus();
+    updateMetroStatus();
+    updateVisuals();
+    drawPattern();
+  }
+
+  // --- Audio / Metronom / Pattern ---
+
+  function ensureAudio(){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+  }
+
+  function freqForRoot(idx){
+    // C4 = 261.63 Hz
+    const semitone = idx; // 0=C
+    return 261.63 * Math.pow(2, semitone / 12);
+  }
+
+  function startChordTone(){
+    ensureAudio();
+    if(!audioCtx) return;
+    if(chordOsc) return;
+
+    chordOsc = audioCtx.createOscillator();
+    chordGain = audioCtx.createGain();
+    chordOsc.type = "sine";
+    chordOsc.frequency.value = freqForRoot(currentRootIndex);
+    chordGain.gain.value = 0;
+    chordOsc.connect(chordGain).connect(audioCtx.destination);
+    chordOsc.start();
+
+    chordGain.gain.linearRampToValueAtTime(0.22, audioCtx.currentTime + 0.03);
+  }
+
+  function stopChordTone(){
+    if(!audioCtx || !chordOsc || !chordGain) return;
+    chordGain.gain.cancelScheduledValues(audioCtx.currentTime);
+    chordGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.05);
+    const osc = chordOsc;
+    setTimeout(()=>{ try{osc.stop();}catch(e){} },90);
+    chordOsc = null;
+    chordGain = null;
+  }
+
+  function startMetronome(){
+    if(metronomeOn) return;
+    ensureAudio();
+    metronomeOn = true;
+    metroStartTimeMs = performance.now();
+    lastTickStep = -1;
+    const stepMs = 60000 / (bpm * stepsPerBeat);
+    metroTimer = setInterval(()=>{
+      const now = performance.now();
+      const elapsed = now - metroStartTimeMs;
+      const stepFloat = elapsed / stepMs;
+      const step = Math.floor(stepFloat);
+      if(step !== lastTickStep){
+        lastTickStep = step;
+        metronomeTick();
+      }
+    }, 5);
+    updateAll();
+  }
+
+  function stopMetronome(){
+    if(!metronomeOn) return;
+    metronomeOn = false;
+    if(metroTimer) clearInterval(metroTimer);
+    metroTimer = null;
+    updateAll();
+  }
+
+  function metronomeTick(){
+    if(!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const g   = audioCtx.createGain();
+    osc.type = "square";
+    // Downbeat lauter
+    const stepInBar = lastTickStep % stepsPerBeat;
+    osc.frequency.value = (stepInBar === 0 ? 1500 : 1000);
+    g.gain.value = (stepInBar === 0 ? 0.35 : 0.24);
+    osc.connect(g).connect(audioCtx.destination);
+    const now = audioCtx.currentTime;
+    osc.start(now);
+    osc.stop(now + 0.04);
+  }
+
+  function onCenterDown(ev){
+    ev.preventDefault();
+    if(metronomeOn){
+      // nur Ton
+    }else{
+      startMetronome();
+    }
+    startChordTone();
+    if(recordOn){
+      pendingEvent = {
+        startMs: performance.now(),
+        rootIndex: currentRootIndex
+      };
+    }
+  }
+
+  function onCenterUp(){
+    stopChordTone();
+    if(recordOn && pendingEvent && metroStartTimeMs !== null){
+      const endMs = performance.now();
+      const evObj = pendingEvent;
+      pendingEvent = null;
+      const stepMs = 60000 / (bpm * stepsPerBeat);
+
+      const startBeat = (evObj.startMs - metroStartTimeMs) / (60000 / bpm);
+      const durBeat   = (endMs - evObj.startMs) / (60000 / bpm);
+
+      let startStep = Math.round(startBeat * stepsPerBeat) % patternSteps;
+      if(startStep < 0) startStep += patternSteps;
+      let lenSteps  = Math.max(1, Math.round(durBeat * stepsPerBeat));
+
+      if(startStep + lenSteps > patternSteps){
+        lenSteps = patternSteps - startStep;
+      }
+
+      patternEvents.push({
+        pitch: evObj.rootIndex % 12,
+        step: startStep,
+        len: lenSteps
+      });
+      drawPattern();
+    }
+  }
+
+  // Pattern-Grid
+  function drawPattern(){
+    const width = patternSvg.clientWidth || 320;
+    const height = patternSvg.clientHeight || 120;
+    patternSvg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    patternSvg.innerHTML = "";
+
+    const rowH = height / 12;
+    const colW = width / patternSteps;
+
+    // horizontale Linien (Pitch)
+    for(let r=0;r<12;r++){
+      const y = (r+1)*rowH;
+      const line = makeEl("line",{
+        x1:0,y1:y,x2:width,y2:y,
+        class: (r === 0 || r === 11 ? "pat-grid-strong":"pat-grid-line")
+      });
+      patternSvg.appendChild(line);
+    }
+
+    // vertikale Grid-Linien (Steps)
+    for(let c=0;c<=patternSteps;c++){
+      const x = c*colW;
+      const strong = (c % stepsPerBeat === 0);
+      const line = makeEl("line",{
+        x1:x,y1:0,x2:x,y2:height,
+        class: strong ? "pat-grid-strong":"pat-grid-line"
+      });
+      patternSvg.appendChild(line);
+    }
+
+    // Blocks
+    patternEvents.forEach(ev=>{
+      const pitchRow = 11 - (ev.pitch % 12); // 0=do unten, 11=ti oben
+      const x = ev.step * colW + 0.5;
+      const y = pitchRow * rowH + 2;
+      const w = ev.len * colW - 1;
+      const h = rowH - 4;
+      const rect = makeEl("rect",{
+        x:x,y:y,width:Math.max(2,w),height:Math.max(2,h),
+        class:"pat-block"
+      });
+      patternSvg.appendChild(rect);
+    });
+  }
+
+  // UI Events
+  bpmControl.addEventListener("input",()=>{
+    bpm = parseInt(bpmControl.value,10) || 120;
+    updateMetroStatus();
+  });
+
+  recordBtn.addEventListener("click",()=>{
+    recordOn = !recordOn;
+    recordBtn.classList.toggle("record-on", recordOn);
+  });
+
+  clearPatBtn.addEventListener("click",()=>{
+    patternEvents.length = 0;
+    drawPattern();
+  });
+
+  // Init
+  buildWheel();
+})();
+</script>
+</body>
+</html>

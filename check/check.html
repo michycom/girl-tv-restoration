@@ -1,0 +1,82 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Untitled Document</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<meta http-equiv="Content-Script-Type" content="text/javascript">
+<script type="text/javascript">
+function getImgSize(id){
+var pic = document.getElementById(id);
+var h = pic.offsetHeight;
+var w = pic.offsetWidth;
+alert ('The image size is '+w+'*'+h);
+}
+</script> 
+</head>
+<body>
+<img id='demoImg' src="http://girl.tv/3boys.gif">
+<input type="button" onclick="getImgSize('demoImg')" value="Get Image Size1">
+
+<script language='JavaScript'> 
+function getImgSize2(imgSrc)
+{
+var newImg = new Image();
+newImg.src = imgSrc;
+var height = newImg.height;
+var width = newImg.width;
+alert ('The image size is '+width+'*'+height);
+}
+</script>
+<input type="button" onclick="getImgSize2('http://girl.tv/3boys.gif')" value="Get Image Size2">
+
+<script langauge="javascript">
+
+function changeIt(){
+var width=250
+var height=250
+                                                    
+document.TheImage.width=width
+document.TheImage.height=height
+}
+
+</script>
+
+
+<script langauge="javascript">
+
+function getImgSize4(imgSrc)
+{
+var newImg = new Image();
+newImg.src = imgSrc;
+var height = newImg.height;
+var width = newImg.width;
+document.TheImage.width=width
+document.TheImage.height=height
+}
+
+function play()
+{
+changeIt()
+getImgSize('TheImage')
+getImgSize4('http://girl.tv/3boys.gif')
+getImgSize('TheImage')
+}
+</script>
+
+
+
+
+<BR>
+<input type="button" value=" Change " onclick="changeIt()">
+<input type="button" onclick="getImgSize('TheImage')" value="Get The Size">
+<input type="button" value=" Change Back" onclick="getImgSize4('http://girl.tv/3boys.gif')">
+<img src="http://girl.tv/3boys.gif" id="TheImage" name="TheImage">
+<input type="button" value=" Play " onclick="play()">
+<!-- kredit: http://www.webdeveloper.com/forum/archive/index.php/t-98502.html --> 
+<!-- kredit: http://codingforums.com/archive/index.php?t-21966.html -->
+<!-- kredit: http://de2.php.net/getimagesize (php) -->
+<!-- kredit http://javascript.internet.com/math-related/image-resizer.html (crazy shit) -->
+</body>
+</html>
+

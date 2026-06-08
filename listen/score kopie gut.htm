@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Musical Notes</title>
+</head>
+<body>
+    <div id="staff-container"></div>
+    <div id="note"></div>
+<script>
+class MusicalNotes {
+    constructor() {
+        this.svgNS = "http://www.w3.org/2000/svg";
+        // Abstände der Notenlinien basierend auf dem Violinschlüssel (G-Schlüssel)
+        this.noteYPositions = {
+            'G4': 80, 'F4': 90, 'E4': 100, 'D4': 110, 'C4': 120,
+            'B3': 130, 'A3': 140, 'G3': 150, 'F3': 160, // Fortfahren für zusätzliche Noten
+        };
+    }
+
+    drawStaff(containerId) {
+        const container = document.getElementById(containerId);
+        const svg = document.createElementNS(this.svgNS, "svg");
+        svg.setAttribute("width", "200");
+        svg.setAttribute("height", "200");
+        container.appendChild(svg);
+
+        // Zeichnen der Notenlinien
+        for (let i = 0; i < 5; i++) {
+            const y = 50 + i * 20;
+            const line = document.createElementNS(this.svgNS, "line");
+            line.setAttribute("x1", "40");
+            line.setAttribute("y1", y.toString());
+            line.setAttribute("x2", "160");
+            line.setAttribute("y2", y.toString());
+            line.setAttribute("stroke", "black");
+            svg.appendChild(line);
+        }
+
+        // Zeichnen des G-Schlüssels
+        const clef = document.createElementNS(this.svgNS, "text");
+        clef.setAttribute("x", "20");
+        clef.setAttribute("y", "80");
+        clef.textContent = '𝄞';
+        clef.setAttribute("font-size", "40");
+        svg.appendChild(clef);
+
+        return svg;
+    }
+
+    drawNote(containerId, noteName) {
+        const svg = this.drawStaff(containerId);
+
+        // Berechnen der Y-Position der Note
+        const y = this.noteYPositions[noteName] || 120; // Standard-Y-Position
+
+        // Zeichnen der Note
+        const note = document.createElementNS(this.svgNS, "circle");
+        note.setAttribute("cx", "100");
+        note.setAttribute("cy", y.toString());
+        note.setAttribute("r", "5");
+        note.setAttribute("fill", "black");
+        svg.appendChild(note);
+    }
+}
+
+// Erstellung und Zeichnung der Noten
+const musicalNotes = new MusicalNotes();
+musicalNotes.drawNote('staff-container', 'C4'); // Zeichnet das mittlere C
+musicalNotes.drawNote('staff-container', 'E4'); // Zeichnet das E in der selben Oktave
+</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<?php
+/**
+ * Release focus. Possible values:
+ * 0 - N/A
+ * 1 - Initial freshmeat announcement
+ * 2 - Documentation
+ * 3 - Code cleanup
+ * 4 - Minor feature enhancements
+ * 5 - Major feature enhancements
+ * 6 - Minor bugfixes
+ * 7 - Major bugfixes
+ * 8 - Minor security fixes
+ * 9 - Major security fixes
+ */
+$this->notes['fm']['focus'] = 6;
+
+/* Mailing list release notes. */
+$this->notes['ml']['changes'] = <<<ML
+The Horde Team is pleased to announce the final release of the Horde Groupware
+Webmail Edition version 1.0.3.
+
+Horde Groupware Webmail Edition is a free, enterprise ready, browser based
+communication suite. Users can read, send and organize email messages and
+manage and share calendars, contacts, tasks and notes with the standards
+compliant components from the Horde Project.
+
+Major changes compared to Horde Groupware Webmail Edition 1.0.2 are:
+    * Added a missing PEAR package.
+
+Major changes compared to Horde Groupware Webmail Edition 1.0.1 are:
+    * Improved webroot detection.
+    * Fixed adding contacts to a new contact list.
+    * Many small bug fixes and improvements.
+    * Updated Czech, Estonian, German, Polish, Spanish, and Simplified
+      Chinese translations.
+ML;
+
+/* Freshmeat release notes, not more than 600 characters. */
+$this->notes['fm']['changes'] = <<<FM
+A missing PEAR package has been added.
+FM;
+
+$this->notes['name'] = 'Horde Groupware Webmail Edition';
+$this->notes['fm']['project'] = 'horde-webmail';
+$this->notes['fm']['branch'] = 'Default';

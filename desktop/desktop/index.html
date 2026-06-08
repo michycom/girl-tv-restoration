@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Mock Apache Listing · Apple inspiriert</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: radial-gradient(1200px 800px at 20% 20%, rgba(186,210,255,0.45), transparent 60%),
+            radial-gradient(1000px 700px at 80% 70%, rgba(255,190,220,0.35), transparent 55%),
+            linear-gradient(135deg, #f5f7fb, #e8ecf8 55%, #f4f6fb);
+      --glass: rgba(255,255,255,0.75);
+      --stroke: rgba(120,130,150,0.25);
+      --text: #0f1525;
+      --muted: #4f5b73;
+      --accent: #147efb;
+      --shadow: 0 18px 60px rgba(39,58,93,0.18);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "SF Pro Text","SF Pro Display",-apple-system,system-ui,"Segoe UI",sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 18px;
+    }
+    .frame {
+      width: min(1100px, 100%);
+      background: var(--glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--stroke);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+    }
+    .apple {
+      position: relative;
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      font-size: 26px;
+      cursor: default;
+      background: linear-gradient(145deg, #0f1629, #1b2b4d);
+      color: #fff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 10px 24px rgba(15,22,41,0.35);
+    }
+    .bubble {
+      position: absolute;
+      left: 60px;
+      top: 50%;
+      transform: translateY(-50%);
+      min-width: 220px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(15,22,41,0.92);
+      color: #f8fbff;
+      font-size: 13px;
+      line-height: 1.4;
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 160ms ease;
+    }
+    .apple:hover .bubble { opacity: 1; }
+    .headline {
+      flex: 1;
+      display: grid;
+      gap: 2px;
+    }
+    .title { font-weight: 700; font-size: 18px; }
+    .sub { color: var(--muted); font-size: 14px; }
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(20,126,251,0.22);
+      background: linear-gradient(145deg, #1b7ef9, #0f68d5);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 12px 26px rgba(20,126,251,0.25);
+    }
+    .cta:hover { filter: brightness(1.03); }
+    .cta:active { transform: translateY(1px); }
+
+    .listing {
+      padding: 18px 20px 24px;
+      background: rgba(255,255,255,0.88);
+    }
+    .legend {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 10px;
+      letter-spacing: 0.01em;
+    }
+    .table {
+      width: 100%;
+      border: 1px solid var(--stroke);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr 0.5fr 1fr;
+      align-items: center;
+      padding: 12px 14px;
+      gap: 10px;
+      background: rgba(255,255,255,0.9);
+    }
+    .row + .row { border-top: 1px solid var(--stroke); }
+    .header {
+      background: rgba(15,22,41,0.04);
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+    }
+    .name .icon { font-size: 18px; width: 22px; text-align: center; }
+    .name a {
+      color: var(--text);
+      text-decoration: none;
+    }
+    .name a:hover { color: var(--accent); text-decoration: underline; }
+    .muted { color: var(--muted); }
+    footer {
+      padding: 14px 20px 18px;
+      font-size: 13px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.82);
+      border-top: 1px solid var(--stroke);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <header>
+      <div class="apple" aria-label="Apple love note" title="Hover for message">
+        
+        <div class="bubble">Optimized for Apple vibes. Keine offizielle Seite – wir feiern nur den Stil.</div>
+      </div>
+      <div class="headline">
+        <div class="title">Mock Apache Listing</div>
+        <div class="sub">Apple-inspiriert · Not an official page – just love for the look</div>
+      </div>
+      <a class="cta" href="https://apps.apple.com" target="_blank" rel="noopener noreferrer">
+        Download our latest apps in App Store
+      </a>
+    </header>
+
+    <section class="listing">
+      <div class="legend">Beispielhafte Autoindex-Ausgabe mit Ordner und 5 Dateien (alle Links gehen in neuem Tab auf).</div>
+      <div class="table">
+        <div class="row header">
+          <div>Name</div>
+          <div>Letzte &Auml;nderung</div>
+          <div>Gr&ouml;&szlig;e</div>
+          <div>Beschreibung</div>
+        </div>
+        <div class="row">
+          <div class="name">
+            <span class="icon">📁</span>
+            <a href="media/" target="_blank" rel="noopener noreferrer">media/</a>
+          </div>
+          <div class="muted">2024-02-22 10:00</div>
+          <div class="muted">–</div>
+          <div class="muted">Ordner f&uuml;r Test-Assets</div>
+        </div>
+        <div class="row">
+          <div class="name">
+            <span class="icon">🖼️</span>
+            <a href="apple-wallpaper.jpg" target="_blank" rel="noopener noreferrer">apple-wallpaper.jpg</a>
+          </div>
+          <div class="muted">2024-02-22 10:05</div>
+          <div class="muted">2.4 MB</div>
+          <div class="muted">Beispiel-JPG</div>
+        </div>
+        <div class="row">
+          <div class="name">
+            <span class="icon">🎬</span>
+            <a href="launch-video.mov" target="_blank" rel="noopener noreferrer">launch-video.mov</a>
+          </div>
+          <div class="muted">2024-02-22 10:06</div>
+          <div class="muted">18 MB</div>
+          <div class="muted">Kurzer MOV-Clip</div>
+        </div>
+        <div class="row">
+          <div class="name">
+            <span class="icon">📄</span>
+            <a href="readme.txt" target="_blank" rel="noopener noreferrer">readme.txt</a>
+          </div>
+          <div class="muted">2024-02-22 10:07</div>
+          <div class="muted">4 KB</div>
+          <div class="muted">Textplatzhalter</div>
+        </div>
+        <div class="row">
+          <div class="name">
+            <span class="icon">📑</span>
+            <a href="notes.pdf" target="_blank" rel="noopener noreferrer">notes.pdf</a>
+          </div>
+          <div class="muted">2024-02-22 10:08</div>
+          <div class="muted">320 KB</div>
+          <div class="muted">PDF-Dummy</div>
+        </div>
+        <div class="row">
+          <div class="name">
+            <span class="icon">📝</span>
+            <a href="changelog.md" target="_blank" rel="noopener noreferrer">changelog.md</a>
+          </div>
+          <div class="muted">2024-02-22 10:09</div>
+          <div class="muted">8 KB</div>
+          <div class="muted">Markdown-Notizen</div>
+        </div>
+      </div>
+    </section>
+    <footer>
+      <div>Links sind relative Pfade – ersetze die Dateien/Ordner nach Belieben.</div>
+      <div>Alle Klicks gehen bewusst in einem neuen Tab/Fenster auf.</div>
+    </footer>
+  </div>
+</body>
+</html>

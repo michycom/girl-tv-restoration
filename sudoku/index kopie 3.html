@@ -1,0 +1,2802 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>2 Player Live</title>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root {
+  --bg:      #08090d;
+  --surface: #0f1117;
+  --panel:   #141720;
+  --border:  #22263a;
+  --border2: #2d3148;
+  --fg:      #e8eaf6;
+  --muted:   #8890b0;
+  --accent:  #5b8eff;
+  --accent2: #3fd9c0;
+  --ok:      #3fd9c0;
+  --warn:    #f7c948;
+  --bad:     #ff5577;
+  --pill-r:  999px;
+  --r:       14px;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: var(--sans); background: var(--bg); color: var(--fg); font-size: 14px; line-height: 1.5; }
+
+/* ── scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ── topbar ── */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px; border-bottom: 1px solid var(--border);
+  background: rgba(8,9,13,.85); backdrop-filter: blur(12px);
+  position: sticky; top: 0; z-index: 10;
+}
+.topbar-left { display: flex; align-items: center; gap: 14px; }
+.logo { font-weight: 700; font-size: 15px; letter-spacing: .4px; }
+.logo span { color: var(--accent); }
+.status-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  border: 1px solid var(--border); border-radius: var(--pill-r);
+  padding: 5px 11px; font-size: 12px; color: var(--muted);
+  background: rgba(255,255,255,.02); transition: border-color .3s;
+}
+.status-pill.ok  { border-color: rgba(63,217,192,.3); color: var(--ok); }
+.status-pill.bad { border-color: rgba(255,85,119,.3); color: var(--bad); }
+.dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--muted);
+  transition: background .3s;
+}
+.dot.ok  { background: var(--ok);  box-shadow: 0 0 6px var(--ok); animation: pulse 2s infinite; }
+.dot.bad { background: var(--bad); box-shadow: 0 0 6px var(--bad); }
+.dot.spin { background: var(--accent); animation: spin-fade 1s infinite; }
+@keyframes pulse    { 0%,100%{opacity:1} 50%{opacity:.5} }
+@keyframes spin-fade{ 0%,100%{opacity:.4} 50%{opacity:1} }
+
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+.unread-badge {
+  background: var(--bad); color: #fff; border-radius: var(--pill-r);
+  padding: 1px 7px; font-size: 11px; font-weight: 700;
+  display: none;
+}
+.unread-badge.show { display: inline; }
+
+/* ── buttons ── */
+button {
+  font-family: var(--sans); cursor: pointer; border: none;
+  border-radius: var(--r); font-size: 13px; font-weight: 600;
+  transition: background .15s, transform .1s, opacity .15s;
+}
+button:active { transform: translateY(1px); }
+button:disabled { opacity: .4; cursor: not-allowed; }
+.btn        { background: var(--panel); border: 1px solid var(--border2); color: var(--fg); padding: 9px 14px; }
+.btn:hover:not(:disabled)  { border-color: #4a5070; }
+.btn.sm     { padding: 7px 11px; font-size: 12px; border-radius: 10px; }
+.btn.xl     { padding: 12px 16px; font-size: 15px; border-radius: 12px; }
+.btn.ghost  { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+.btn.ghost:hover { border-color: var(--border2); color: var(--fg); }
+.btn.primary { background: var(--accent); color: #fff; border: none; }
+.btn.primary:hover:not(:disabled) { background: #4a7eef; }
+.btn.success { background: var(--ok); color: #0a1a18; border: none; }
+.btn.danger  { background: var(--bad); color: #fff; border: none; }
+.btn.copy-btn { position: relative; overflow: hidden; }
+.btn.copy-btn .copy-label { transition: transform .2s, opacity .2s; display: block; }
+.btn.copy-btn .copy-done  { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; transform: translateY(110%); transition: transform .2s, opacity .2s; color: var(--ok); }
+.btn.copy-btn.copied .copy-label { transform: translateY(-110%); opacity: 0; }
+.btn.copy-btn.copied .copy-done  { transform: translateY(0); }
+
+/* ── layout ── */
+.wrap { max-width: 1000px; margin: 0 auto; padding: 20px 16px 60px; }
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 16px;
+}
+.card + .card { margin-top: 14px; }
+.card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.card-title { font-weight: 700; font-size: 13px; letter-spacing: .3px; }
+.label { font-size: 11px; color: var(--muted); margin: 10px 0 5px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+.muted  { color: var(--muted); font-size: 13px; line-height: 1.45; }
+.sep    { height: 1px; background: var(--border); margin: 14px 0; }
+
+/* ── form controls ── */
+textarea, input, select {
+  width: 100%; background: var(--bg); color: var(--fg);
+  border: 1px solid var(--border2); border-radius: 10px;
+  padding: 9px 12px; font-family: inherit; font-size: 13px;
+  outline: none; transition: border-color .2s;
+}
+textarea:focus, input:focus, select:focus { border-color: var(--accent); }
+textarea { min-height: 80px; resize: vertical; font-family: var(--mono); font-size: 12px; }
+input    { height: 40px; }
+select   { height: 40px; cursor: pointer; }
+textarea.mono, input.mono { font-family: var(--mono); font-size: 12px; }
+
+/* ── step wizard ── */
+.steps { display: flex; gap: 0; margin: 18px 0 0; }
+.step  { flex: 1; padding: 12px 14px; background: var(--panel); border: 1px solid var(--border); border-right: none; }
+.step:first-child { border-radius: var(--r) 0 0 var(--r); }
+.step:last-child  { border-right: 1px solid var(--border); border-radius: 0 var(--r) var(--r) 0; }
+.step .snum  { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 4px; }
+.step .stxt  { font-size: 12px; font-weight: 600; color: var(--muted); }
+.step.active .snum { color: var(--accent); }
+.step.active .stxt { color: var(--fg); }
+.step.done   .snum { color: var(--ok); }
+.step.done   .stxt { color: var(--ok); }
+@media (max-width: 560px) { .steps { flex-direction: column; } .step { border-right: 1px solid var(--border); border-bottom: none; } .step:last-child { border-bottom: 1px solid var(--border); border-radius: 0 0 var(--r) var(--r); } .step:first-child { border-radius: var(--r) var(--r) 0 0; } }
+
+/* ── progress log ── */
+.progress-log { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+.plog-item { display: flex; align-items: center; gap: 9px; font-size: 12px; color: var(--muted); }
+.plog-item .picon { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+.plog-item.ok   .picon { background: rgba(63,217,192,.15); color: var(--ok); }
+.plog-item.spin .picon { background: rgba(91,142,255,.15); color: var(--accent); animation: spin-fade 1s infinite; }
+.plog-item.bad  .picon { background: rgba(255,85,119,.15); color: var(--bad); }
+.plog-item.ok   { color: var(--fg); }
+.plog-item.bad  { color: var(--bad); }
+
+/* ── QR code ── */
+.qr-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 10px; padding: 16px; background: #fff; border-radius: var(--r); width: fit-content; }
+.qr-wrap canvas, .qr-wrap img {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+.qr-label { color: #333; font-size: 11px; font-weight: 600; }
+.qr-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+
+/* ── row / col ── */
+.row { display: flex; gap: 12px; flex-wrap: wrap; }
+.col { flex: 1 1 300px; }
+.row-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+
+/* ── dialog / modal ── */
+dialog {
+  border: none; border-radius: 18px; padding: 0;
+  width: min(920px, 94vw); max-height: 90vh; overflow-y: auto;
+  background: var(--surface); color: var(--fg);
+  box-shadow: 0 24px 80px rgba(0,0,0,.7);
+  border: 1px solid var(--border);
+}
+dialog[open][data-fallback="1"] {
+  position: fixed; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0; z-index: 1001;
+}
+dialog::backdrop { background: rgba(0,0,0,.65); backdrop-filter: blur(5px); }
+.dlg-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.dlg-title { font-weight: 800; font-size: 15px; }
+.dlg-body  { padding: 16px; }
+body.dialog-open { overflow: hidden; }
+body.dialog-fallback::before {
+  content: ''; position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,.65); backdrop-filter: blur(5px);
+}
+
+/* ── chat ── */
+.chat-wrap { display: flex; flex-direction: column; height: 100%; }
+.chat-log {
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 12px; min-height: 200px; max-height: 340px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.chat-msg {
+  padding: 9px 12px; border-radius: 12px; border: 1px solid transparent;
+  animation: msg-in .2s ease;
+}
+@keyframes msg-in { from { opacity:0; transform: translateY(6px); } }
+.chat-msg.me   { background: rgba(91,142,255,.1);  border-color: rgba(91,142,255,.2);  align-self: flex-end; max-width: 80%; }
+.chat-msg.them { background: rgba(63,217,192,.08); border-color: rgba(63,217,192,.18); align-self: flex-start; max-width: 80%; }
+.chat-msg.sys  { background: rgba(247,201,72,.07); border-color: rgba(247,201,72,.18); color: var(--muted); font-size: 12px; align-self: center; text-align: center; }
+.chat-msg .meta { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+.chat-msg .txt  { white-space: pre-wrap; word-break: break-word; }
+.chat-input-row { display: flex; gap: 8px; margin-top: 10px; align-items: flex-end; }
+.chat-input-row input { flex: 1; }
+
+/* ── export button ── */
+.export-btn { font-size: 12px; }
+
+/* ── settings card ── */
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 560px) { .settings-grid { grid-template-columns: 1fr; } }
+
+/* ── badge ── */
+.role-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(91,142,255,.1); border: 1px solid rgba(91,142,255,.25);
+  color: var(--accent); border-radius: var(--pill-r); padding: 4px 10px; font-size: 12px; font-weight: 600;
+}
+.role-badge.p2 { background: rgba(63,217,192,.1); border-color: rgba(63,217,192,.25); color: var(--ok); }
+
+/* ── alerts ── */
+.alert { padding: 10px 13px; border-radius: 10px; font-size: 12px; margin: 10px 0; }
+.alert.info  { background: rgba(91,142,255,.08);  border: 1px solid rgba(91,142,255,.2); color: #a0b8ff; }
+.alert.ok    { background: rgba(63,217,192,.08);  border: 1px solid rgba(63,217,192,.2); color: var(--ok); }
+.alert.warn  { background: rgba(247,201,72,.08);  border: 1px solid rgba(247,201,72,.2); color: var(--warn); }
+.alert.bad   { background: rgba(255,85,119,.08);  border: 1px solid rgba(255,85,119,.2); color: var(--bad); }
+
+/* ── connection state banner ── */
+.conn-banner {
+  display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+  border-radius: var(--r); margin: 0 0 16px;
+  background: rgba(63,217,192,.07); border: 1px solid rgba(63,217,192,.2);
+  animation: msg-in .3s ease;
+}
+.conn-banner.bad { background: rgba(255,85,119,.07); border-color: rgba(255,85,119,.2); }
+.conn-banner-icon { font-size: 20px; }
+.conn-banner-text .head { font-weight: 700; font-size: 14px; color: var(--ok); }
+.conn-banner.bad .conn-banner-text .head { color: var(--bad); }
+.conn-banner-text .sub  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+.flow-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(91,142,255,.18), transparent 30%),
+    radial-gradient(circle at 80% 0%, rgba(63,217,192,.14), transparent 28%),
+    linear-gradient(180deg, #04050a 0%, #090b12 100%);
+}
+
+.flow-overlay.show { display: flex; }
+
+.flow-shell {
+  width: min(980px, 94vw);
+  min-height: min(720px, 88vh);
+  border: 1px solid var(--border2);
+  border-radius: 22px;
+  padding: 24px;
+  background:
+    linear-gradient(180deg, rgba(20,23,32,.96), rgba(10,12,18,.98)),
+    repeating-linear-gradient(
+      180deg,
+      rgba(255,255,255,.015) 0,
+      rgba(255,255,255,.015) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+  box-shadow: 0 30px 100px rgba(0,0,0,.65);
+  overflow: hidden;
+}
+
+.flow-shell-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.flow-kicker {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--accent2);
+  margin-bottom: 8px;
+}
+
+.flow-step {
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.flow-title-lg {
+  font-family: var(--mono);
+  font-size: clamp(28px, 5vw, 52px);
+  line-height: 1;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.flow-copy {
+  max-width: 60ch;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.flow-role-grid {
+  display: grid;
+  grid-template-columns: 1fr 120px 1fr;
+  gap: 18px;
+  align-items: stretch;
+  margin-top: 28px;
+}
+
+.flow-role-card,
+.flow-choice-card {
+  background: linear-gradient(180deg, rgba(91,142,255,.08), rgba(255,255,255,.02));
+  border: 1px solid var(--border2);
+  border-radius: 18px;
+  padding: 22px;
+  text-align: left;
+  color: var(--fg);
+}
+
+.flow-role-card:hover,
+.flow-choice-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.flow-role-card strong,
+.flow-choice-card strong {
+  display: block;
+  font-family: var(--mono);
+  font-size: 22px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.flow-divider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent2);
+  opacity: .9;
+}
+
+.flow-divider .line {
+  width: 2px;
+  height: 120px;
+  background: linear-gradient(180deg, rgba(63,217,192,0), rgba(63,217,192,.9));
+  border-radius: 999px;
+}
+
+.flow-divider .arrow {
+  font-size: 40px;
+  line-height: 1;
+  margin-top: 10px;
+}
+
+.flow-panel {
+  max-width: 760px;
+}
+
+.flow-input {
+  margin-top: 22px;
+  max-width: 420px;
+}
+
+.flow-input input {
+  height: 48px;
+  font-size: 15px;
+}
+
+.flow-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.flow-choice-card.active {
+  border-color: var(--accent2);
+  box-shadow: inset 0 0 0 1px rgba(63,217,192,.25);
+}
+
+.flow-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.flow-qr-stage {
+  display: grid;
+  gap: 14px;
+  margin-top: 24px;
+  max-width: 540px;
+}
+
+.flow-qr-video {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #000;
+  border: 1px solid var(--border2);
+  border-radius: 18px;
+  object-fit: cover;
+}
+
+.flow-note {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.flow-inline {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 760px) {
+  .flow-role-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .flow-divider {
+    min-height: 100px;
+  }
+
+  .flow-divider .line {
+    height: 56px;
+  }
+}
+
+/* ── hide ── */
+.hide { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">2 Player <span>Live</span></div>
+    <div id="statusPill" class="status-pill">
+      <span id="statusDot" class="dot"></span>
+      <span id="statusTxt">Bereit</span>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span id="unreadBadge" class="unread-badge">0</span>
+    <button id="btnExportChat" class="btn sm ghost hide">⬇ Chat</button>
+    <button id="btnReconnect" class="btn sm ghost hide">↺ Neu verbinden</button>
+    <button id="btnSettings" class="btn sm ghost">⚙ Einstellungen</button>
+    <button id="btnOpen" class="btn sm primary">👥 Verbinden</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- Connected banner + Chat -->
+  <div id="connBanner" class="conn-banner hide">
+    <div class="conn-banner-icon">🔗</div>
+    <div class="conn-banner-text">
+      <div class="head" id="connBannerHead">Verbunden</div>
+      <div class="sub"  id="connBannerSub">DataChannel offen</div>
+    </div>
+    <div style="margin-left:auto; display:flex; gap:8px;">
+      <span id="connRoleBadge" class="role-badge">Player 1</span>
+    </div>
+  </div>
+  <div id="disconnBanner" class="conn-banner bad hide">
+    <div class="conn-banner-icon">⚡</div>
+    <div class="conn-banner-text">
+      <div class="head">Verbindung unterbrochen</div>
+      <div class="sub" id="disconnReason">—</div>
+    </div>
+  </div>
+
+  <div id="chatCard" class="card hide">
+    <div class="card-head">
+      <div class="card-title">Chat (DataChannel)</div>
+      <button id="btnExportChat2" class="btn sm ghost">⬇ Exportieren</button>
+    </div>
+    <div id="chatLog" class="chat-log"></div>
+    <div class="chat-input-row">
+      <input id="chatInput" type="text" placeholder="Nachricht … (Enter zum Senden)"/>
+      <button id="btnSend" class="btn primary">Senden</button>
+    </div>
+    <p class="muted" style="margin-top:8px; font-size:12px;">
+      💡 Player 1 sendet automatisch alle 7 s &quot;ping&quot; — stoppt, sobald du etwas schreibst.
+    </p>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════════
+     MAIN DIALOG
+══════════════════════════════════════════ -->
+<dialog id="dlg">
+  <div class="dlg-head">
+    <div class="dlg-title">Verbindung herstellen</div>
+    <button id="btnDlgClose" class="btn ghost sm">✕</button>
+  </div>
+  <div class="dlg-body">
+    <div class="row">
+
+      <!-- ───── Player 1 ───── -->
+      <div class="col" id="colP1">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Player 1 – Offer erzeugen</div>
+            <span class="role-badge">P1</span>
+          </div>
+          <p class="muted" id="p1IntroTxt">Erzeuge einen kurzen Link, sende ihn an Player 2. Der Answer kommt automatisch über denselben Link zurück.</p>
+
+          <!-- Steps -->
+          <div class="steps" id="p1Steps">
+            <div class="step active" id="p1s1"><div class="snum">01</div><div class="stxt">Offer erzeugen</div></div>
+            <div class="step" id="p1s2"><div class="snum">02</div><div class="stxt">Link teilen</div></div>
+            <div class="step" id="p1s3"><div class="snum">03</div><div class="stxt">Auf Answer warten</div></div>
+          </div>
+
+          <div class="sep"></div>
+
+          <!-- Step 1: generate -->
+          <div id="p1gen">
+            <button id="btnCreateOffer" class="btn primary">Offer-Link erzeugen</button>
+            <div id="p1Progress" class="progress-log" style="margin-top:12px;"></div>
+          </div>
+
+          <!-- Step 2: share offer -->
+          <div id="p1share" class="hide">
+            <div id="qrOffer" style="margin-top:10px;"></div>
+            <div class="row-btns" style="margin-top:8px;">
+              <button id="btnOfferSent" class="btn sm primary">→ Weiter: Auf Answer warten</button>
+            </div>
+            <div class="label">Link fuer Player 2</div>
+            <textarea id="taOfferLink" class="mono" readonly rows="3"></textarea>
+            <div class="row-btns">
+              <button id="btnShareOffer" class="btn sm">📤 Teilen</button>
+              <button id="btnCopyOffer" class="btn sm copy-btn"><span class="copy-label">📋 Kopieren</span><span class="copy-done">✓ Kopiert</span></button>
+            </div>
+          </div>
+
+          <!-- Step 3: paste answer -->
+          <div id="p1answer" class="hide">
+            <div class="label" id="p1AnswerManualLabel">Optional: manueller Answer-Link (nur Fallback)</div>
+            <input id="inAnswerLink" class="mono" type="text" placeholder="https://…?=a.…"/>
+            <div class="row-btns">
+              <button id="btnApplyAnswer" class="btn primary sm">✓ Manuell uebernehmen</button>
+              <button id="btnClearP1" class="btn sm ghost">Reset</button>
+            </div>
+            <div id="p1ApplyStatus" class="muted" style="margin-top:8px; font-size:12px;"></div>
+            <p class="muted" style="margin-top:8px; font-size:12px;">Player 2 schickt den Answer normalerweise automatisch ueber denselben Kurzlink zurueck.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ───── Player 2 ───── -->
+      <div class="col" id="colP2">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">Player 2 – Answer erzeugen</div>
+            <span class="role-badge p2">P2</span>
+          </div>
+          <p class="muted" id="p2StatusTxt">Schritt 1: Link von Player 1 einfuegen oder per QR oeffnen.</p>
+
+          <div id="p2join">
+            <div class="label">Link von Player 1</div>
+            <input id="inOfferLink" class="mono" type="text" placeholder="https://…/?s=ABCD1234"/>
+            <div class="row-btns">
+              <button id="btnApplyOffer" class="btn primary sm">✓ Offer übernehmen</button>
+              <button id="btnPasteOffer" class="btn sm">📋 Einfügen</button>
+            </div>
+          </div>
+
+          <div class="sep"></div>
+
+          <div id="p2content" class="hide">
+            <div class="label" id="p2DetectedLabel">Erkannter Offer</div>
+            <textarea id="taDetectedOffer" class="mono" readonly rows="2"></textarea>
+
+            <div id="p2Progress" class="progress-log" style="margin:10px 0;"></div>
+
+            <div id="p2answerBlock" class="hide">
+              <div class="label" id="p2AnswerLabel">Answer-Link (an Player 1 senden)</div>
+              <textarea id="taAnswerLink" class="mono" readonly rows="3"></textarea>
+              <div id="qrAnswer" style="margin-top:10px;"></div>
+              <div class="row-btns">
+                <button id="btnShareAnswer" class="btn sm">📤 Teilen</button>
+                <button id="btnCopyAnswer" class="btn sm copy-btn"><span class="copy-label">📋 Kopieren</span><span class="copy-done">✓ Kopiert</span></button>
+                <button id="btnClearP2" class="btn sm ghost">Reset</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" id="p2debugCard">
+          <div class="card-head"><div class="card-title">ICE / Debug</div></div>
+          <div class="mono muted" id="dbgTxt" style="font-size:11px; line-height:1.6; white-space:pre-wrap;"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</dialog>
+
+<!-- ═══════════════════════════════════════
+     SETTINGS DIALOG
+══════════════════════════════════════════ -->
+<dialog id="settingsDlg">
+  <div class="dlg-head">
+    <div class="dlg-title">Netzwerk-Einstellungen</div>
+    <button id="btnSettingsClose" class="btn ghost sm">✕</button>
+  </div>
+  <div class="dlg-body">
+    <div class="card">
+      <div class="settings-grid">
+        <div>
+          <div class="label">Netz-Modus</div>
+          <select id="selMode">
+            <option value="auto">Auto (URL &gt; Einstellung)</option>
+            <option value="lan">LAN-only (kein STUN)</option>
+            <option value="wan">Standard: Global/WAN (STUN)</option>
+          </select>
+
+          <div class="label" style="margin-top:14px;">Link-Transport</div>
+          <select id="selLinkFlow">
+            <option value="short">Kurzlink (Standard)</option>
+            <option value="direct">Direktlink (lang)</option>
+          </select>
+
+          <div class="label" style="margin-top:14px;">STUN Profil</div>
+          <select id="selStunProfile" class="mono">
+            <option value="verified">Verified (Cloudflare, Nextcloud, Google, SIPNET)</option>
+            <option value="mix">Mix (Community)</option>
+            <option value="cloudflare">Cloudflare only</option>
+            <option value="nextcloud">Nextcloud only</option>
+            <option value="sipnet">SIPNET only</option>
+            <option value="google">Google only</option>
+            <option value="blackberry">BlackBerry only</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div>
+          <div class="label">Effektive STUN-Liste</div>
+          <textarea id="taStunList" class="mono" readonly rows="6"></textarea>
+        </div>
+      </div>
+
+      <div id="customStunWrap" class="hide" style="margin-top:12px;">
+        <div class="label">Eigene STUN-Zeilen (eine pro Zeile)</div>
+        <textarea id="taCustomStun" class="mono" rows="4" placeholder="stun:stun.example.com:3478"></textarea>
+        <p class="muted" style="margin-top:6px;">Nur <code>stun:</code>-Zeilen werden genutzt. Falls leer → Fallback auf Verified.</p>
+      </div>
+
+      <div class="alert info" style="margin-top:14px;">
+        💡 Tipp: Falls LAN-only nicht verbindet, wechsle auf Global/WAN.
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+      <div class="card-title" style="margin-bottom:10px;">Ping / Diagnose</div>
+      <div class="settings-grid">
+        <div>
+          <div class="label">Ping-Intervall (Sekunden)</div>
+          <input id="inPingInterval" type="number" min="2" max="60" value="7"/>
+        </div>
+        <div>
+          <div class="label">ICE Gather Timeout (ms)</div>
+          <input id="inIceTimeout" type="number" min="1000" max="30000" step="500" value="6500"/>
+        </div>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<div id="connectFlow" class="flow-overlay" aria-hidden="true">
+  <div class="flow-shell">
+    <div class="flow-shell-top">
+      <div>
+        <div class="flow-kicker">Link Arena</div>
+        <div id="connectFlowStep" class="flow-step">01 / Rolle</div>
+      </div>
+      <button id="btnFlowClose" class="btn ghost sm" type="button">Schließen</button>
+    </div>
+    <div id="connectFlowBody"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+const $  = (id) => document.getElementById(id);
+const now = () => new Date().toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+
+function b64uEncode(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (const b of bytes) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function b64uDecode(b64u) {
+  const b64 = b64u.replace(/-/g,'+').replace(/_/g,'/') + '==='.slice((b64u.length+3)%4);
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+
+function getHashRawFromLocation(loc = location) {
+  const h = (loc && typeof loc.hash === 'string') ? loc.hash : '';
+  return h.startsWith('#') ? h.slice(1) : h;
+}
+function getSearchRawFromLocation(loc = location) {
+  const s = (loc && typeof loc.search === 'string') ? loc.search : '';
+  return s.startsWith('?') ? s.slice(1) : s;
+}
+function getPrefixedSignalToken(rawValue, prefix) {
+  const raw = String(rawValue || '').replace(/^[?#]/, '');
+  const first = raw.split('&', 1)[0] || '';
+  const marker = prefix + '.';
+  if (!first.startsWith(marker)) return null;
+  const token = first.slice(marker.length).trim();
+  return token || null;
+}
+function getParamToken(rawValue, prefix, namedKey) {
+  const raw = String(rawValue || '').replace(/^[?#]/, '');
+  if (!raw) return null;
+  const prefixed = getPrefixedSignalToken(raw, prefix);
+  if (prefixed) return prefixed;
+  const params = new URLSearchParams(raw);
+  const unnamed = String(params.get('') || '').trim();
+  if (unnamed.startsWith(prefix + '.')) {
+    return unnamed.slice(prefix.length + 1).trim() || null;
+  }
+  return params.get(namedKey);
+}
+function getOfferToken(rawValue = null) {
+  if (rawValue == null) {
+    return getParamToken(getSearchRawFromLocation(), 'o', 'offer')
+      || getParamToken(getHashRawFromLocation(), 'o', 'offer');
+  }
+  return getParamToken(rawValue, 'o', 'offer');
+}
+function getAnswerToken(rawValue = null) {
+  if (rawValue == null) {
+    return getParamToken(getSearchRawFromLocation(), 'a', 'answer')
+      || getParamToken(getHashRawFromLocation(), 'a', 'answer');
+  }
+  return getParamToken(rawValue, 'a', 'answer');
+}
+function getSessionIdFromLocation(loc = location) {
+  try {
+    return String(new URL(loc.href, location.href).searchParams.get('s') || '').trim();
+  } catch {
+    return '';
+  }
+}
+function extractSessionId(input) {
+  const raw = String(input || '').trim();
+  if (!raw) return '';
+  try {
+    return String(new URL(raw, location.href).searchParams.get('s') || '').trim();
+  } catch {
+    return /^[A-Za-z0-9_-]{6,64}$/.test(raw) ? raw : '';
+  }
+}
+function extractOfferPayload(input) {
+  const raw = String(input || '').trim();
+  if (!raw) return '';
+  try {
+    const u = new URL(raw, location.href);
+    return getOfferToken(u.search) || getOfferToken(u.hash) || raw;
+  } catch {
+    return getOfferToken(raw) || raw;
+  }
+}
+function hasOfferInLocation() {
+  return !!getSessionIdFromLocation() || !!getOfferToken();
+}
+function parseHash() {
+  const rawSearch = getSearchRawFromLocation();
+  if (getOfferToken(rawSearch) || getAnswerToken(rawSearch)) {
+    const params = new URLSearchParams(rawSearch);
+    params.delete('');
+    params.delete('offer');
+    params.delete('answer');
+    return params;
+  }
+
+  const raw = getHashRawFromLocation();
+  const first = raw.split('&', 1)[0] || '';
+  if (first.startsWith('o.') || first.startsWith('a.')) {
+    const idx = raw.indexOf('&');
+    return new URLSearchParams(idx === -1 ? '' : raw.slice(idx + 1));
+  }
+  return new URLSearchParams(raw);
+}
+function buildPublicBaseUrl() {
+  const u = new URL(location.href);
+  u.hash = '';
+  u.search = '';
+  if (u.pathname.length > 1) {
+    u.pathname = u.pathname.replace(/\/+$/, '');
+  }
+  return u;
+}
+function buildSessionLink(sessionId) {
+  const u = buildPublicBaseUrl();
+  u.searchParams.set('s', sessionId);
+  return u.toString();
+}
+function buildSignalLink(kind /* 'offer'|'answer' */, payload, extras = {}) {
+  const u = buildPublicBaseUrl();
+  const p = new URLSearchParams();
+  for (const [k, v] of Object.entries(extras)) {
+    if (v == null) p.delete(k); else p.set(k, v);
+  }
+  p.delete('offer');
+  p.delete('answer');
+  const prefix = kind === 'answer' ? 'a.' : 'o.';
+  const direct = '=' + prefix + payload;
+  const tail = p.toString();
+  u.search = direct + (tail ? '&' + tail : '');
+  u.hash = '';
+  return u.toString();
+}
+/** Remove sensitive params from URL bar after processing */
+function cleanHashParam(key) {
+  const tokenPrefix = key === 'answer' ? 'a' : 'o';
+  const u = new URL(location.href);
+  let changed = false;
+
+  const searchRaw = getSearchRawFromLocation(u);
+  if (getParamToken(searchRaw, tokenPrefix, key)) {
+    const searchParams = new URLSearchParams(searchRaw);
+    searchParams.delete('');
+    searchParams.delete(key);
+    u.search = searchParams.toString() ? '?' + searchParams.toString() : '';
+    changed = true;
+  }
+
+  const hashRaw = getHashRawFromLocation(u);
+  const hashParams = parseHash();
+  if ((key === 'offer' && getPrefixedSignalToken(hashRaw, 'o')) ||
+      (key === 'answer' && getPrefixedSignalToken(hashRaw, 'a'))) {
+    u.hash = '';
+    changed = true;
+  } else if (hashParams.has(key)) {
+    hashParams.delete(key);
+    u.hash = hashParams.toString() ? '#' + hashParams.toString() : '';
+    changed = true;
+  }
+  if (!changed) return;
+  history.replaceState(null, '', u.toString());
+}
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; }
+  catch { prompt('Kopieren:', text); return false; }
+}
+async function shareText(title, text) {
+  if (navigator.share) {
+    try { await navigator.share({ title, text }); return true; } catch { return false; }
+  }
+  return false;
+}
+
+function blobFromCanvas(canvas) {
+  return new Promise((resolve, reject) => {
+    if (!canvas || typeof canvas.toBlob !== 'function') {
+      reject(new Error('Canvas-Export nicht verfügbar.'));
+      return;
+    }
+    canvas.toBlob(blob => {
+      if (blob) resolve(blob);
+      else reject(new Error('QR-Bild konnte nicht exportiert werden.'));
+    }, 'image/png');
+  });
+}
+
+async function blobFromQrNode(node) {
+  if (!node) throw new Error('QR-Bild nicht gefunden.');
+  if (node.tagName === 'CANVAS') {
+    return blobFromCanvas(node);
+  }
+  if (node.tagName === 'IMG') {
+    const src = String(node.currentSrc || node.src || '').trim();
+    if (!src) throw new Error('QR-Bildquelle fehlt.');
+    const res = await fetch(src);
+    if (!res.ok) throw new Error('QR-Bild konnte nicht geladen werden.');
+    return res.blob();
+  }
+  throw new Error('QR-Bildformat wird nicht unterstützt.');
+}
+
+async function shareQrImage(containerId, fallbackText, filenameBase) {
+  const container = $(containerId);
+  const node = container ? container.querySelector('canvas, img') : null;
+  if (!node) throw new Error('QR-Bild nicht gefunden.');
+
+  const blob = await blobFromQrNode(node);
+  const file = new File([blob], `${filenameBase || 'qr-code'}.png`, { type: blob.type || 'image/png' });
+
+  if (navigator.share && typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
+    await navigator.share({
+      title: 'QR-Code',
+      text: fallbackText || '',
+      files: [file],
+    });
+    return true;
+  }
+
+  if (navigator.share) {
+    return shareText('QR-Code', fallbackText || '');
+  }
+
+  throw new Error('Teilen von QR-Bildern wird auf diesem Gerät nicht unterstützt.');
+}
+
+function errorText(err) {
+  if (err && typeof err.message === 'string' && err.message) return err.message;
+  return String(err);
+}
+
+function escapeAttr(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function animateCopyBtn(btn) {
+  btn.classList.add('copied');
+  setTimeout(() => btn.classList.remove('copied'), 1800);
+}
+
+function syncDialogBodyState() {
+  const hasOpen = !!document.querySelector('dialog[open]');
+  const hasFallbackOpen = !!document.querySelector('dialog[open][data-fallback="1"]');
+  document.body.classList.toggle('dialog-open', hasOpen);
+  document.body.classList.toggle('dialog-fallback', hasFallbackOpen);
+}
+function openDialog(el) {
+  if (!el) return;
+  try {
+    if (typeof el.showModal === 'function') {
+      el.removeAttribute('data-fallback');
+      if (!el.open) el.showModal();
+      syncDialogBodyState();
+      return;
+    }
+    if (typeof el.show === 'function') {
+      el.removeAttribute('data-fallback');
+      if (!el.open) el.show();
+      syncDialogBodyState();
+      return;
+    }
+  } catch {}
+  el.setAttribute('data-fallback', '1');
+  el.setAttribute('open', '');
+  syncDialogBodyState();
+}
+function closeDialog(el) {
+  if (!el) return;
+  try {
+    if (typeof el.close === 'function') {
+      if (el.open) el.close();
+      syncDialogBodyState();
+      return;
+    }
+  } catch {}
+  el.removeAttribute('data-fallback');
+  el.removeAttribute('open');
+  syncDialogBodyState();
+}
+
+function ls(key, def) {
+  const v = localStorage.getItem(key);
+  return v === null ? def : v;
+}
+function lsSet(key, val) { localStorage.setItem(key, val); }
+function lsDel(...keys) { keys.forEach(k => localStorage.removeItem(k)); }
+
+const qrDetector = (() => {
+  try {
+    return typeof BarcodeDetector !== 'undefined'
+      ? new BarcodeDetector({ formats: ['qr_code'] })
+      : null;
+  } catch {
+    return null;
+  }
+})();
+
+function hasQrDecoder() {
+  return !!qrDetector || typeof jsQR === 'function';
+}
+
+const flowState = {
+  step: 'role',
+  role: '',
+  name: '',
+  mode: 'wan',
+  scannerStream: null,
+  scannerRaf: 0,
+};
+const SIGNAL_POLL_MS = 1500;
+const signalState = {
+  sessionId: '',
+  sharedLink: '',
+  answerPollTimer: 0,
+  lastAnswerPayload: '',
+  pollInFlight: false,
+};
+const linkFlowState = { current: 'short' };
+
+function savedPlayerName() {
+  return ls('2p.playerName', '').trim();
+}
+
+function setPlayerName(name) {
+  lsSet('2p.playerName', String(name || '').trim());
+}
+
+function normalizeConnectMode(mode) {
+  return mode === 'lan' ? 'lan' : 'wan';
+}
+
+function normalizeLinkFlow(value) {
+  return value === 'direct' ? 'direct' : 'short';
+}
+
+function preferredLinkFlow() {
+  const el = $('selLinkFlow');
+  if (el) return normalizeLinkFlow(el.value);
+  return normalizeLinkFlow(ls('2p.linkFlow', 'short'));
+}
+
+function refreshLinkFlowUi(flow = linkFlowState.current) {
+  const mode = normalizeLinkFlow(flow);
+  const step3Text = document.querySelector('#p1s3 .stxt');
+  if ($('p1IntroTxt')) {
+    $('p1IntroTxt').textContent = mode === 'direct'
+      ? 'Erzeuge einen Direktlink, sende ihn an Player 2 und uebernimm danach deren Answer-Link manuell.'
+      : 'Erzeuge einen kurzen Link, sende ihn an Player 2. Der Answer kommt automatisch ueber denselben Link zurueck.';
+  }
+  if (step3Text) {
+    step3Text.textContent = mode === 'direct' ? 'Answer einfügen' : 'Auf Answer warten';
+  }
+  if ($('btnOfferSent')) {
+    $('btnOfferSent').textContent = mode === 'direct'
+      ? '→ Weiter: Answer einfügen'
+      : '→ Weiter: Auf Answer warten';
+  }
+  if ($('p1AnswerManualLabel')) {
+    $('p1AnswerManualLabel').textContent = mode === 'direct'
+      ? 'Answer-Link von Player 2'
+      : 'Optional: manueller Answer-Link (nur Fallback)';
+  }
+  if ($('btnApplyAnswer')) {
+    $('btnApplyAnswer').textContent = mode === 'direct'
+      ? '✓ Answer übernehmen'
+      : '✓ Manuell uebernehmen';
+  }
+}
+
+function setLinkFlowMode(flow) {
+  linkFlowState.current = normalizeLinkFlow(flow);
+  refreshLinkFlowUi(linkFlowState.current);
+}
+
+function setModePreference(mode) {
+  $('selMode').value = mode;
+  saveSettings();
+}
+
+function requestNotificationsIfNeeded() {
+  if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+    try {
+      if (typeof Notification.requestPermission === 'function') {
+        const maybePromise = Notification.requestPermission();
+        if (maybePromise && typeof maybePromise.catch === 'function') {
+          maybePromise.catch(() => {});
+        }
+      }
+    } catch {}
+  }
+}
+
+function buildSignalApiUrl(params = {}) {
+  const base = buildPublicBaseUrl();
+  const u = new URL(base.origin);
+  u.pathname = (base.pathname === '/' ? '' : base.pathname) + '/signal.php';
+  for (const [key, value] of Object.entries(params)) {
+    if (value == null || value === '') continue;
+    u.searchParams.set(key, value);
+  }
+  return u.toString();
+}
+
+async function signalRequest(method, params = {}, body = null) {
+  const init = {
+    method,
+    headers: { Accept: 'application/json' },
+  };
+  if (body !== null) {
+    init.headers['Content-Type'] = 'application/json';
+    init.body = JSON.stringify(body);
+  }
+
+  let res;
+  try {
+    res = await fetch(buildSignalApiUrl(params), init);
+  } catch {
+    throw new Error('Kurzlink-Server nicht erreichbar.');
+  }
+
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error('Kurzlink-Server antwortet nicht als JSON.');
+  }
+
+  if (!res.ok || !data || data.ok !== true) {
+    throw new Error(data && data.error ? data.error : `Kurzlink-Serverfehler (${res.status})`);
+  }
+
+  return data;
+}
+
+async function createSignalSession(offerPayload, mode) {
+  return signalRequest('POST', { action: 'create' }, { offer: offerPayload, mode });
+}
+
+async function fetchSignalSession(sessionId) {
+  return signalRequest('GET', { id: sessionId });
+}
+
+async function storeSignalAnswer(sessionId, answerPayload) {
+  return signalRequest('POST', { action: 'answer' }, { id: sessionId, answer: answerPayload });
+}
+
+function stopAnswerPolling() {
+  if (signalState.answerPollTimer) {
+    clearTimeout(signalState.answerPollTimer);
+    signalState.answerPollTimer = 0;
+  }
+  signalState.pollInFlight = false;
+}
+
+function clearSignalState() {
+  stopAnswerPolling();
+  signalState.sessionId = '';
+  signalState.sharedLink = '';
+  signalState.lastAnswerPayload = '';
+}
+
+function setActiveSignalSession(sessionId, sharedLink = '') {
+  signalState.sessionId = String(sessionId || '').trim();
+  signalState.sharedLink = signalState.sessionId
+    ? String(sharedLink || '').trim() || buildSessionLink(signalState.sessionId)
+    : '';
+  if (signalState.sessionId) {
+    flowSet('2p.sessionId', signalState.sessionId);
+    flowSet('2p.sharedLink', signalState.sharedLink);
+  }
+}
+
+async function pollForServerAnswer(sessionId) {
+  if (!sessionId || signalState.sessionId !== sessionId || signalState.pollInFlight) return;
+  signalState.pollInFlight = true;
+  try {
+    const session = await fetchSignalSession(sessionId);
+    if (signalState.sessionId !== sessionId) return;
+    if (!session.answer) {
+      if (role === 'Player 1' && !getRemoteAnswerDescription(pc)) {
+        $('p1ApplyStatus').textContent = 'Warte auf Player 2. Der Answer wird automatisch ueber denselben Kurzlink abgeholt.';
+      }
+      return;
+    }
+    signalState.lastAnswerPayload = String(session.answer || '').trim();
+    await applyAnswer(signalState.lastAnswerPayload);
+    if (getRemoteAnswerDescription(pc)?.type === 'answer') {
+      stopAnswerPolling();
+    }
+  } catch (err) {
+    if (role === 'Player 1') {
+      $('p1ApplyStatus').textContent = 'Warte auf Player 2. Kurzlink-Server meldet gerade: ' + errorText(err);
+    }
+  } finally {
+    signalState.pollInFlight = false;
+    const remote = getRemoteAnswerDescription(pc);
+    if (signalState.sessionId === sessionId && !(dc && dc.readyState === 'open') && !(remote && remote.type === 'answer')) {
+      signalState.answerPollTimer = window.setTimeout(() => {
+        pollForServerAnswer(sessionId);
+      }, SIGNAL_POLL_MS);
+    }
+  }
+}
+
+function startAnswerPolling(sessionId) {
+  stopAnswerPolling();
+  if (!sessionId) return;
+  setActiveSignalSession(sessionId, signalState.sharedLink || buildSessionLink(sessionId));
+  if (role === 'Player 1') {
+    $('p1ApplyStatus').textContent = 'Warte auf Player 2. Der Answer wird automatisch ueber denselben Kurzlink abgeholt.';
+  }
+  void pollForServerAnswer(sessionId);
+}
+
+async function handleSessionLink(sessionId) {
+  const cleanId = extractSessionId(sessionId);
+  if (!cleanId) {
+    throw new Error('Kurzlink-ID fehlt.');
+  }
+  const fallbackLink = buildSessionLink(cleanId);
+  openDialog($('dlg'));
+  setRoleView('p2');
+  $('p2join').classList.add('hide');
+  $('p2content').classList.remove('hide');
+  $('p2answerBlock').classList.add('hide');
+  clearProgress('p2Progress');
+  $('taDetectedOffer').value = fallbackLink;
+  $('p2DetectedLabel').textContent = 'Kurzlink von Player 1';
+  $('p2StatusTxt').textContent = 'Kurzlink wird geladen…';
+  setStatus('Kurzlink wird geladen…', 'spin');
+
+  try {
+    const session = await fetchSignalSession(cleanId);
+    const offerPayload = String(session.offer || '').trim();
+    if (!offerPayload) {
+      throw new Error('Im Kurzlink wurde kein Offer gefunden.');
+    }
+    const mode = normalizeConnectMode(session.mode);
+    setModePreference(mode);
+    await handleOffer(offerPayload, {
+      sessionId: String(session.id || cleanId).trim(),
+      sharedLink: String(session.link || '').trim() || fallbackLink,
+      mode,
+    });
+  } catch (err) {
+    $('p2StatusTxt').textContent = 'Fehler: ' + errorText(err);
+    setStatus('Kurzlink-Fehler', 'bad');
+  }
+}
+
+function stopQrScanner() {
+  if (flowState.scannerRaf) {
+    cancelAnimationFrame(flowState.scannerRaf);
+    flowState.scannerRaf = 0;
+  }
+  if (flowState.scannerStream) {
+    flowState.scannerStream.getTracks().forEach(track => {
+      try { track.stop(); } catch {}
+    });
+    flowState.scannerStream = null;
+  }
+  const video = $('flowQrVideo');
+  if (video) {
+    try { video.pause(); } catch {}
+    video.srcObject = null;
+  }
+}
+
+function closeConnectFlow() {
+  stopQrScanner();
+  $('connectFlow').classList.remove('show');
+  $('connectFlow').setAttribute('aria-hidden', 'true');
+}
+
+function openConnectFlow() {
+  stopQrScanner();
+  flowState.step = 'role';
+  flowState.role = '';
+  flowState.name = savedPlayerName();
+  flowState.mode = normalizeConnectMode(ls('2p.mode', 'wan'));
+  $('connectFlow').classList.add('show');
+  $('connectFlow').setAttribute('aria-hidden', 'false');
+  renderConnectFlow();
+}
+
+function launchPlayer1FromFlow() {
+  setPlayerName(flowState.name);
+  setModePreference(flowState.mode);
+  closeConnectFlow();
+  requestNotificationsIfNeeded();
+  openDialog($('dlg'));
+  setRoleView('p1');
+  createOffer();
+}
+
+function launchPlayer2FromFlow() {
+  setPlayerName(flowState.name);
+  closeConnectFlow();
+  requestNotificationsIfNeeded();
+  openDialog($('dlg'));
+  setRoleView('p2');
+  $('p2join').classList.remove('hide');
+  $('inOfferLink').focus();
+}
+
+function acceptOfferFromFlow(raw) {
+  stopQrScanner();
+  closeConnectFlow();
+  applyOfferInput(raw);
+}
+
+function extractQrValue(hits) {
+  const value = hits && hits[0] ? String(hits[0].rawValue || '').trim() : '';
+  return value || '';
+}
+
+async function detectQrSource(source) {
+  if (!source) return '';
+  if (qrDetector) {
+    try {
+      const value = extractQrValue(await qrDetector.detect(source));
+      if (value) return value;
+    } catch {}
+  }
+  return detectQrWithJsQr(source);
+}
+
+async function createImageBitmapFromFile(file) {
+  if (typeof createImageBitmap !== 'function') return null;
+  try {
+    return await createImageBitmap(file, { imageOrientation: 'from-image' });
+  } catch {
+    try {
+      return await createImageBitmap(file);
+    } catch {
+      return null;
+    }
+  }
+}
+
+function loadImageElementFromFile(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    const cleanup = () => URL.revokeObjectURL(url);
+
+    img.onload = () => resolve({ img, cleanup });
+    img.onerror = () => {
+      cleanup();
+      reject(new Error('Bild konnte nicht geladen werden.'));
+    };
+    img.src = url;
+  });
+}
+
+function createCanvas(width, height) {
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, width);
+  canvas.height = Math.max(1, height);
+  return canvas;
+}
+
+function drawImageToCanvas(image, maxSide) {
+  const srcW = Math.max(1, image.naturalWidth || image.videoWidth || image.width || 1);
+  const srcH = Math.max(1, image.naturalHeight || image.videoHeight || image.height || 1);
+  const scale = maxSide ? maxSide / Math.max(srcW, srcH) : 1;
+  const width = Math.max(1, Math.round(srcW * scale));
+  const height = Math.max(1, Math.round(srcH * scale));
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return canvas;
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, height);
+  ctx.drawImage(image, 0, 0, width, height);
+  return canvas;
+}
+
+function detectQrWithJsQr(source) {
+  if (typeof jsQR !== 'function' || !source) return '';
+  let canvas = null;
+  if (source.tagName === 'CANVAS') {
+    const maxSide = Math.max(source.width || 0, source.height || 0);
+    canvas = maxSide > 1600 ? drawImageToCanvas(source, 1600) : source;
+  } else {
+    const maxSide = source.tagName === 'VIDEO' ? 960 : 1600;
+    canvas = drawImageToCanvas(source, maxSide);
+  }
+
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return '';
+
+  try {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const result = jsQR(imageData.data, canvas.width, canvas.height, {
+      inversionAttempts: 'attemptBoth',
+    });
+    return result && result.data ? String(result.data).trim() : '';
+  } catch {
+    return '';
+  }
+}
+
+function createProcessedQrCanvas(sourceCanvas, options = {}) {
+  const { contrast = 1, threshold = null, invert = false } = options;
+  const canvas = createCanvas(sourceCanvas.width, sourceCanvas.height);
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return canvas;
+
+  ctx.drawImage(sourceCanvas, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  const lumas = new Uint8ClampedArray(data.length / 4);
+  let min = 255;
+  let max = 0;
+
+  for (let i = 0, px = 0; px < data.length; i++, px += 4) {
+    const luma = Math.round(data[px] * 0.299 + data[px + 1] * 0.587 + data[px + 2] * 0.114);
+    lumas[i] = luma;
+    if (luma < min) min = luma;
+    if (luma > max) max = luma;
+  }
+
+  const range = Math.max(1, max - min);
+  for (let i = 0, px = 0; px < data.length; i++, px += 4) {
+    let value = ((lumas[i] - min) * 255) / range;
+    value = (value - 128) * contrast + 128;
+    if (threshold !== null) value = value >= threshold ? 255 : 0;
+    if (invert) value = 255 - value;
+    value = Math.max(0, Math.min(255, Math.round(value)));
+    data[px] = value;
+    data[px + 1] = value;
+    data[px + 2] = value;
+    data[px + 3] = 255;
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+  return canvas;
+}
+
+async function detectQrFromFile(file) {
+  if (!hasQrDecoder()) throw new Error('QR-Erkennung im Browser nicht verfügbar.');
+  let bitmap = null;
+  let loadedImage = null;
+  try {
+    bitmap = await createImageBitmapFromFile(file);
+    const bitmapValue = await detectQrSource(bitmap);
+    if (bitmapValue) return bitmapValue;
+
+    loadedImage = await loadImageElementFromFile(file);
+    const img = loadedImage.img;
+
+    const imageValue = await detectQrSource(img);
+    if (imageValue) return imageValue;
+
+    const maxSide = Math.max(img.naturalWidth || img.width || 0, img.naturalHeight || img.height || 0, 1);
+    const candidateSizes = [...new Set([
+      Math.min(maxSide, 2048),
+      Math.min(maxSide, 1536),
+      Math.min(maxSide, 1024),
+      Math.min(maxSide, 768),
+      Math.min(maxSide, 512),
+      Math.min(maxSide, 320),
+    ].filter(size => size >= 160))];
+
+    for (const size of candidateSizes) {
+      const baseCanvas = drawImageToCanvas(img, size);
+      const variants = [
+        baseCanvas,
+        createProcessedQrCanvas(baseCanvas, { contrast: 1.25 }),
+        createProcessedQrCanvas(baseCanvas, { contrast: 1.6 }),
+        createProcessedQrCanvas(baseCanvas, { contrast: 1.35, threshold: 128 }),
+        createProcessedQrCanvas(baseCanvas, { contrast: 1.5, threshold: 110 }),
+        createProcessedQrCanvas(baseCanvas, { contrast: 1.5, threshold: 160 }),
+      ];
+
+      for (const candidate of variants) {
+        const value = await detectQrSource(candidate);
+        if (value) return value;
+      }
+    }
+
+    throw new Error('Kein QR-Code erkannt. Nutze am besten einen klaren Screenshot des QR-Felds.');
+  } finally {
+    if (bitmap && typeof bitmap.close === 'function') bitmap.close();
+    if (loadedImage && typeof loadedImage.cleanup === 'function') loadedImage.cleanup();
+  }
+}
+
+async function scanQrLoop() {
+  if (!flowState.scannerStream || !hasQrDecoder()) return;
+  const video = $('flowQrVideo');
+  const status = $('flowQrStatus');
+  try {
+    if (video && video.readyState >= 2) {
+      const value = await detectQrSource(video);
+      if (value) {
+        if (status) status.textContent = 'QR erkannt. Offer wird übernommen …';
+        acceptOfferFromFlow(value);
+        return;
+      }
+    }
+  } catch {}
+  flowState.scannerRaf = requestAnimationFrame(scanQrLoop);
+}
+
+async function startQrScanner() {
+  const status = $('flowQrStatus');
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    if (status) status.textContent = 'Kamerazugriff wird vom Browser nicht unterstützt.';
+    return;
+  }
+  if (!hasQrDecoder()) {
+    if (status) status.textContent = 'Live-QR-Erkennung nicht verfügbar. Nutze QR-Bild oder manuellen Link.';
+    return;
+  }
+
+  stopQrScanner();
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1280 },
+        height: { ideal: 1280 }
+      },
+      audio: false
+    });
+
+    flowState.scannerStream = stream;
+    const video = $('flowQrVideo');
+    if (!video) return;
+    video.srcObject = stream;
+    await video.play();
+
+    if (status) status.textContent = 'Kamera aktiv. QR-Code in den Rahmen halten.';
+    scanQrLoop();
+  } catch (err) {
+    if (status) status.textContent = 'Kamera konnte nicht gestartet werden: ' + errorText(err);
+  }
+}
+
+function renderConnectFlow() {
+  const step = $('connectFlowStep');
+  const body = $('connectFlowBody');
+  if (!step || !body) return;
+
+  if (flowState.step === 'role') {
+    step.textContent = '01 / Rolle';
+    body.innerHTML = `
+      <div class="flow-title-lg">Player Select</div>
+      <p class="flow-copy">Wähle zuerst deine Rolle. Danach folgen Name und Verbindungsweg.</p>
+      <div class="flow-role-grid">
+        <button id="btnFlowRoleP1" class="flow-role-card" type="button">
+          <strong>Player 1</strong>
+          <span>Offer erzeugen, Link oder QR teilen, danach Answer übernehmen.</span>
+        </button>
+        <div class="flow-divider" aria-hidden="true">
+          <div class="line"></div>
+          <div class="arrow">↓</div>
+        </div>
+        <button id="btnFlowRoleP2" class="flow-role-card" type="button">
+          <strong>Player 2</strong>
+          <span>Offer scannen oder einfügen, Answer erzeugen und zurücksenden.</span>
+        </button>
+      </div>
+    `;
+
+    $('btnFlowRoleP1').addEventListener('click', () => {
+      flowState.role = 'Player 1';
+      flowState.step = 'name';
+      renderConnectFlow();
+    });
+
+    $('btnFlowRoleP2').addEventListener('click', () => {
+      flowState.role = 'Player 2';
+      flowState.step = 'name';
+      renderConnectFlow();
+    });
+
+    return;
+  }
+
+  if (flowState.step === 'name') {
+    step.textContent = '02 / Name';
+    body.innerHTML = `
+      <div class="flow-panel">
+        <div class="flow-kicker">${flowState.role}</div>
+        <div class="flow-title-lg">Enter Name</div>
+        <p class="flow-copy">Der Name wird lokal gespeichert und bei der nächsten Verbindung wieder vorgeschlagen.</p>
+        <div class="flow-input">
+          <input id="flowNameInput" type="text" maxlength="32" placeholder="z. B. Michy" value="${escapeAttr(flowState.name)}"/>
+        </div>
+        <div class="flow-actions">
+          <button id="btnFlowBackRole" class="btn ghost" type="button">Zurück</button>
+          <button id="btnFlowNextName" class="btn primary" type="button">Weiter</button>
+        </div>
+      </div>
+    `;
+
+    $('btnFlowBackRole').addEventListener('click', () => {
+      flowState.step = 'role';
+      renderConnectFlow();
+    });
+
+    $('btnFlowNextName').addEventListener('click', () => {
+      const value = $('flowNameInput').value.trim();
+      if (!value) {
+        $('flowNameInput').focus();
+        return;
+      }
+      flowState.name = value;
+      setPlayerName(value);
+      flowState.step = flowState.role === 'Player 1' ? 'network' : 'scanner';
+      renderConnectFlow();
+    });
+
+    $('flowNameInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') $('btnFlowNextName').click();
+    });
+
+    setTimeout(() => $('flowNameInput').focus(), 0);
+    return;
+  }
+
+  if (flowState.step === 'network') {
+    step.textContent = '03 / Netzwerk';
+    const currentMode = normalizeConnectMode(flowState.mode || ls('2p.mode', 'wan'));
+
+    body.innerHTML = `
+      <div class="flow-panel">
+        <div class="flow-kicker">Player 1</div>
+        <div class="flow-title-lg">Connect Mode</div>
+        <p class="flow-copy">Die Auswahl wird direkt in den Einstellungen gespeichert und als Standard wiederverwendet.</p>
+        <div class="flow-choice-grid">
+          <button id="btnFlowWan" class="flow-choice-card ${currentMode === 'wan' ? 'active' : ''}" type="button">
+            <strong>Global</strong>
+            <span>WAN mit STUN. Beste Standardwahl für Geräte über verschiedene Netzwerke.</span>
+          </button>
+          <button id="btnFlowLan" class="flow-choice-card ${currentMode === 'lan' ? 'active' : ''}" type="button">
+            <strong>Lokal</strong>
+            <span>Nur LAN, kein STUN. Gut für lokales WLAN oder Hotspot.</span>
+          </button>
+        </div>
+        <div class="flow-actions">
+          <button id="btnFlowBackName" class="btn ghost" type="button">Zurück</button>
+          <button id="btnFlowLaunchP1" class="btn primary" type="button">Mission starten</button>
+        </div>
+      </div>
+    `;
+
+    $('btnFlowWan').addEventListener('click', () => {
+      flowState.mode = 'wan';
+      setModePreference('wan');
+      renderConnectFlow();
+    });
+
+    $('btnFlowLan').addEventListener('click', () => {
+      flowState.mode = 'lan';
+      setModePreference('lan');
+      renderConnectFlow();
+    });
+
+    $('btnFlowBackName').addEventListener('click', () => {
+      flowState.step = 'name';
+      renderConnectFlow();
+    });
+
+    $('btnFlowLaunchP1').addEventListener('click', launchPlayer1FromFlow);
+    return;
+  }
+
+  if (flowState.step === 'scanner') {
+    step.textContent = '03 / QR';
+    body.innerHTML = `
+      <div class="flow-panel">
+        <div class="flow-kicker">Player 2</div>
+        <div class="flow-title-lg">Scan Offer</div>
+        <p class="flow-copy">Scanne den QR-Code von Player 1. Falls die Kamera im Browser nicht stabil verfügbar ist, nutze QR-Bild oder den manuellen Link.</p>
+
+        <div class="flow-qr-stage">
+          <video id="flowQrVideo" class="flow-qr-video" playsinline muted></video>
+          <div id="flowQrStatus" class="flow-note">Bereit zum Scannen.</div>
+
+          <div class="flow-inline">
+            <button id="btnFlowStartQr" class="btn primary" type="button">QR Kamera starten</button>
+            <label class="btn" for="flowQrFile">QR Bild wählen</label>
+            <input id="flowQrFile" type="file" accept="image/*" class="hide"/>
+          </div>
+
+          <div class="label">Oder Link manuell</div>
+          <input id="flowManualOffer" class="mono" type="text" placeholder="https://.../?s=ABCD1234"/>
+        </div>
+
+        <div class="flow-actions">
+          <button id="btnFlowBackName2" class="btn ghost" type="button">Zurück</button>
+          <button id="btnFlowUseManual" class="btn" type="button">Manuell übernehmen</button>
+          <button id="btnFlowLaunchP2" class="btn primary" type="button">Ohne Scan weiter</button>
+        </div>
+      </div>
+    `;
+
+    $('btnFlowBackName2').addEventListener('click', () => {
+      stopQrScanner();
+      flowState.step = 'name';
+      renderConnectFlow();
+    });
+
+    $('btnFlowStartQr').addEventListener('click', startQrScanner);
+
+    $('btnFlowUseManual').addEventListener('click', () => {
+      const value = $('flowManualOffer').value.trim();
+      if (!value) {
+        $('flowManualOffer').focus();
+        return;
+      }
+      acceptOfferFromFlow(value);
+    });
+
+    $('btnFlowLaunchP2').addEventListener('click', launchPlayer2FromFlow);
+
+    $('flowQrFile').addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const status = $('flowQrStatus');
+      try {
+        if (status) status.textContent = 'QR-Bild wird gelesen …';
+        const text = await detectQrFromFile(file);
+        if (status) status.textContent = 'QR erkannt. Offer wird übernommen …';
+        acceptOfferFromFlow(text);
+      } catch (err) {
+        if (status) status.textContent = errorText(err);
+      } finally {
+        e.target.value = '';
+      }
+    });
+
+    return;
+  }
+}
+
+const FLOW_KEYS = ['2p.offer', '2p.answer', '2p.role', '2p.step', '2p.offerLink', '2p.answerLink', '2p.sessionId', '2p.sharedLink'];
+const USE_SESSION_FLOW = (() => {
+  try {
+    const k = '__2p_flow_test__';
+    sessionStorage.setItem(k, '1');
+    sessionStorage.removeItem(k);
+    return true;
+  } catch {
+    return false;
+  }
+})();
+function flowGet(key, def) {
+  if (USE_SESSION_FLOW) {
+    const v = sessionStorage.getItem(key);
+    return v === null ? def : v;
+  }
+  return ls(key, def);
+}
+function flowSet(key, val) {
+  if (USE_SESSION_FLOW) sessionStorage.setItem(key, val);
+  else lsSet(key, val);
+}
+function flowDel(...keys) {
+  keys.forEach(k => {
+    if (USE_SESSION_FLOW) {
+      try { sessionStorage.removeItem(k); } catch {}
+    }
+    try { localStorage.removeItem(k); } catch {}
+  });
+}
+function clearLegacyFlowStorage() {
+  if (!USE_SESSION_FLOW) return;
+  FLOW_KEYS.forEach(k => {
+    try { localStorage.removeItem(k); } catch {}
+  });
+}
+
+// ─── STUN profiles ──────────────────────────────────────────────────────────
+const STUN_BASE_P1 = [
+  'stun:stun.cloudflare.com:3478',
+  'stun:stun.nextcloud.com:443',
+  'stun:stun.sipnet.net:3478',
+  'stun:stun.l.google.com:19302',
+];
+const STUN_BASE_P2 = [
+  'stun:stun.nextcloud.com:443',
+  'stun:stun.cloudflare.com:3478',
+  'stun:stun.sipnet.net:3478',
+  'stun:stun.l.google.com:19302',
+];
+
+function normalizeStunList(urls) {
+  const out = [];
+  const seen = new Set();
+  for (const raw of urls || []) {
+    const u = String(raw || '').trim();
+    if (!u || seen.has(u)) continue;
+    seen.add(u);
+    out.push(u);
+    if (out.length >= 4) break; // Browser warns for 5+ servers.
+  }
+  return out;
+}
+
+function stunForProfile(profile, roleLabel) {
+  const base = roleLabel === 'Player 1' ? STUN_BASE_P1 : STUN_BASE_P2;
+  const filters = {
+    verified:   u => u.includes('cloudflare') || u.includes('nextcloud') || u.includes('sipnet') || u.includes('google'),
+    mix:        () => true,
+    cloudflare: u => u.includes('cloudflare'),
+    nextcloud:  u => u.includes('nextcloud'),
+    sipnet:     u => u.includes('sipnet'),
+    blackberry: u => u.includes('blackberry'),
+    google:     u => u.includes('google'),
+  };
+  if (profile === 'custom') {
+    const raw = ($('taCustomStun') && $('taCustomStun').value) || '';
+    const lines = raw.split(/\r?\n/).map(s => s.trim()).filter(s => /^stun:/i.test(s));
+    return normalizeStunList(lines.length ? lines : stunForProfile('verified', roleLabel));
+  }
+  const selected = base.filter(filters[profile] ?? (() => true));
+  return normalizeStunList(selected.length ? selected : base.filter(filters.verified));
+}
+
+function refreshStunTextarea() {
+  const p = $('selStunProfile').value;
+  const p1 = stunForProfile(p, 'Player 1');
+  const p2 = stunForProfile(p, 'Player 2');
+  $('taStunList').value =
+    `Profil: ${p}\n\nPlayer 1:\n${p1.join('\n')}\n\nPlayer 2:\n${p2.join('\n')}`;
+}
+
+// ─── UI Elements ─────────────────────────────────────────────────────────────
+const statusPill = $('statusPill');
+const statusDot  = $('statusDot');
+const statusTxt  = $('statusTxt');
+const unreadBadge= $('unreadBadge');
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let pc = null, dc = null;
+let role = '—';
+let pingTimer = null;
+let stopAutoPing = false;
+let unreadCount = 0;
+const answerApplyState = { inFlight: false, lastPayload: '' };
+
+const PING_INTERVAL = () => parseInt($('inPingInterval').value || '7', 10) * 1000;
+const ICE_TIMEOUT   = () => parseInt($('inIceTimeout').value || '6500', 10);
+
+// ─── Status UI ───────────────────────────────────────────────────────────────
+function setStatus(txt, mode /* null | 'ok' | 'bad' | 'spin' */) {
+  statusTxt.textContent = txt;
+  statusDot.className = 'dot' + (mode ? ' ' + mode : '');
+  statusPill.className = 'status-pill' + (mode === 'ok' ? ' ok' : mode === 'bad' ? ' bad' : '');
+  document.title = unreadCount > 0 ? `(${unreadCount}) 2 Player Live` : '2 Player Live';
+}
+
+function routeToChat() {
+  closeConnectFlow();
+  closeDialog($('dlg'));
+  const chatCard = $('chatCard');
+  if (chatCard && !chatCard.classList.contains('hide')) {
+    try {
+      chatCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch {}
+  }
+  setTimeout(() => {
+    const input = $('chatInput');
+    if (input && !$('chatCard').classList.contains('hide')) {
+      try { input.focus(); } catch {}
+    }
+  }, 60);
+}
+
+function setConnected(connected, reason) {
+  $('connBanner').classList.toggle('hide', !connected);
+  $('disconnBanner').classList.toggle('hide', connected || !reason);
+  $('chatCard').classList.toggle('hide', !connected);
+  $('btnReconnect').classList.toggle('hide', !(!connected && reason));
+  $('btnExportChat').classList.toggle('hide', !connected);
+  if (reason) $('disconnReason').textContent = reason;
+  if (connected) {
+    const savedName = savedPlayerName();
+    $('connBanner').querySelector('.conn-banner-icon').textContent = '🔗';
+    $('connBannerSub').textContent = savedName
+      ? `Verbunden als ${savedName} (${role})`
+      : `Verbunden als ${role}`;
+    $('connRoleBadge').textContent = savedName || role;
+    $('connRoleBadge').className = 'role-badge' + (role === 'Player 2' ? ' p2' : '');
+    routeToChat();
+  }
+}
+
+function setRoleView(view /* 'both'|'p1'|'p2' */) {
+  const showP1 = view !== 'p2';
+  const showP2 = view !== 'p1';
+  $('colP1').classList.toggle('hide', !showP1);
+  $('colP2').classList.toggle('hide', !showP2);
+}
+
+// ─── Progress log helper ─────────────────────────────────────────────────────
+function addProgress(containerId, text, mode /* 'ok'|'spin'|'bad' */) {
+  const icons = { ok: '✓', spin: '…', bad: '✕' };
+  const el = document.createElement('div');
+  el.className = 'plog-item ' + mode;
+  el.innerHTML = `<span class="picon">${icons[mode]}</span><span>${text}</span>`;
+  $(containerId).appendChild(el);
+  return el;
+}
+function clearProgress(containerId) { $(containerId).innerHTML = ''; }
+
+// ─── Chat ─────────────────────────────────────────────────────────────────────
+function logMsg(kind, from, text) {
+  const el = document.createElement('div');
+  el.className = 'chat-msg ' + kind;
+  el.innerHTML = `<div class="meta">${now()} · ${from}</div><div class="txt"></div>`;
+  el.querySelector('.txt').textContent = text;
+  $('chatLog').appendChild(el);
+  $('chatLog').scrollTop = $('chatLog').scrollHeight;
+
+  // Unread badge when tab is not focused
+  if (kind === 'them' && document.hidden) {
+    unreadCount++;
+    unreadBadge.textContent = unreadCount;
+    unreadBadge.classList.add('show');
+    document.title = `(${unreadCount}) 2 Player Live`;
+    // Browser notification
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      new Notification(`Neue Nachricht von ${from}`, { body: text, icon: '' });
+    }
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    unreadCount = 0;
+    unreadBadge.textContent = '0';
+    unreadBadge.classList.remove('show');
+    document.title = '2 Player Live';
+  }
+});
+
+function exportChat() {
+  const msgs = [...$('chatLog').querySelectorAll('.chat-msg')];
+  const lines = msgs.map(m => {
+    const metaEl = m.querySelector('.meta');
+    const txtEl  = m.querySelector('.txt');
+    const meta = metaEl ? metaEl.textContent : '';
+    const txt  = txtEl ? txtEl.textContent : '';
+    return `[${meta}] ${txt}`;
+  });
+  const blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'chat-export.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ─── WebRTC core ──────────────────────────────────────────────────────────────
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function effectiveMode() {
+  const urlMode = parseHash().get('mode');
+  if (urlMode === 'lan' || urlMode === 'wan') return urlMode;
+  const m = $('selMode').value;
+  return m === 'auto' ? 'wan' : m;
+}
+
+function buildRtcConfig(roleLabel) {
+  if (effectiveMode() === 'lan') return { iceServers: [] };
+  const profile = $('selStunProfile').value;
+  const urls = stunForProfile(profile, roleLabel);
+  const shuffled = shuffle(urls).map(u => ({ urls: u }));
+  return { iceServers: shuffled };
+}
+
+async function waitIce(peer) {
+  if (peer.iceGatheringState === 'complete') return;
+  return new Promise(resolve => {
+    const onState = () => {
+      if (peer.iceGatheringState === 'complete') {
+        peer.removeEventListener('icegatheringstatechange', onState);
+        resolve();
+      }
+    };
+    peer.addEventListener('icegatheringstatechange', onState);
+    setTimeout(() => {
+      try { peer.removeEventListener('icegatheringstatechange', onState); } catch {}
+      resolve();
+    }, ICE_TIMEOUT());
+  });
+}
+
+function cleanup() {
+  stopPing();
+  stopAutoPing = false;
+  clearSignalState();
+  setLinkFlowMode(preferredLinkFlow());
+  answerApplyState.inFlight = false;
+  answerApplyState.lastPayload = '';
+
+  if (dc) { try { dc.onopen = dc.onmessage = dc.onclose = null; dc.close(); } catch {} dc = null; }
+  if (pc) { try { pc.onicecandidate = pc.onconnectionstatechange = pc.onicegatheringstatechange = pc.ondatachannel = null; pc.close(); } catch {} pc = null; }
+
+  role = '—';
+  setStatus('Bereit', null);
+  setConnected(false, null);
+  resetP2LinkLabels();
+}
+
+function attachPcEvents(peer, progressId) {
+  peer.onicegatheringstatechange = () => {
+    $('dbgTxt').textContent = `iceGathering: ${peer.iceGatheringState}\nconnection:   ${peer.connectionState}`;
+  };
+  peer.onconnectionstatechange = () => {
+    const s = peer.connectionState;
+    $('dbgTxt').textContent = `iceGathering: ${peer.iceGatheringState}\nconnection:   ${s}`;
+
+    if (s === 'connected') {
+      if (role === 'Player 1') stopAnswerPolling();
+      setStatus('Verbunden', 'ok');
+      setConnected(true);
+      if (progressId) addProgress(progressId, 'Verbindung hergestellt!', 'ok');
+    }
+    if (s === 'failed') {
+      setStatus('Verbindung fehlgeschlagen', 'bad');
+      setConnected(false, `Verbindung fehlgeschlagen (${now()})`);
+    }
+    if (s === 'disconnected') {
+      setStatus('Getrennt', 'bad');
+      setConnected(false, 'Verbindung unterbrochen — Peer nicht erreichbar');
+    }
+    if (s === 'closed') {
+      setStatus('Geschlossen', 'bad');
+      setConnected(false, 'Verbindung geschlossen');
+    }
+  };
+}
+
+function wireChannel(channel, myLabel, theirLabel) {
+  dc = channel;
+  dc.onopen = () => {
+    if (role === 'Player 1') stopAnswerPolling();
+    setStatus('DataChannel offen', 'ok');
+    setConnected(true);
+    logMsg('sys', 'System', `✓ Verbunden: ${myLabel} ↔ ${theirLabel}`);
+    if (role === 'Player 1') { stopAutoPing = false; startPing(); }
+  };
+  dc.onmessage = (ev) => {
+    const msg = String(ev.data ?? '');
+    logMsg('them', theirLabel, msg);
+    if (role === 'Player 2' && msg.trim().toLowerCase() === 'ping') {
+      try { dc.send('pong'); logMsg('me', myLabel, 'pong'); } catch {}
+    }
+  };
+  dc.onclose = () => {
+    setStatus('DataChannel geschlossen', 'bad');
+    stopPing();
+    logMsg('sys', 'System', 'DataChannel geschlossen');
+  };
+}
+
+function startPing() {
+  stopPing();
+  pingTimer = setInterval(() => {
+    if (!dc || dc.readyState !== 'open' || stopAutoPing) return;
+    try { dc.send('ping'); logMsg('me', 'Player 1', 'ping'); } catch {}
+  }, PING_INTERVAL());
+}
+function stopPing() { if (pingTimer) { clearInterval(pingTimer); pingTimer = null; } }
+
+// ─── QR Code ─────────────────────────────────────────────────────────────────
+function scaleQrToIntegerMultiple(containerId) {
+  const container = $(containerId);
+  if (!container) return;
+  const node = container.querySelector('canvas, img');
+  if (!node) return;
+
+  const isCanvas = node.tagName === 'CANVAS';
+  const natural = isCanvas
+    ? Math.max(node.width || 0, parseInt(node.getAttribute('width') || '0', 10))
+    : Math.max(node.naturalWidth || 0, node.width || 0);
+
+  if (!natural) {
+    if (!isCanvas && typeof node.addEventListener === 'function') {
+      node.addEventListener('load', () => scaleQrToIntegerMultiple(containerId), { once: true });
+    }
+    return;
+  }
+
+  const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+  const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+  const maxW = Math.max(120, vw - 56);
+  const maxH = Math.max(120, vh - 220);
+  const maxPx = Math.max(120, Math.min(maxW, maxH));
+
+  let scale = Math.floor(maxPx / natural);
+  if (!Number.isFinite(scale) || scale < 1) scale = 1;
+
+  const size = natural * scale;
+  node.style.width = size + 'px';
+  node.style.height = size + 'px';
+  node.style.maxWidth = 'none';
+  node.style.maxHeight = 'none';
+}
+
+let qrRescaleRaf = 0;
+function scheduleQrRescale() {
+  if (qrRescaleRaf) return;
+  qrRescaleRaf = requestAnimationFrame(() => {
+    qrRescaleRaf = 0;
+    scaleQrToIntegerMultiple('qrOffer');
+    scaleQrToIntegerMultiple('qrAnswer');
+  });
+}
+
+function renderQR(containerId, text) {
+  const container = $(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  if (!text) return;
+
+  if (typeof QRCode === 'undefined') {
+    container.innerHTML = '<p class="muted" style="font-size:12px;">QR: Bibliothek nicht geladen</p>';
+    return;
+  }
+
+  // QR version 40 with level L holds ~4296 chars — SDP links are typically 2000–3500
+  if (text.length > 4200) {
+    container.innerHTML = '<p class="muted" style="font-size:12px;">⚠ Link zu lang für QR-Code – bitte kopieren/teilen.</p>';
+    return;
+  }
+
+  try {
+    const wrap = document.createElement('div');
+    wrap.className = 'qr-wrap';
+    const qrEl = document.createElement('div');
+    wrap.appendChild(qrEl);
+    const lbl = document.createElement('div');
+    lbl.className = 'qr-label';
+    lbl.textContent = containerId === 'qrOffer' ? 'QR-Code for Player 2' : 'QR-Code zum Scannen';
+    wrap.appendChild(lbl);
+    if (containerId === 'qrOffer') {
+      const actions = document.createElement('div');
+      actions.className = 'qr-actions';
+      const shareBtn = document.createElement('button');
+      shareBtn.type = 'button';
+      shareBtn.className = 'btn sm';
+      shareBtn.textContent = '📤 QR teilen';
+      shareBtn.addEventListener('click', async () => {
+        try {
+          const ok = await shareQrImage(containerId, text, 'player-2-qr');
+          if (!ok) {
+            await copyText(text);
+          }
+        } catch {
+          const ok = await shareText('Link fuer Player 2', text);
+          if (!ok) {
+            await copyText(text);
+          }
+        }
+      });
+      actions.appendChild(shareBtn);
+      wrap.appendChild(actions);
+    }
+    container.appendChild(wrap);
+    // Keep a stable base QR size and upscale only in integer multiples for sharp pixels.
+    new QRCode(qrEl, {
+      text,
+      width: 280,
+      height: 280,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.L
+    });
+    scheduleQrRescale();
+  } catch (e) {
+    container.innerHTML = '<p class="muted" style="font-size:12px;">QR-Code konnte nicht erzeugt werden – bitte kopieren.</p>';
+  }
+}
+
+// ─── Player 1 flow ───────────────────────────────────────────────────────────
+function p1SetStep(n) {
+  [1,2,3].forEach(i => {
+    const s = $(`p1s${i}`);
+    s.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+  });
+  $('p1gen').classList.toggle('hide', n !== 1);
+  $('p1share').classList.toggle('hide', n !== 2);
+  $('p1answer').classList.toggle('hide', n < 3);
+}
+
+function resetP2LinkLabels() {
+  $('p2DetectedLabel').textContent = 'Erkannter Offer';
+  $('p2AnswerLabel').textContent = 'Answer-Link (an Player 1 senden)';
+}
+
+function setP2LinkLabels(useShortOffer, useShortAnswer) {
+  $('p2DetectedLabel').textContent = useShortOffer ? 'Kurzlink von Player 1' : 'Erkannter Offer';
+  $('p2AnswerLabel').textContent = useShortAnswer ? 'Kurzlink' : 'Answer-Link (an Player 1 senden)';
+}
+
+function getRemoteAnswerDescription(peer) {
+  if (!peer) return null;
+  return peer.currentRemoteDescription || peer.remoteDescription || null;
+}
+
+function hasMatchingRemoteAnswer(peer, ansObj) {
+  const remote = getRemoteAnswerDescription(peer);
+  if (!remote || remote.type !== 'answer' || !ansObj || ansObj.type !== 'answer') return false;
+  return String(remote.sdp || '').trim() === String(ansObj.sdp || '').trim();
+}
+
+function finalizeAnswerApply(alreadyApplied = false) {
+  const connectedNow = !!(dc && dc.readyState === 'open');
+  stopAnswerPolling();
+  flowSet('2p.step', '3');
+  $('p1ApplyStatus').textContent = alreadyApplied
+    ? (connectedNow ? '✓ Answer war bereits gesetzt. Verbindung aktiv.' : '✓ Answer war bereits gesetzt. Verbindung wird aufgebaut…')
+    : '✓ Answer gesetzt – warte auf Verbindung…';
+  setStatus(connectedNow ? 'Verbunden' : 'Warte auf Verbindung…', connectedNow ? 'ok' : 'spin');
+  p1SetStep(3);
+}
+
+function explainAnswerApplyError(err, peer, ansObj) {
+  const raw = errorText(err);
+
+  if (raw.includes('Cannot set remote answer in state stable')) {
+    if (hasMatchingRemoteAnswer(peer, ansObj) || (peer && peer.signalingState === 'stable' && getRemoteAnswerDescription(peer)?.type === 'answer')) {
+      return 'Answer war bereits gesetzt. Die Verbindung laeuft schon oder wird gerade aufgebaut.';
+    }
+    return 'Dieser Offer hat bereits einen Answer oder gehoert nicht mehr zum aktuellen Verbindungsversuch. Bitte einen neuen Offer-Link erzeugen.';
+  }
+
+  if (raw.includes('Failed to parse SessionDescription') || raw.includes('set remote answer sdp')) {
+    return 'Der Answer-Link ist ungueltig oder passt nicht zu diesem Offer.';
+  }
+
+  if (raw.includes('Keine aktive Verbindung')) {
+    return raw;
+  }
+
+  return raw;
+}
+
+async function createOffer(reloadHint = false) {
+  cleanup();
+  role = 'Player 1';
+  setRoleView('p1');
+  setLinkFlowMode(preferredLinkFlow());
+  p1SetStep(1);
+  clearProgress('p1Progress');
+  $('p1ApplyStatus').textContent = '';
+  $('btnCreateOffer').disabled = true;
+  setStatus('Offer wird erzeugt…', 'spin');
+  if (reloadHint) {
+    addProgress('p1Progress', '↺ Seite neugeladen – neuer Offer-Link wird erzeugt…', 'spin');
+  }
+
+  const prog = addProgress.bind(null, 'p1Progress');
+  const p1s = prog('RTCPeerConnection erstellen…', 'spin');
+
+  try {
+    pc = new RTCPeerConnection(buildRtcConfig('Player 1'));
+    attachPcEvents(pc, 'p1Progress');
+
+    const channel = pc.createDataChannel('chat');
+    wireChannel(channel, 'Player 1', 'Player 2');
+
+    p1s.className = 'plog-item ok'; p1s.querySelector('.picon').textContent = '✓'; p1s.querySelector('span:last-child').textContent = 'RTCPeerConnection erstellt';
+
+    const p2s = prog('Offer erstellen…', 'spin');
+    const offer = await pc.createOffer({ offerToReceiveAudio: false, offerToReceiveVideo: false });
+    await pc.setLocalDescription(offer);
+    p2s.className = 'plog-item ok'; p2s.querySelector('.picon').textContent = '✓'; p2s.querySelector('span:last-child').textContent = 'Offer erstellt';
+
+    const p3s = prog('ICE-Kandidaten sammeln…', 'spin');
+    await waitIce(pc);
+    p3s.className = 'plog-item ok'; p3s.querySelector('.picon').textContent = '✓'; p3s.querySelector('span:last-child').textContent = 'ICE-Kandidaten gesammelt';
+
+    const payload  = b64uEncode(JSON.stringify(pc.localDescription));
+    const modeParam = effectiveMode();
+    let link = '';
+    const wantsShortLink = preferredLinkFlow() === 'short';
+    let sessionId = '';
+
+    if (wantsShortLink) {
+      try {
+        const session = await createSignalSession(payload, modeParam);
+        sessionId = String(session.id || '').trim();
+        if (!sessionId) throw new Error('Kurzlink-Server hat keine Session-ID geliefert.');
+        link = String(session.link || '').trim() || buildSessionLink(sessionId);
+        setActiveSignalSession(sessionId, link);
+        setLinkFlowMode('short');
+      } catch (sessionErr) {
+        clearSignalState();
+        link = buildSignalLink('offer', payload, { mode: modeParam });
+        setLinkFlowMode('direct');
+        prog('Kurzlink-Speicher nicht verfuegbar — Direktlink als Fallback.', 'bad');
+        $('p1ApplyStatus').textContent = 'Kurzlink-Speicher nicht verfuegbar. Falls Player 2 antwortet, Answer-Link manuell einfuegen.';
+      }
+    } else {
+      clearSignalState();
+      link = buildSignalLink('offer', payload, { mode: modeParam });
+      setLinkFlowMode('direct');
+      prog('Direktlink-Modus aktiv — teile den Link und uebernimm danach den Answer manuell.', 'ok');
+    }
+
+    flowSet('2p.offer', payload);
+    flowSet('2p.role', 'Player 1');
+    flowSet('2p.step', '2');
+    flowSet('2p.offerLink', link);
+    if (signalState.sessionId) {
+      flowSet('2p.sessionId', sessionId);
+      flowSet('2p.sharedLink', link);
+    } else {
+      flowDel('2p.sessionId', '2p.sharedLink');
+    }
+    $('taOfferLink').value = link;
+    renderQR('qrOffer', link);
+
+    p1SetStep(2);
+    setStatus('Offer bereit — Link teilen', null);
+    if (signalState.sessionId) {
+      prog('Kurzlink erzeugt — denselben Link fuer QR, SMS, Mail und Copy/Paste nutzen', 'ok');
+      startAnswerPolling(sessionId);
+    } else if (wantsShortLink) {
+      prog('Direktlink erzeugt — teile ihn an Player 2', 'ok');
+    }
+  } catch (e) {
+    prog('Fehler: ' + errorText(e), 'bad');
+    setStatus('Offer fehlgeschlagen', 'bad');
+  } finally {
+    $('btnCreateOffer').disabled = false;
+  }
+}
+
+async function applyAnswer(linkOrPayload) {
+  let payload = '';
+  let ansObj = null;
+  try {
+    $('p1ApplyStatus').textContent = '';
+    setStatus('Answer wird angewendet…', 'spin');
+
+    // Accept: full URL with ?=a.… / #a.… / #answer=…, or a raw b64u payload
+    try {
+      const u = new URL(linkOrPayload, location.href);
+      const candidate = getAnswerToken(u.search) || getAnswerToken(u.hash);
+      payload = candidate || linkOrPayload; // fallback: treat string as raw payload
+    } catch {
+      payload = linkOrPayload;
+    }
+    if (!payload) throw new Error('Kein ?=a.…, #a.… oder #answer=… im Link gefunden.');
+
+    // Verify it is valid JSON when decoded
+    try { ansObj = JSON.parse(b64uDecode(payload)); }
+    catch { throw new Error('Ungültiger Answer-Payload (kein gültiges JSON nach Dekodierung).'); }
+
+    if (!pc || pc.signalingState === 'closed') {
+      throw new Error('Keine aktive Verbindung. Bitte zuerst einen neuen Offer erzeugen.');
+    }
+
+    if (answerApplyState.inFlight && payload === answerApplyState.lastPayload) {
+      finalizeAnswerApply(true);
+      return;
+    }
+
+    if (hasMatchingRemoteAnswer(pc, ansObj)) {
+      finalizeAnswerApply(true);
+      return;
+    }
+
+    if (pc.signalingState === 'stable') {
+      throw new Error('Cannot set remote answer in state stable');
+    }
+
+    if (pc.signalingState !== 'have-local-offer') {
+      throw new Error(`Answer kann im aktuellen Zustand nicht angewendet werden (${pc.signalingState}). Bitte neuen Offer-Link erzeugen.`);
+    }
+
+    answerApplyState.inFlight = true;
+    answerApplyState.lastPayload = payload;
+
+    await pc.setRemoteDescription(ansObj);
+
+    finalizeAnswerApply(false);
+  } catch (e) {
+    if (hasMatchingRemoteAnswer(pc, ansObj)) {
+      finalizeAnswerApply(true);
+      return;
+    }
+    $('p1ApplyStatus').textContent = '✗ Fehler: ' + explainAnswerApplyError(e, pc, ansObj);
+    setStatus('Fehler beim Answer', 'bad');
+  } finally {
+    answerApplyState.inFlight = false;
+  }
+}
+
+// ─── Player 2 flow ───────────────────────────────────────────────────────────
+async function handleOffer(offerPayload, options = {}) {
+  cleanup();
+  const sessionId = String(options.sessionId || '').trim();
+  const sharedLink = String(options.sharedLink || '').trim() || (sessionId ? buildSessionLink(sessionId) : '');
+  const useServerSession = !!sessionId;
+  if (useServerSession) {
+    setActiveSignalSession(sessionId, sharedLink);
+  }
+  if (options.mode) {
+    setModePreference(normalizeConnectMode(options.mode));
+  }
+  role = 'Player 2';
+  setRoleView('p2');
+  $('p2join').classList.add('hide');
+  $('p2content').classList.remove('hide');
+  $('p2answerBlock').classList.add('hide');
+  clearProgress('p2Progress');
+  setP2LinkLabels(useServerSession, false);
+  $('taDetectedOffer').value = useServerSession ? sharedLink : buildSignalLink('offer', offerPayload);
+  $('p2StatusTxt').textContent = useServerSession
+    ? 'Kurzlink erkannt – Answer wird erzeugt und automatisch gespeichert…'
+    : 'Offer erkannt – Answer wird erzeugt…';
+  setStatus(useServerSession ? 'Kurzlink erkannt…' : 'Offer erkannt…', 'spin');
+
+  const prog = addProgress.bind(null, 'p2Progress');
+
+  try {
+    pc = new RTCPeerConnection(buildRtcConfig('Player 2'));
+    attachPcEvents(pc, 'p2Progress');
+
+    pc.ondatachannel = (ev) => { wireChannel(ev.channel, 'Player 2', 'Player 1'); };
+
+    const p1s = prog('RTCPeerConnection erstellt', 'ok');
+
+    const offerObj = JSON.parse(b64uDecode(offerPayload));
+    await pc.setRemoteDescription(offerObj);
+    prog('Offer gesetzt', 'ok');
+
+    const p3s = prog('Answer erstellen…', 'spin');
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    p3s.className = 'plog-item ok'; p3s.querySelector('.picon').textContent = '✓'; p3s.querySelector('span:last-child').textContent = 'Answer erstellt';
+
+    const p4s = prog('ICE-Kandidaten sammeln…', 'spin');
+    await waitIce(pc);
+    p4s.className = 'plog-item ok'; p4s.querySelector('.picon').textContent = '✓'; p4s.querySelector('span:last-child').textContent = 'ICE-Kandidaten gesammelt';
+
+    const ansPayload = b64uEncode(JSON.stringify(pc.localDescription));
+    let ansLink = buildSignalLink('answer', ansPayload, { mode: effectiveMode() });
+    let answerStoredOnServer = false;
+
+    if (useServerSession) {
+      try {
+        const stored = await storeSignalAnswer(sessionId, ansPayload);
+        ansLink = String(stored.link || '').trim() || sharedLink;
+        setActiveSignalSession(sessionId, ansLink);
+        answerStoredOnServer = true;
+      } catch (storeErr) {
+        prog('Kurzlink-Antwort konnte nicht gespeichert werden — manueller Answer-Link als Fallback', 'bad');
+      }
+    }
+
+    flowSet('2p.answer', ansPayload);
+    flowSet('2p.role', 'Player 2');
+    flowSet('2p.answerLink', ansLink);
+    if (useServerSession) {
+      flowSet('2p.sessionId', sessionId);
+      flowSet('2p.sharedLink', answerStoredOnServer ? ansLink : sharedLink);
+    }
+    setP2LinkLabels(useServerSession, useServerSession && answerStoredOnServer);
+    $('taAnswerLink').value = ansLink;
+    renderQR('qrAnswer', ansLink);
+    $('p2answerBlock').classList.remove('hide');
+
+    if (useServerSession && answerStoredOnServer) {
+      prog('Answer im Kurzlink gespeichert — Player 1 verbindet automatisch', 'ok');
+      $('p2StatusTxt').textContent = 'Answer gespeichert. Player 1 verbindet automatisch ueber denselben Kurzlink.';
+      setStatus('Answer gespeichert — warte auf Verbindung…', 'spin');
+    } else {
+      prog('Answer-Link erzeugt – sende ihn an Player 1', 'ok');
+      $('p2StatusTxt').textContent = 'Answer-Link erzeugt. Sende ihn an Player 1.';
+      setStatus('Answer bereit — Link teilen', null);
+    }
+
+    // Clean offer from URL bar after processing
+    cleanHashParam('offer');
+  } catch (e) {
+    prog('Fehler: ' + errorText(e), 'bad');
+    $('p2StatusTxt').textContent = 'Fehler: ' + errorText(e);
+    setStatus('Player 2 Fehler', 'bad');
+  }
+}
+
+function applyOfferInput(linkOrPayload) {
+  const input = String(linkOrPayload || '').trim();
+  const sessionId = extractSessionId(input);
+  if (sessionId) {
+    void handleSessionLink(sessionId);
+    return;
+  }
+  const payload = extractOfferPayload(input);
+  if (!payload || payload.includes('://')) {
+    $('p2StatusTxt').textContent = 'Bitte einen gueltigen Link von Player 1 einfuegen.';
+    setStatus('Offer-Link fehlt', 'bad');
+    return;
+  }
+  openDialog($('dlg'));
+  setRoleView('p2');
+  handleOffer(payload);
+}
+
+// ─── Chat send ────────────────────────────────────────────────────────────────
+function sendChat() {
+  const text = $('chatInput').value.trim();
+  if (!text) return;
+  if (!dc || dc.readyState !== 'open') { logMsg('sys', 'System', 'Nicht verbunden.'); return; }
+  if (role === 'Player 1' && text.toLowerCase() !== 'ping') stopAutoPing = true;
+  try {
+    dc.send(text);
+    logMsg('me', role, text);
+    $('chatInput').value = '';
+  } catch { logMsg('sys', 'System', 'Senden fehlgeschlagen.'); }
+}
+
+// ─── Reconnect ───────────────────────────────────────────────────────────────
+function reconnect() {
+  const savedSessionId = flowGet('2p.sessionId', null);
+  const savedSharedLink = flowGet('2p.sharedLink', '');
+  if (flowGet('2p.role', null) === 'Player 2') {
+    const savedOffer = flowGet('2p.offer', null);
+    if (savedOffer) {
+      cleanup();
+      openDialog($('dlg'));
+      setRoleView('p2');
+      handleOffer(savedOffer, {
+        sessionId: savedSessionId || '',
+        sharedLink: savedSharedLink || (savedSessionId ? buildSessionLink(savedSessionId) : ''),
+      });
+    }
+    else { cleanup(); $('btnOpen').click(); }
+  } else {
+    // Player 1 or unknown — always generate a fresh offer
+    openDialog($('dlg'));
+    createOffer(true);
+  }
+}
+
+// ─── Settings persistence ────────────────────────────────────────────────────
+function saveSettings() {
+  lsSet('2p.mode',    $('selMode').value);
+  lsSet('2p.linkFlow', $('selLinkFlow').value);
+  lsSet('2p.profile', $('selStunProfile').value);
+  lsSet('2p.customStun', $('taCustomStun').value);
+  lsSet('2p.pingInterval', $('inPingInterval').value);
+  lsSet('2p.iceTimeout', $('inIceTimeout').value);
+}
+function loadSettings() {
+  $('selMode').value        = ls('2p.mode',    'wan');
+  $('selLinkFlow').value    = normalizeLinkFlow(ls('2p.linkFlow', 'short'));
+  $('selStunProfile').value = ls('2p.profile', 'verified');
+  $('taCustomStun').value   = ls('2p.customStun', '');
+  $('inPingInterval').value = ls('2p.pingInterval', '7');
+  $('inIceTimeout').value   = ls('2p.iceTimeout',   '6500');
+  const isCustom = $('selStunProfile').value === 'custom';
+  $('customStunWrap').classList.toggle('hide', !isCustom);
+  refreshStunTextarea();
+  setLinkFlowMode($('selLinkFlow').value);
+}
+
+// ─── Event bindings ───────────────────────────────────────────────────────────
+$('btnOpen').addEventListener('click', () => {
+  openConnectFlow();
+});
+$('btnDlgClose').addEventListener('click', () => closeDialog($('dlg')));
+$('btnFlowClose').addEventListener('click', closeConnectFlow);
+
+$('btnSettings').addEventListener('click', () => openDialog($('settingsDlg')));
+$('btnSettingsClose').addEventListener('click', () => closeDialog($('settingsDlg')));
+
+$('selMode').addEventListener('change', saveSettings);
+$('selLinkFlow').addEventListener('change', () => {
+  saveSettings();
+  setLinkFlowMode($('selLinkFlow').value);
+});
+$('selStunProfile').addEventListener('change', () => {
+  const isCustom = $('selStunProfile').value === 'custom';
+  $('customStunWrap').classList.toggle('hide', !isCustom);
+  refreshStunTextarea();
+  saveSettings();
+});
+$('taCustomStun').addEventListener('input', () => { refreshStunTextarea(); saveSettings(); });
+$('inPingInterval').addEventListener('change', saveSettings);
+$('inIceTimeout').addEventListener('change', saveSettings);
+
+$('btnCreateOffer').addEventListener('click', createOffer);
+
+$('btnApplyOffer').addEventListener('click', () => {
+  applyOfferInput($('inOfferLink').value);
+});
+$('btnPasteOffer').addEventListener('click', async () => {
+  try {
+    const txt = await navigator.clipboard.readText();
+    $('inOfferLink').value = txt || '';
+    if (txt) applyOfferInput(txt);
+  } catch {
+    $('inOfferLink').focus();
+  }
+});
+$('inOfferLink').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    applyOfferInput($('inOfferLink').value);
+  }
+});
+$('inOfferLink').addEventListener('paste', () => {
+  setTimeout(() => {
+    const v = $('inOfferLink').value.trim();
+    if (v.includes('?s=') || v.includes('?=o.') || v.includes('#o.') || v.includes('#offer=')) applyOfferInput(v);
+  }, 50);
+});
+
+$('btnShareOffer').addEventListener('click', async () => {
+  const link = $('taOfferLink').value.trim();
+  if (!link) return;
+  const ok = await shareText('Offer-Link', link);
+  if (!ok) { await copyText(link); animateCopyBtn($('btnCopyOffer')); }
+});
+$('btnCopyOffer').addEventListener('click', async () => {
+  const link = $('taOfferLink').value.trim();
+  if (!link) return;
+  await copyText(link);
+  animateCopyBtn($('btnCopyOffer'));
+});
+$('btnOfferSent').addEventListener('click', () => {
+  if (!$('taOfferLink').value.trim()) return;
+  p1SetStep(3);
+  if (signalState.sessionId) {
+    $('p1ApplyStatus').textContent = 'Warte auf Player 2. Der Answer wird automatisch ueber denselben Kurzlink abgeholt.';
+    return;
+  }
+  $('inAnswerLink').focus();
+});
+$('btnApplyAnswer').addEventListener('click', () => {
+  const v = $('inAnswerLink').value.trim();
+  if (v) applyAnswer(v);
+});
+$('btnClearP1').addEventListener('click', () => {
+  flowDel(...FLOW_KEYS);
+  $('taOfferLink').value = ''; $('inAnswerLink').value = '';
+  clearProgress('p1Progress');
+  p1SetStep(1);
+  cleanup();
+  setRoleView('p1');
+});
+
+$('btnShareAnswer').addEventListener('click', async () => {
+  const link = $('taAnswerLink').value.trim();
+  if (!link) return;
+  const ok = await shareText('Answer-Link', link);
+  if (!ok) { await copyText(link); animateCopyBtn($('btnCopyAnswer')); }
+});
+$('btnCopyAnswer').addEventListener('click', async () => {
+  const link = $('taAnswerLink').value.trim();
+  if (!link) return;
+  await copyText(link);
+  animateCopyBtn($('btnCopyAnswer'));
+});
+$('btnClearP2').addEventListener('click', () => {
+  flowDel(...FLOW_KEYS);
+  $('taDetectedOffer').value = ''; $('taAnswerLink').value = ''; $('inOfferLink').value = '';
+  clearProgress('p2Progress');
+  $('p2join').classList.remove('hide');
+  $('p2answerBlock').classList.add('hide');
+  $('p2content').classList.add('hide');
+  $('p2StatusTxt').textContent = 'Schritt 1: Link von Player 1 einfuegen oder per QR oeffnen.';
+  cleanup();
+  setRoleView(hasOfferInLocation() ? 'p2' : 'both');
+});
+
+$('btnSend').addEventListener('click', sendChat);
+$('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); } });
+
+$('btnReconnect').addEventListener('click', reconnect);
+
+const exportFn = () => exportChat();
+$('btnExportChat').addEventListener('click', exportFn);
+$('btnExportChat2').addEventListener('click', exportFn);
+
+// Paste answer link detection
+$('inAnswerLink').addEventListener('paste', (e) => {
+  setTimeout(() => {
+    const v = $('inAnswerLink').value.trim();
+    if (v.includes('?=a.') || v.includes('#a.') || v.includes('#answer=')) { applyAnswer(v); }
+  }, 50);
+});
+
+window.addEventListener('resize', scheduleQrRescale);
+window.addEventListener('orientationchange', scheduleQrRescale);
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+function init() {
+  clearLegacyFlowStorage();
+  loadSettings();
+  cleanup();
+  setRoleView('both');
+  $('p2join').classList.remove('hide');
+
+  const sessionId = getSessionIdFromLocation();
+  const offer   = getOfferToken();
+  const answer  = getAnswerToken();
+
+  if (sessionId) {
+    setRoleView('p2');
+    openDialog($('dlg'));
+    void handleSessionLink(sessionId);
+    return;
+  }
+
+  // ── URL has #o.… or #offer=… → Player 2 path ────────────────────────────
+  if (offer) {
+    setRoleView('p2');
+    openDialog($('dlg'));
+    handleOffer(offer);
+    return;
+  }
+
+  // ── URL has #a.… or #answer=… → Player 1 applying answer ─────────────────
+  if (answer) {
+    setRoleView('p1');
+    openDialog($('dlg'));
+    p1SetStep(3);
+    $('inAnswerLink').value = location.href;
+    cleanHashParam('answer');
+    if (flowGet('2p.offer', null)) {
+      $('p1ApplyStatus').textContent = '🔄 Offer aus Speicher – verbinde…';
+      applyAnswer(answer);
+    } else {
+      $('p1ApplyStatus').textContent = 'Kein lokaler Offer gefunden. Bitte neuen Offer-Link erzeugen.';
+      setStatus('Neuen Offer erzeugen', 'bad');
+    }
+    return;
+  }
+
+  // ── No URL params: restore state from current tab session ────────────────
+  // WebRTC sessions cannot survive a page reload: the RTCPeerConnection and its
+  // ICE candidates are ephemeral. Attempting setLocalDescription(savedSDP) on a
+  // brand-new PC leaves signalingState as 'stable', which makes setRemoteDescription
+  // throw "Cannot set remote answer in state stable".
+  // Fix: Player 1 always generates a fresh offer on reload (new ICE candidates, new
+  // DTLS fingerprint). Player 2 can always re-derive a new answer from the stored
+  // offer SDP because it is just text.
+
+  const savedRole  = flowGet('2p.role',  null);
+  const savedOffer = flowGet('2p.offer', null);
+  const savedSessionId = flowGet('2p.sessionId', null);
+  const savedSharedLink = flowGet('2p.sharedLink', '');
+
+  if (!savedRole || !savedOffer) return; // nothing to restore
+
+  openDialog($('dlg'));
+
+  if (savedRole === 'Player 1') {
+    // Always create a fresh offer — the old one is tied to the dead PC.
+    createOffer(/*reloadHint=*/true);
+    return;
+  }
+
+  if (savedRole === 'Player 2') {
+    // Re-derive a new answer from the stored offer SDP.
+    setRoleView('p2');
+    handleOffer(savedOffer, {
+      sessionId: savedSessionId || '',
+      sharedLink: savedSharedLink || (savedSessionId ? buildSessionLink(savedSessionId) : ''),
+    });
+    return;
+  }
+}
+
+init();
+
+})();
+</script>
+</body>
+</html>

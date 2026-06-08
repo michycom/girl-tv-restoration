@@ -1,0 +1,181 @@
+
+.note-label {
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    pointer-events: none; /*Stelle sicher, dass das Label keine Mausklicks abfängt*/
+}
+
+div.octave {
+    display: flex;
+    width: 462px; /* Feste Breite */
+}
+#piano {
+    display: grid; /* Nutze Grid-Layout */
+    gap: 0px; /* Abstand zwischen den Grid-Items */
+    grid-auto-flow: column; /* Ordnet die .octave-Elemente in Spalten an */
+    background-color: #333;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    margin-left: 0; /* Entfernt automatischen Rand auf der linken Seite */
+    justify-content: start; /* Inhalte innerhalb des Grids linksbündig ausrichten */
+    width: max-content; /* Breite des Containers basierend auf dem Inhalt */
+    justify-content: start;
+}
+
+.white {
+    background: linear-gradient(to bottom, #fff, #eee);
+    width: 60px;
+    height: 200px;
+    margin: 0 3px;
+    position: relative;
+    z-index: 1;
+ 
+}
+
+.black {
+    background: linear-gradient(to bottom, #000, #444);
+    width: 40px;
+    height: 120px;
+    position: absolute;
+    margin-left: 58px; /* Verschiebt die schwarze Taste nach links, um sie zwischen den weißen Tasten zu platzieren */
+    top: 0;
+    z-index: 2;
+    margin-top: 15px;
+}
+
+/* Positioniere schwarze Tasten korrekt zwischen den weißen */
+.piano::after {
+    content: '';
+    display: block;
+    clear: both;
+}
+
+/* Anpassungen für die Beschriftung */
+.key span {
+    display: block;
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    color: rgba(0, 0, 0, 0.7); /* Ändere die Farbe für weiße Tasten */
+    font-size: 10px;
+    pointer-events: none;
+}
+
+
+.key.black span {
+    color: rgba(255, 255, 255, 0.7); /* Weiße Schrift für schwarze Tasten */
+}
+
+/* Verbesserte Hover-Effekte */
+.key:hover {
+    filter: brightness(1.05);
+}
+
+.key.black:hover {
+    filter: brightness(0.95);
+}
+
+/* Sanfte Animation beim Drücken */
+.key:active {
+    transform: translateY(4px);
+}
+
+/* 3D-Effekt für Tasten */
+.key::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.1), inset 0 -3px 0 rgba(0, 0, 0, 0.1);
+    border-radius: 0 0 5px 5px;
+}
+
+
+.key.white {
+    position: relative;
+  }
+  
+/* Tasten-Styling */
+.key {
+    cursor: pointer;
+     /* //position: relative;Ermöglicht die Platzierung von Pseudo-Elementen */
+    margin: 0 2px;
+    border: 1px solid #000;
+    border-radius: 0 0 5px 5px; /* Runde Ecken unten */
+    transition: transform 0.1s ease, box-shadow 0.1s ease; /* Sanfte Animation beim Drücken und für den Schatten */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Schatten für 3D-Effekt */
+}
+
+.key::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 10px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 0 0 5px 5px;
+    z-index: -1; /* Platziere es unter der Taste */
+}
+
+/* Aktiver Zustand für Tasten */
+.key:active, .key.active { /* .key.active für den Zustand ohne Benutzerinteraktion */
+    transform: translateY(2px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); /* Reduzierter Schatten, um den Eindruck zu erwecken, dass die Taste gedrückt ist */
+}
+
+/* Hover-Effekte */
+.key:hover:not(:active) { /* Nicht :active, weil wir nicht wollen, dass der Hover-Effekt beim Drücken der Taste sichtbar ist */
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3); /* Größerer Schatten für Hover-Effekt */
+}
+
+/* Pseudo-Element für 3D-Effekt */
+.key::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    box-shadow: inset 0 3px 3px rgba(255, 255, 255, 0.1), inset 0 -3px 3px rgba(0, 0, 0, 0.1);
+    border-radius: 0 0 5px 5px;
+}
+
+/* Tastenbeschriftung */
+.key span.note-label {
+    position: absolute;
+    bottom: 10px; /* Erhöht, um zu verhindern, dass es durch den 3D-Effekt verdeckt wird */
+    left: 50%;
+    transform: translateX(-50%);
+    color: white;
+    font-size: 12px;
+    font-family: 'Arial', sans-serif; /* Wähle eine gut lesbare Schriftart */
+    pointer-events: none;
+}
+
+/* Stile für die schwarzen Tasten anpassen */
+.key.black {
+    border-radius: 0 0 3px 3px; /* Kleinere Rundung für die schwarzen Tasten */
+    margin-top: 16px;
+}
+
+.key.black::before {
+    border-radius: 0 0 3px 3px;
+}
+
+.key {
+    /* Dein vorheriger Stil plus der zusätzliche Außenglow */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2), /* Innen Schatten */
+                 0 0 15px rgba(255, 255, 255, 0.5) inset, /* Innen Glow */
+                 0 0 20px rgba(255, 255, 255, 0.2); /* Außen Glow */
+  }
+  
+  .key.white .note-label {
+    color: rgba(0, 0, 0, 0.7) !important; /* Starkes Schwarz, überschreibt andere Regeln */
+}

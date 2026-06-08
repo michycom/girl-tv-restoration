@@ -1,0 +1,865 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Akkord-Baum · DO → Quinte → Dreiklang → 7 → 9/11/13</title>
+  <style>
+    :root{
+      color-scheme: dark;
+      --bg:#05060a;
+      --panel:#0d1018;
+      --line:#32384b;
+      --line-strong:#5a627d;
+      --text:#f5f7ff;
+      --muted:#a4acbd;
+      --accent:#4fd1ff;
+      --accent-soft:rgba(79,209,255,.18);
+      --radius:14px;
+      --shadow:0 18px 40px rgba(0,0,0,.7);
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:flex-start;
+      justify-content:center;
+      padding:18px 10px 32px;
+      background:radial-gradient(circle at top,#181b2b 0,#05060b 55%,#000 100%);
+      color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+    }
+    .app{
+      background:var(--panel);
+      border-radius:var(--radius);
+      padding:14px 16px 16px;
+      max-width:1200px;
+      width:100%;
+      box-shadow:var(--shadow);
+    }
+    .header{
+      display:flex;
+      flex-wrap:wrap;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .title{
+      font-size:18px;
+      text-transform:uppercase;
+      letter-spacing:.14em;
+      color:var(--muted);
+      margin:0;
+    }
+    .subtitle{
+      font-size:11px;
+      color:var(--muted);
+      margin-top:2px;
+    }
+    .svg-wrap{
+      margin-top:8px;
+      background:#050712;
+      border-radius:12px;
+      padding:10px;
+      overflow:auto;
+    }
+    svg{
+      display:block;
+      max-width:100%;
+    }
+
+    .legend{
+      font-size:11px;
+      color:var(--muted);
+      line-height:1.5;
+      margin-top:10px;
+    }
+    .legend b{color:var(--text); font-weight:600;}
+
+    /* Node styles */
+    .node{
+      cursor:pointer;
+      /* keine zusätzliche CSS-Transformation, nur Filter/Opacity animieren */
+      transition:filter .12s ease, opacity .12s ease;
+    }
+    .node-circle{
+      fill:#151a2a;
+      stroke:#3a435b;
+      stroke-width:1.4;
+    }
+    .node-root .node-circle{
+      fill:#151f33;
+      stroke:var(--accent);
+      stroke-width:1.9;
+    }
+    .node-fifth .node-circle{
+      fill:#141c2e;
+    }
+    .node-triad .node-circle{
+      fill:#171c30;
+    }
+    .node-seventh .node-circle{
+      fill:#181e34;
+    }
+    .node-ext .node-circle{
+      fill:#182139;
+      stroke:#4a97c9;
+    }
+    .node:hover{
+      /* keine Position-/Scale-Änderung mehr -> kein Springen */
+      filter:drop-shadow(0 8px 14px rgba(0,0,0,.6));
+    }
+    .node:hover .node-circle{
+      stroke:var(--accent);
+    }
+
+    .node-label-main{
+      font-size:15px;
+      font-weight:700;
+      fill:#f7f8ff;
+      text-anchor:middle;
+      dominant-baseline:middle;
+    }
+    .node-label-sub{
+      font-size:10px;
+      fill:var(--muted);
+      text-anchor:middle;
+      dominant-baseline:hanging;
+    }
+    .node-label-info{
+      font-size:8px;
+      fill:#c0c7da;
+      text-anchor:middle;
+      dominant-baseline:baseline;
+    }
+
+    /* Edges */
+    .edge{
+      stroke:var(--line);
+      stroke-width:1.2;
+      transition:opacity .12s ease;
+    }
+    .edge-strong{
+      stroke:var(--line-strong);
+      stroke-width:1.4;
+    }
+
+    .badge{
+      font-size:10px;
+      fill:var(--muted);
+      text-anchor:start;
+      dominant-baseline:middle;
+    }
+
+    .hidden{
+      opacity:0;
+      pointer-events:none;
+    }
+
+    @media (max-width:800px){
+      .title{font-size:16px;}
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div>
+      <h1 class="title">Akkord-Baum · DO → Quinte → Dreiklang → 7 → 9/11/13</h1>
+      <div class="subtitle">
+        Chromatische Solmisation · erweiterbare Äste · Akkorde mit mehr als vier Tönen erscheinen beim Klick
+      </div>
+    </div>
+  </div>
+
+  <div class="svg-wrap">
+    <svg id="chordTreeSvg" viewBox="0 0 1200 650" xmlns="http://www.w3.org/2000/svg">
+      <!-- statische Beschriftung rechts -->
+      <text x="900" y="60"  class="badge">Ebene 0: Grundton (DO)</text>
+      <text x="900" y="140" class="badge">Ebene 1: Quinte (SE / SOL / SI)</text>
+      <text x="900" y="220" class="badge">Ebene 2: Dreiklänge (Dur / Moll / sus / dim / aug)</text>
+      <text x="900" y="300" class="badge">Ebene 3: 7er-Typen (7 / maj7 / m7 / ø7 / dim7)</text>
+      <text x="900" y="380" class="badge">Ebene 4: Erweiterungen &gt; 4 Töne (re' / fa' / la')</text>
+
+      <!-- Gruppen für Edges & Nodes -->
+      <g id="edgesG"></g>
+      <g id="nodesG"></g>
+    </svg>
+  </div>
+
+  <div class="legend">
+    <p><b>Interaktion:</b></p>
+    <p>
+      · Klick auf <b>DO</b> → zeigt SE / SOL / SI.<br>
+      · Klick auf eine Quinte → zeigt passende Dreiklang-Typen (Dur, Moll, sus2, sus4, dim, aug).<br>
+      · Klick auf einen Dreiklang → zeigt mögliche 7er-Akkorde.<br>
+      · Klick auf einen 7er-Akkord → zeigt Akkorde mit <b>mehr als 4 Tönen</b> (re'/fa'/la' = 9/11/13) als eigene Knoten.<br>
+      Wiederholter Klick blendet die jeweilige Unterebene wieder aus.
+    </p>
+    <p>
+      Solmisations-Logik (von DO aus gedacht):<br>
+      – Dur: do – <b>mi</b> – sol · Moll: do – <b>me</b> – sol · Dim: do – me – <b>se</b> · Aug: do – mi – <b>si</b>.<br>
+      – 7: <b>te</b> (kleine Septime) · maj7: <b>ti</b> (große Septime).<br>
+      – 9 = <b>re'</b>, 11 = <b>fa'</b>, 13 = <b>la'</b> über dem Grundton.
+    </p>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+(function(){
+  const svgns = "http://www.w3.org/2000/svg";
+  const svg   = document.getElementById("chordTreeSvg");
+  const edgesG = document.getElementById("edgesG");
+  const nodesG = document.getElementById("nodesG");
+
+  // Y-Positionen je Ebene
+  const levelY = {
+    0: 80,   // DO
+    1: 160,  // Quinten
+    2: 250,  // Dreiklänge
+    3: 340,  // 7er
+    4: 440   // 9/re' / 11/fa' / 13/la'
+  };
+
+  // Datenmodell
+  const nodesData = [
+    // ROOT
+    {
+      id:"root_do",
+      parent:null,
+      level:0,
+      x:600,
+      type:"root",
+      main:"DO",
+      sub:"Grundton · 1",
+      info:"Start aller Akkorde",
+      notes:"do"
+    },
+
+    // ========= Ebene 1 – QUINTEN =========
+    {
+      id:"fifth_se",
+      parent:"root_do",
+      level:1,
+      x:350,
+      type:"fifth",
+      main:"SE",
+      sub:"♭5 · verminderte Quinte",
+      info:"Basis für dim / halbvermindert",
+      notes:"do – se"
+    },
+    {
+      id:"fifth_sol",
+      parent:"root_do",
+      level:1,
+      x:600,
+      type:"fifth",
+      main:"SOL",
+      sub:"5 · reine Quinte",
+      info:"Basis für Dur, Moll, sus",
+      notes:"do – sol"
+    },
+    {
+      id:"fifth_si",
+      parent:"root_do",
+      level:1,
+      x:850,
+      type:"fifth",
+      main:"SI",
+      sub:"#5 · übermäßige Quinte",
+      info:"Basis für Augmented",
+      notes:"do – si"
+    },
+
+    // ========= Ebene 2 – DREIKLÄNGE =========
+    // SE → dim
+    {
+      id:"triad_dim",
+      parent:"fifth_se",
+      level:2,
+      x:350,
+      type:"triad",
+      main:"ME",
+      sub:"dim (vermindert)",
+      info:"do – me – se",
+      notes:"do – me – se"
+    },
+
+    // SOL → Moll / Dur / sus2 / sus4
+    {
+      id:"triad_min",
+      parent:"fifth_sol",
+      level:2,
+      x:480,
+      type:"triad",
+      main:"ME",
+      sub:"Moll",
+      info:"do – me – sol",
+      notes:"do – me – sol"
+    },
+    {
+      id:"triad_maj",
+      parent:"fifth_sol",
+      level:2,
+      x:600,
+      type:"triad",
+      main:"MI",
+      sub:"Dur",
+      info:"do – mi – sol",
+      notes:"do – mi – sol"
+    },
+    {
+      id:"triad_sus2",
+      parent:"fifth_sol",
+      level:2,
+      x:540,
+      type:"triad",
+      main:"RE",
+      sub:"sus2",
+      info:"do – re – sol",
+      notes:"do – re – sol"
+    },
+    {
+      id:"triad_sus4",
+      parent:"fifth_sol",
+      level:2,
+      x:660,
+      type:"triad",
+      main:"FA",
+      sub:"sus4",
+      info:"do – fa – sol",
+      notes:"do – fa – sol"
+    },
+
+    // SI → aug
+    {
+      id:"triad_aug",
+      parent:"fifth_si",
+      level:2,
+      x:850,
+      type:"triad",
+      main:"ME",
+      sub:"aug (übermäßig)",
+      info:"do – mi – si",
+      notes:"do – mi – si"
+    },
+
+    // ========= Ebene 3 – 7ER =========
+    // dim → halbvermindert / dim7 (vereinfachte Schreibweise)
+    {
+      id:"sev_halfdim",
+      parent:"triad_dim",
+      level:3,
+      x:320,
+      type:"seventh",
+      main:"TE",
+      sub:"ø7 (halbverm.)",
+      info:"do – me – se – te",
+      notes:"do – me – se – te"
+    },
+    {
+      id:"sev_dim7",
+      parent:"triad_dim",
+      level:3,
+      x:380,
+      type:"seventh",
+      main:"TI",
+      sub:"dim7 (stark verm.)",
+      info:"do – me – se – ti",
+      notes:"do – me – se – ti"
+    },
+
+    // Moll-Dreiklang → Moll7, MollMaj7
+    {
+      id:"sev_min7",
+      parent:"triad_min",
+      level:3,
+      x:460,
+      type:"seventh",
+      main:"TE",
+      sub:"m7 (Moll7)",
+      info:"do – me – sol – te",
+      notes:"do – me – sol – te"
+    },
+    {
+      id:"sev_minMaj7",
+      parent:"triad_min",
+      level:3,
+      x:500,
+      type:"seventh",
+      main:"TI",
+      sub:"mMaj7",
+      info:"do – me – sol – ti",
+      notes:"do – me – sol – ti"
+    },
+
+    // Dur-Dreiklang → Dominant7 / Maj7
+    {
+      id:"sev_dom7",
+      parent:"triad_maj",
+      level:3,
+      x:580,
+      type:"seventh",
+      main:"TE",
+      sub:"7 (Dominant7)",
+      info:"do – mi – sol – te",
+      notes:"do – mi – sol – te"
+    },
+    {
+      id:"sev_maj7",
+      parent:"triad_maj",
+      level:3,
+      x:620,
+      type:"seventh",
+      main:"TI",
+      sub:"maj7 (Durmaj7)",
+      info:"do – mi – sol – ti",
+      notes:"do – mi – sol – ti"
+    },
+
+    // sus2 → 7
+    {
+      id:"sev_sus2_7",
+      parent:"triad_sus2",
+      level:3,
+      x:540,
+      type:"seventh",
+      main:"TE",
+      sub:"7sus2",
+      info:"do – re – sol – te",
+      notes:"do – re – sol – te"
+    },
+
+    // sus4 → 7
+    {
+      id:"sev_sus4_7",
+      parent:"triad_sus4",
+      level:3,
+      x:660,
+      type:"seventh",
+      main:"TE",
+      sub:"7sus4",
+      info:"do – fa – sol – te",
+      notes:"do – fa – sol – te"
+    },
+
+    // aug → +7 / +maj7
+    {
+      id:"sev_aug7",
+      parent:"triad_aug",
+      level:3,
+      x:830,
+      type:"seventh",
+      main:"TE",
+      sub:"+7",
+      info:"do – mi – si – te",
+      notes:"do – mi – si – te"
+    },
+    {
+      id:"sev_augMaj7",
+      parent:"triad_aug",
+      level:3,
+      x:870,
+      type:"seventh",
+      main:"TI",
+      sub:"+maj7",
+      info:"do – mi – si – ti",
+      notes:"do – mi – si – ti"
+    },
+
+    // ========= Ebene 4 – 9 / 11 / 13 (als re'/fa'/la') =========
+    // Halbvermindert
+    {
+      id:"ext_halfdim_9",
+      parent:"sev_halfdim",
+      level:4,
+      x:300,
+      type:"ext",
+      main:"re'",
+      sub:"ø7(re')",
+      info:"",
+      notes:"te + re' · 5 Töne"
+    },
+    {
+      id:"ext_halfdim_11",
+      parent:"sev_halfdim",
+      level:4,
+      x:340,
+      type:"ext",
+      main:"fa'",
+      sub:"ø7(fa')",
+      info:"",
+      notes:"te + fa' · 5 Töne"
+    },
+    {
+      id:"ext_halfdim_13",
+      parent:"sev_halfdim",
+      level:4,
+      x:380,
+      type:"ext",
+      main:"la'",
+      sub:"ø7(la')",
+      info:"",
+      notes:"te + la' · 5 Töne"
+    },
+
+    // dim7
+    {
+      id:"ext_dim7_9",
+      parent:"sev_dim7",
+      level:4,
+      x:420,
+      type:"ext",
+      main:"re'",
+      sub:"dim7(re')",
+      info:"",
+      notes:"ti + re' · 5 Töne"
+    },
+
+    // Moll7
+    {
+      id:"ext_min7_9",
+      parent:"sev_min7",
+      level:4,
+      x:440,
+      type:"ext",
+      main:"re'",
+      sub:"m9",
+      info:"",
+      notes:"me + te + re' · 5 Töne"
+    },
+    {
+      id:"ext_min7_11",
+      parent:"sev_min7",
+      level:4,
+      x:480,
+      type:"ext",
+      main:"fa'",
+      sub:"m11",
+      info:"",
+      notes:"me + te + fa' · 5 Töne"
+    },
+    {
+      id:"ext_min7_13",
+      parent:"sev_min7",
+      level:4,
+      x:520,
+      type:"ext",
+      main:"la'",
+      sub:"m13",
+      info:"",
+      notes:"me + te + la' · 5 Töne"
+    },
+
+    // MollMaj7
+    {
+      id:"ext_minMaj7_9",
+      parent:"sev_minMaj7",
+      level:4,
+      x:520,
+      type:"ext",
+      main:"re'",
+      sub:"mMaj9",
+      info:"",
+      notes:"me + ti + re' · 5 Töne"
+    },
+
+    // Dominant7
+    {
+      id:"ext_dom7_9",
+      parent:"sev_dom7",
+      level:4,
+      x:560,
+      type:"ext",
+      main:"re'",
+      sub:"9",
+      info:"",
+      notes:"te + re' · 5 Töne"
+    },
+    {
+      id:"ext_dom7_11",
+      parent:"sev_dom7",
+      level:4,
+      x:600,
+      type:"ext",
+      main:"fa'",
+      sub:"11",
+      info:"",
+      notes:"te + fa' · 5 Töne"
+    },
+    {
+      id:"ext_dom7_13",
+      parent:"sev_dom7",
+      level:4,
+      x:640,
+      type:"ext",
+      main:"la'",
+      sub:"13",
+      info:"",
+      notes:"te + la' · 5 Töne"
+    },
+
+    // Maj7
+    {
+      id:"ext_maj7_9",
+      parent:"sev_maj7",
+      level:4,
+      x:680,
+      type:"ext",
+      main:"re'",
+      sub:"maj9",
+      info:"",
+      notes:"ti + re' · 5 Töne"
+    },
+    {
+      id:"ext_maj7_11",
+      parent:"sev_maj7",
+      level:4,
+      x:720,
+      type:"ext",
+      main:"fa'",
+      sub:"maj11",
+      info:"",
+      notes:"ti + fa' · 5 Töne (praktisch oft ohne mi)"
+    },
+    {
+      id:"ext_maj7_13",
+      parent:"sev_maj7",
+      level:4,
+      x:760,
+      type:"ext",
+      main:"la'",
+      sub:"maj13",
+      info:"",
+      notes:"ti + la' · 5 Töne"
+    },
+
+    // sus2 7
+    {
+      id:"ext_sus2_9",
+      parent:"sev_sus2_7",
+      level:4,
+      x:540,
+      type:"ext",
+      main:"re'",
+      sub:"7sus2(re')",
+      info:"",
+      notes:"re' + te · 5 Töne (konzeptuell)"
+    },
+
+    // sus4 7
+    {
+      id:"ext_sus4_11",
+      parent:"sev_sus4_7",
+      level:4,
+      x:660,
+      type:"ext",
+      main:"fa'",
+      sub:"7sus4(fa')",
+      info:"",
+      notes:"fa' + te · 5 Töne (konzeptuell)"
+    },
+
+    // aug +7 / +maj7
+    {
+      id:"ext_aug7_9",
+      parent:"sev_aug7",
+      level:4,
+      x:820,
+      type:"ext",
+      main:"re'",
+      sub:"+9",
+      info:"",
+      notes:"+7(re') · 5 Töne"
+    },
+    {
+      id:"ext_augMaj7_9",
+      parent:"sev_augMaj7",
+      level:4,
+      x:880,
+      type:"ext",
+      main:"re'",
+      sub:"+maj9",
+      info:"",
+      notes:"+maj7(re') · 5 Töne"
+    }
+  ];
+
+  const nodesMap = {};
+  const childrenMap = {};
+  const expanded = {};
+
+  nodesData.forEach(n=>{
+    nodesMap[n.id] = n;
+    if(n.parent){
+      if(!childrenMap[n.parent]) childrenMap[n.parent] = [];
+      childrenMap[n.parent].push(n.id);
+    }
+  });
+
+  function makeEl(tag, attrs){
+    const el = document.createElementNS(svgns, tag);
+    if(attrs){
+      for(const k in attrs){
+        el.setAttribute(k, attrs[k]);
+      }
+    }
+    return el;
+  }
+
+  function buildTree(){
+    nodesData.forEach(node=>{
+      const y = levelY[node.level] || 80;
+      const x = node.x;
+      node.y = y;
+
+      // Edge zum Parent
+      if(node.parent){
+        const parent = nodesMap[node.parent];
+        if(parent){
+          const py = levelY[parent.level] || 80;
+          const px = parent.x;
+          const line = makeEl("line",{
+            x1:px,
+            y1:py+28,
+            x2:x,
+            y2:y-28,
+            class:"edge" + (parent.level === 0 ? " edge-strong" : "")
+          });
+          line.dataset.parentId = node.parent;
+          line.dataset.childId = node.id;
+          node._edge = line;
+          edgesG.appendChild(line);
+        }
+      }
+
+      // Node-Gruppe
+      const g = makeEl("g",{
+        class:"node node-" + node.type,
+        "data-node-id":node.id,
+        transform:`translate(${x},${y})`
+      });
+
+      const r = (node.type === "root" ? 34 :
+                 node.type === "fifth" ? 30 :
+                 node.type === "triad" ? 28 :
+                 node.type === "seventh" ? 26 : 24);
+
+      const circle = makeEl("circle",{
+        class:"node-circle",
+        cx:0,cy:0,r:r
+      });
+      g.appendChild(circle);
+
+      const tMain = makeEl("text",{
+        class:"node-label-main",
+        x:0,y:-2
+      });
+      tMain.textContent = node.main;
+      g.appendChild(tMain);
+
+      const tSub = makeEl("text",{
+        class:"node-label-sub",
+        x:0,y:r-4
+      });
+      tSub.textContent = node.sub || "";
+      g.appendChild(tSub);
+
+      if(node.info){
+        const tInfo = makeEl("text",{
+          class:"node-label-info",
+          x:0,y:r+12
+        });
+        tInfo.textContent = node.info;
+        g.appendChild(tInfo);
+      }
+
+      g.addEventListener("click", onNodeClick);
+
+      node._g = g;
+      nodesG.appendChild(g);
+    });
+
+    // Nur Root sichtbar
+    nodesData.forEach(node=>{
+      if(node.parent){
+        hideNodeAndEdge(node.id);
+      }
+    });
+  }
+
+  function hideNodeAndEdge(nodeId){
+    const node = nodesMap[nodeId];
+    if(!node) return;
+    if(node._g) node._g.classList.add("hidden");
+    if(node._edge) node._edge.classList.add("hidden");
+  }
+
+  function showNodeAndEdge(nodeId){
+    const node = nodesMap[nodeId];
+    if(!node) return;
+    if(node._g) node._g.classList.remove("hidden");
+    if(node._edge) node._edge.classList.remove("hidden");
+  }
+
+  function setSubtreeVisibility(nodeId, visible){
+    const children = childrenMap[nodeId] || [];
+    children.forEach(childId=>{
+      if(visible){
+        showNodeAndEdge(childId);
+      }else{
+        hideNodeAndEdge(childId);
+        setSubtreeVisibility(childId, false);
+        expanded[childId] = false;
+      }
+    });
+  }
+
+  function collapseAllToRoot(){
+    nodesData.forEach(node=>{
+      if(node.parent){
+        hideNodeAndEdge(node.id);
+      }
+      expanded[node.id] = false;
+    });
+  }
+
+  function onNodeClick(evt){
+    evt.stopPropagation();
+    const g = evt.currentTarget;
+    const id = g.getAttribute("data-node-id");
+    if(!id) return;
+
+    const node = nodesMap[id];
+    if(!node) return;
+
+    const now = !expanded[id];
+    expanded[id] = now;
+
+    // Geschwister einklappen
+    if(now && node.parent){
+      const siblings = childrenMap[node.parent] || [];
+      siblings.forEach(sibId => {
+        if(sibId !== id){
+          expanded[sibId] = false;
+          setSubtreeVisibility(sibId, false);
+        }
+      });
+    }
+
+    setSubtreeVisibility(id, now);
+  }
+
+  buildTree();
+
+  // Klick auf Hintergrund: alles auf DO einklappen
+  svg.addEventListener("click", function(evt){
+    collapseAllToRoot();
+  });
+})();
+</script>
+</body>
+</html> 

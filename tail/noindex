@@ -1,0 +1,19 @@
+<html>
+<head>
+<style type="text/css">
+<!--
+body {
+	font-family: arial;
+	font-size: 11px;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+	background-color: #000000;
+-->
+</style>
+</head>
+<body> 
+<iframe src="http://der-die-das.com/tail.php" width="100%" scrolling="no" marginheight="0" marginwidth="0" frameborder="0" height="95%"></iframe>
+</body>
+</html>

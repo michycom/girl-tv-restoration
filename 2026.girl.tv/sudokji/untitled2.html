@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SUDKJI 9x9 Outline Animation</title>
+
+  <style>
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: #111;
+      color: #f2f2f2;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      display: grid;
+      place-items: center;
+    }
+
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(9, 42px);
+      grid-template-rows: repeat(9, 42px);
+      gap: 6px;
+      padding: 18px;
+      background: #1b1b1b;
+      border-radius: 18px;
+    }
+
+    .cell {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      background: #2a2a2a;
+      color: #444;
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1;
+      transition: 120ms ease;
+    }
+
+    .cell.on {
+      background: #f2f2f2;
+      color: #111;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="grid"></div>
+
+  <script>
+    const glyphs = {
+      S: [
+        "SSSSSSSSS",
+        "SXXXXXXXX",
+        "SXXXXXXXX",
+        "SSSSSSSSS",
+        "XXXXXXXXS",
+        "XXXXXXXXS",
+        "XXXXXXXXS",
+        "XXXXXXXXS",
+        "SSSSSSSSS"
+      ],
+
+      U: [
+        "UXXXXXXXU",
+        "UXXXXXXXU",
+        "UXXXXXXXU",
+        "UXXXXXXXU",
+        "UXXXXXXXU",
+        "UXXXXXXXU",
+        "UXXXXXXXU",
+        "UXXXXXXXU",
+        "UUUUUUUUU"
+      ],
+
+      D: [
+        "DDDDDDDDX",
+        "DXXXXXXXD",
+        "DXXXXXXXD",
+        "DXXXXXXXD",
+        "DXXXXXXXD",
+        "DXXXXXXXD",
+        "DXXXXXXXD",
+        "DXXXXXXXD",
+        "DDDDDDDDX"
+      ],
+
+      K: [
+        "KXXXXXXXK",
+        "KXXXXXXKX",
+        "KXXXXXKXX",
+        "KXXXXKXXX",
+        "KKKKXXXXX",
+        "KXXXXKXXX",
+        "KXXXXXKXX",
+        "KXXXXXXKX",
+        "KXXXXXXXK"
+      ],
+
+      J: [
+        "JJJJJJJJJ",
+        "XXXXXXXXJ",
+        "XXXXXXXXJ",
+        "XXXXXXXXJ",
+        "XXXXXXXXJ",
+        "JXXXXXXXJ",
+        "JXXXXXXXJ",
+        "JXXXXXXXJ",
+        "JJJJJJJJJ"
+      ],
+
+      I: [
+        "IIIIIIIII",
+        "XXXXIXXXX",
+        "XXXXIXXXX",
+        "XXXXIXXXX",
+        "XXXXIXXXX",
+        "XXXXIXXXX",
+        "XXXXIXXXX",
+        "XXXXIXXXX",
+        "IIIIIIIII"
+      ]
+    };
+
+    const word = "SUDKJI";
+    const gridSize = 9;
+    const glyphWidth = 9;
+    const glyphHeight = 9;
+    const letterGap = 2;
+    const speed = 180;
+
+    const gridElement = document.getElementById("grid");
+    const cells = [];
+
+    for (let i = 0; i < gridSize * gridSize; i++) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.textContent = "x";
+      gridElement.appendChild(cell);
+      cells.push(cell);
+    }
+
+    function makeTextMatrix(text) {
+      const width = text.length * glyphWidth + (text.length - 1) * letterGap;
+      const matrix = Array.from(
+        { length: glyphHeight },
+        () => Array(width).fill("X")
+      );
+
+      let offsetX = 0;
+
+      for (const char of text) {
+        const glyph = glyphs[char];
+
+        for (let y = 0; y < glyphHeight; y++) {
+          for (let x = 0; x < glyphWidth; x++) {
+            matrix[y][offsetX + x] = glyph[y][x];
+          }
+        }
+
+        offsetX += glyphWidth + letterGap;
+      }
+
+      return matrix;
+    }
+
+    const textMatrix = makeTextMatrix(word);
+    const textWidth = textMatrix[0].length;
+
+    let frame = 0;
+
+    function draw() {
+      const clearGrid = Array.from(
+        { length: gridSize },
+        () => Array(gridSize).fill("X")
+      );
+
+      const horizontalOffset = gridSize - (frame % (textWidth + gridSize + 1));
+
+      for (let y = 0; y < glyphHeight; y++) {
+        for (let x = 0; x < textWidth; x++) {
+          const targetY = y;
+          const targetX = horizontalOffset + x;
+
+          if (
+            targetY >= 0 &&
+            targetY < gridSize &&
+            targetX >= 0 &&
+            targetX < gridSize
+          ) {
+            clearGrid[targetY][targetX] = textMatrix[y][x];
+          }
+        }
+      }
+
+      for (let y = 0; y < gridSize; y++) {
+        for (let x = 0; x < gridSize; x++) {
+          const value = clearGrid[y][x];
+          const cell = cells[y * gridSize + x];
+
+          if (value !== "X") {
+            cell.classList.add("on");
+            cell.textContent = value;
+          } else {
+            cell.classList.remove("on");
+            cell.textContent = "x";
+          }
+        }
+      }
+
+      frame++;
+    }
+
+    draw();
+    setInterval(draw, speed);
+  </script>
+</body>
+</html>

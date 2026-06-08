@@ -1,0 +1,75 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+
+<!-- TITLE TAG  -->
+<?
+$mydate=date(d);
+echo '<title>girl.tv/land |day';
+echo $mydate;
+echo'|</title>';
+?> 
+
+<SCRIPT LANGUAGE="JavaScript" type="text/javascript">
+	
+	var BaseURL = "";
+    var File = "http://195.177.251.55/cam3.jpg"   
+	var theTimer = setTimeout("reloadImage()",1);
+      
+      function reloadImage() {
+        theDate = new Date();
+        var url = BaseURL;
+        url += File;
+        url += "?dummy=";
+        url += theDate.getTime().toString(10);
+
+        document.Bild.src = url;
+
+        theTimer = setTimeout("reloadImage()",1000);
+      }
+</SCRIPT>
+
+<script language="JavaScript" src="http://girl.tv/land/jscripts/gtv-land.js" type="text/javascript"></script>
+
+<script language="JavaScript">
+stby = window.open("http://girl.tv/standby", "standby", "scrollbars=no,status=no,width=110,height=100,left=100,top=100");
+stby.blur();
+</script>
+
+<style type="text/css">
+body {margin-left: 0px;margin-top: 0px;margin-right: 0px;margin-bottom: 0px;}
+.alt {font-family: Arial, Helvetica, sans-serif;font-size: 9px;color: #999999;}
+.errorstyle {font-family: Georgia, "Times New Roman", Times, serif;font-size: 36px;color: #FF3366;}
+</style>
+
+
+</head>
+
+<body onLoad='Imge'>
+
+	<div id="INFO-LAYER" style="position:absolute; width:522px; height:115px; z-index:1; visibility: hidden;"><a href="http://girl.tv">girl.tv</a> /// girltv /// land /// hits /// <a href="http://kunsthausgraz.at">Kunsthaus Graz</a> /// medien.KUNSTLABOR /// 1-21.9.2005 /// Er&ouml;ffnung Donnerstag 1.9.2005 20:00uhr /// K&uuml;nstler: Tim Kaiser /// Michael Heering /// Katharina Trudzinski /// Julien M&uuml;hlenpfordt /// Marc Wright /// Franz Xaver /// Marie Vogt /// Johanna Trundzinski /// <a href="http://hui-hui.de">HUI-HUI</a> /// 8grad /// d7 /// <a href="http://einlegen.de">EK-Einlegen Kassetten</a> /// </div>
+	<IMG SRC="http://195.177.251.55/cam3.jpg"  ALT="welcome at girl.tv/land" NAME="Bild" width="720" height="576" hspace="0" vspace="0" border="0" 
+usemap="#radio" class="alt">
+    
+<map name="radio" id="radio">
+    
+  	<area shape="rect" coords="121,238,209,368" href="http://girl.tv/hui-hui" target="_blank" alt="Hui-Hui" title="girl.tv radio loop">
+  	<area shape="rect" coords="71,475,186,566" href="#" target="_blank" alt="jazz dance">
+        <!--area shape="rect" title="uploaded" coords="291,191,544,315" href="javascript:cam3pop()" alt="von der plattform"-->
+  	<area shape="rect" coords="471,90,663,249" href="http://girl.tv/aerobic/total-workout.htm" title="hui-hui total workout" target="_blank" alt="Hui-Hui Total Workout">
+  	  	<!--area shape="rect" title="LIVE AUDIO Elevate Festival" coords="291,191,544,315" href="javascript:p-pop()" alt="elevate festival"-->
+
+    <area shape="poly" coords="151,15,257,-17,274,52,221,83" href="#" title="television" alt="Brezel">
+    <area shape="rect" coords="428,363,577,445" href="#" alt="yoga">
+
+	<area shape="rect" coords="253,445,399,593" href="http://girl.tv/aerobic/8minuten-workout.htm" title="Hui-Hui 8 Min. Workout" target="_blank" alt="hui-hui 
+sport">
+        
+    <area shape="poly" coords="325,95,364,131,587,5,368,1" href="#" target="_top" alt="ballet">
+</map>
+
+</body>
+</html>
+

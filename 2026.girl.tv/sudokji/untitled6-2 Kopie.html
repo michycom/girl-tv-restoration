@@ -1,0 +1,1170 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SUDOKJI Negativeform Lab</title>
+
+  <style>
+    :root {
+      --bg: #050505;
+      --panel: #101010;
+      --cell-empty: #171717;
+      --material: #f4f1e8;
+      --void: #050505;
+      --accent: #f4f1e8;
+      --glow: rgba(255, 246, 210, 0.75);
+      --grid-gap: 7px;
+      --cell-size: min(8.2vw, 52px);
+      --radius: 11px;
+      --speed-factor: 1;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at 50% 35%, #242018 0%, transparent 38%),
+        radial-gradient(circle at 50% 65%, #111 0%, var(--bg) 58%);
+      color: var(--material);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      overflow: hidden;
+    }
+
+    body.scan-on::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(
+          to bottom,
+          transparent 0%,
+          rgba(255,255,255,0.035) 50%,
+          transparent 100%
+        );
+      background-size: 100% 7px;
+      mix-blend-mode: overlay;
+      opacity: 0.55;
+      animation: scan 5s linear infinite;
+      z-index: 5;
+    }
+
+    @keyframes scan {
+      from { transform: translateY(-24px); }
+      to { transform: translateY(24px); }
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(310px, 380px) 1fr;
+      gap: 24px;
+      padding: 24px;
+      align-items: center;
+    }
+
+    .controls {
+      align-self: stretch;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      background: rgba(10,10,10,0.78);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 24px;
+      box-shadow: 0 32px 90px rgba(0,0,0,0.55);
+      backdrop-filter: blur(14px);
+    }
+
+    .controls h1 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .controls p {
+      margin: 0 0 16px;
+      font-size: 12px;
+      line-height: 1.45;
+      opacity: 0.62;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+      margin: 0 0 13px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 86px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    label {
+      font-size: 11px;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      opacity: 0.74;
+    }
+
+    input,
+    select,
+    button {
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.07);
+      color: var(--material);
+      font: inherit;
+      padding: 10px 11px;
+      outline: none;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      accent-color: var(--accent);
+    }
+
+    input[type="checkbox"] {
+      width: auto;
+      accent-color: var(--accent);
+    }
+
+    select option {
+      color: #111;
+    }
+
+    button {
+      cursor: pointer;
+      transition: 160ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.12);
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 0;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .value {
+      text-align: right;
+      opacity: 0.68;
+      font-size: 12px;
+    }
+
+    .stage {
+      position: relative;
+      display: grid;
+      gap: 18px;
+      justify-items: center;
+      align-content: center;
+      min-width: 0;
+    }
+
+    .title {
+      font-size: 12px;
+      letter-spacing: 0.22em;
+      opacity: 0.65;
+      text-transform: uppercase;
+    }
+
+    #grid {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(9, var(--cell-size));
+      grid-template-rows: repeat(9, var(--cell-size));
+      gap: var(--grid-gap);
+      padding: 22px;
+      background:
+        linear-gradient(145deg, rgba(255,255,255,0.08), transparent 40%),
+        var(--panel);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 24px;
+      box-shadow:
+        0 32px 90px rgba(0,0,0,0.75),
+        inset 0 0 28px rgba(255,255,255,0.035);
+    }
+
+    .breathe-on #grid {
+      animation: panelBreath 3.8s ease-in-out infinite;
+    }
+
+    #grid::after {
+      content: "";
+      position: absolute;
+      inset: 22px;
+      pointer-events: none;
+      border-radius: 10px;
+      box-shadow:
+        inset 0 0 40px rgba(255, 246, 210, 0.08),
+        0 0 55px rgba(255, 246, 210, 0.08);
+    }
+
+    @keyframes panelBreath {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.012); }
+    }
+
+    .cell {
+      width: var(--cell-size);
+      height: var(--cell-size);
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius);
+      font-size: calc(var(--cell-size) * 0.43);
+      font-weight: 950;
+      line-height: 1;
+      user-select: none;
+      transition:
+        background 180ms ease,
+        color 180ms ease,
+        transform 180ms ease,
+        box-shadow 180ms ease,
+        opacity 180ms ease,
+        border-radius 180ms ease;
+    }
+
+    .cell.empty {
+      background: var(--cell-empty);
+      color: rgba(255,255,255,0.08);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+      opacity: 0.65;
+    }
+
+    .cell.material {
+      background:
+        radial-gradient(circle at 35% 25%, #ffffff 0%, var(--material) 45%, #b8ad91 100%);
+      color: #050505;
+      box-shadow:
+        0 0 18px var(--glow),
+        0 0 42px rgba(255, 246, 210, 0.26),
+        inset 0 0 0 1px rgba(255,255,255,0.55),
+        inset 0 -7px 14px rgba(0,0,0,0.22);
+      transform: translateY(-1px) scale(1.035);
+    }
+
+    .pulse-on .cell.material {
+      animation: materialPulse 2.4s ease-in-out infinite;
+    }
+
+    .cell.void {
+      background:
+        radial-gradient(circle at 50% 50%, #080808 0%, #020202 100%);
+      color: transparent;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 246, 210, 0.14),
+        inset 0 0 20px rgba(0,0,0,0.95);
+      transform: scale(0.92);
+    }
+
+    .flat .cell.material {
+      background: var(--material);
+      box-shadow: none;
+      transform: none;
+    }
+
+    .flat .cell.void {
+      background: var(--void);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+      transform: none;
+    }
+
+    .matrix .cell {
+      border-radius: 3px;
+      text-shadow: 0 0 12px currentColor;
+    }
+
+    .matrix .cell.material {
+      background: #0b1d10;
+      color: #8cff9a;
+      box-shadow:
+        0 0 18px rgba(140,255,154,0.4),
+        inset 0 0 0 1px rgba(140,255,154,0.28);
+    }
+
+    .matrix .cell.void {
+      background: #020602;
+      box-shadow: inset 0 0 0 1px rgba(140,255,154,0.12);
+    }
+
+    .amber .cell.material {
+      background:
+        radial-gradient(circle at 35% 25%, #fff7d5 0%, #ffbe4d 55%, #7a4310 100%);
+      color: #120800;
+      box-shadow:
+        0 0 18px rgba(255,190,77,0.75),
+        0 0 42px rgba(255,140,0,0.25),
+        inset 0 -7px 14px rgba(0,0,0,0.22);
+    }
+
+    .ice .cell.material {
+      background:
+        radial-gradient(circle at 35% 25%, #ffffff 0%, #aeefff 50%, #366575 100%);
+      color: #001015;
+      box-shadow:
+        0 0 18px rgba(174,239,255,0.75),
+        0 0 42px rgba(90,190,255,0.28),
+        inset 0 -7px 14px rgba(0,0,0,0.22);
+    }
+
+    @keyframes materialPulse {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.16); }
+    }
+
+    .caption {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      opacity: 0.42;
+      text-align: center;
+    }
+
+    .debug {
+      width: min(680px, 100%);
+      max-height: 180px;
+      overflow: auto;
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(0,0,0,0.48);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.66);
+      font-size: 11px;
+      line-height: 1.35;
+      white-space: pre;
+    }
+
+    @media (max-width: 860px) {
+      html,
+      body {
+        overflow: auto;
+      }
+
+      .app {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+
+      .controls {
+        max-height: none;
+      }
+    }
+  </style>
+</head>
+
+<body class="scan-on pulse-on breathe-on">
+  <main class="app">
+    <aside class="controls">
+      <h1>Sudokji Glyph Lab</h1>
+      <p>9×9 Sichtfenster. Die Buchstaben laufen als Material/Negativform durch das Raster. Punkt bedeutet Negativraum, Stern bedeutet Füllmaterial.</p>
+
+      <div class="field">
+        <label for="wordInput">Wort</label>
+        <input id="wordInput" value="SUDOKJI" spellcheck="false" />
+      </div>
+
+      <div class="field">
+        <label for="glyphSetSelect">Glyph-Set</label>
+        <select id="glyphSetSelect">
+          <option value="negative7">7×7 Negativform</option>
+          <option value="classic3">3×3 Pixel</option>
+          <option value="classic5">3×5 Pixel</option>
+          <option value="outline9">5×7 Outline / Stern</option>
+          <option value="dsl">DSL / Stern-Material</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="motionSelect">Animation</label>
+        <select id="motionSelect">
+          <option value="scroll">Horizontal Scroll</option>
+          <option value="single">Einzelbuchstaben</option>
+          <option value="static">Statisch erster Buchstabe</option>
+          <option value="bounce">Bounce</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="themeSelect">Look</label>
+        <select id="themeSelect">
+          <option value="warm">Warm Glow</option>
+          <option value="flat">Flat</option>
+          <option value="matrix">Matrix</option>
+          <option value="amber">Amber</option>
+          <option value="ice">Ice</option>
+        </select>
+      </div>
+
+      <div class="field row">
+        <label for="speedRange">Speed</label>
+        <span class="value" id="speedValue">160 ms</span>
+        <input id="speedRange" type="range" min="40" max="700" step="10" value="160" />
+      </div>
+
+      <div class="field row">
+        <label for="letterGapRange">Letter Gap</label>
+        <span class="value" id="letterGapValue">2</span>
+        <input id="letterGapRange" type="range" min="0" max="6" step="1" value="2" />
+      </div>
+
+      <div class="field row">
+        <label for="cellSizeRange">Cell Size</label>
+        <span class="value" id="cellSizeValue">52 px</span>
+        <input id="cellSizeRange" type="range" min="24" max="72" step="1" value="52" />
+      </div>
+
+      <div class="field row">
+        <label for="gridGapRange">Grid Gap</label>
+        <span class="value" id="gridGapValue">7 px</span>
+        <input id="gridGapRange" type="range" min="0" max="16" step="1" value="7" />
+      </div>
+
+      <div class="field row">
+        <label for="radiusRange">Radius</label>
+        <span class="value" id="radiusValue">11 px</span>
+        <input id="radiusRange" type="range" min="0" max="22" step="1" value="11" />
+      </div>
+
+      <div class="field row">
+        <label for="offsetYRange">Offset Y</label>
+        <span class="value" id="offsetYValue">1</span>
+        <input id="offsetYRange" type="range" min="0" max="8" step="1" value="1" />
+      </div>
+
+      <div class="check-row">
+        <label for="showLettersCheck">Buchstaben anzeigen</label>
+        <input id="showLettersCheck" type="checkbox" checked />
+      </div>
+
+      <div class="check-row">
+        <label for="scanCheck">Scanlines</label>
+        <input id="scanCheck" type="checkbox" checked />
+      </div>
+
+      <div class="check-row">
+        <label for="pulseCheck">Pulse</label>
+        <input id="pulseCheck" type="checkbox" checked />
+      </div>
+
+      <div class="check-row">
+        <label for="breatheCheck">Panel Breath</label>
+        <input id="breatheCheck" type="checkbox" checked />
+      </div>
+
+      <div class="button-row">
+        <button id="pauseButton" type="button">Pause</button>
+        <button id="resetButton" type="button">Reset</button>
+      </div>
+    </aside>
+
+    <section class="stage">
+      <div class="title" id="titleOutput">negativeform sudokji</div>
+      <div id="grid"></div>
+      <div class="caption" id="captionOutput">SUDOKJI · 7×7 glyphs inside 9×9 grid</div>
+      <pre class="debug" id="debugOutput"></pre>
+    </section>
+  </main>
+
+  <script>
+    function normalizeGlyph(width, lines, fillChar) {
+      return lines.map(line => line.padEnd(width, fillChar).slice(0, width));
+    }
+
+    function replaceChars(lines, map) {
+      return lines.map(line => line.replace(/[A-Z*_.]/g, char => map[char] ?? char));
+    }
+
+    function makeGlyph(char, lines) {
+      return lines.map(line => line.replace(/[A-Z]/g, char));
+    }
+
+    const glyph_S_3 = [
+      "SSS",
+      "XSX",
+      "SSS"
+    ];
+
+    const glyph_U_3 = [
+      "UXU",
+      "UXU",
+      "UUU"
+    ];
+
+    const glyph_D_3 = [
+      "DDD",
+      "DXD",
+      "DDD"
+    ];
+
+    const glyph_O_3 = [
+      "OOO",
+      "OXO",
+      "OOO"
+    ];
+
+    const glyph_K_3 = [
+      "KXK",
+      "KKX",
+      "KXK"
+    ];
+
+    const glyph_J_3 = [
+      "JJJ",
+      "XXJ",
+      "JJX"
+    ];
+
+    const glyph_I_3 = [
+      "III",
+      "XIX",
+      "III"
+    ];
+
+    const glyph_S_5 = [
+      "SSS",
+      "SXX",
+      "SSS",
+      "XXS",
+      "SSS"
+    ];
+
+    const glyph_U_5 = [
+      "UXU",
+      "UXU",
+      "UXU",
+      "UXU",
+      "UUU"
+    ];
+
+    const glyph_D_5 = [
+      "DDX",
+      "DXD",
+      "DXD",
+      "DXD",
+      "DDX"
+    ];
+
+    const glyph_O_5 = [
+      "OOO",
+      "OXO",
+      "OXO",
+      "OXO",
+      "OOO"
+    ];
+
+    const glyph_K_5 = [
+      "KXK",
+      "KKX",
+      "KXX",
+      "KKX",
+      "KXK"
+    ];
+
+    const glyph_J_5 = [
+      "JJJ",
+      "XXJ",
+      "XXJ",
+      "JXJ",
+      "JJJ"
+    ];
+
+    const glyph_I_5 = [
+      "III",
+      "XIX",
+      "XIX",
+      "XIX",
+      "III"
+    ];
+
+    const glyph_S_7 = [
+      "SSSSSSS",
+      "S.....S",
+      "S.SSSSS",
+      "S.....S",
+      "SSSSS.S",
+      "S.....S",
+      "SSSSSSS"
+    ];
+
+    const glyph_U_7 = [
+      "U.....U",
+      "U.....U",
+      "U.....U",
+      "U.....U",
+      "U.....U",
+      "U.....U",
+      "UUUUUUU"
+    ];
+
+    const glyph_D_7 = [
+      "DDDDDD.",
+      "D.....D",
+      "D.....D",
+      "D.....D",
+      "D.....D",
+      "D.....D",
+      "DDDDDD."
+    ];
+
+    const glyph_O_7 = [
+      "OOOOOOO",
+      "O.....O",
+      "O.....O",
+      "O.....O",
+      "O.....O",
+      "O.....O",
+      "OOOOOOO"
+    ];
+
+    const glyph_K_7 = [
+      "K.....K",
+      "K....K.",
+      "K...K..",
+      "KKKK...",
+      "K...K..",
+      "K....K.",
+      "K.....K"
+    ];
+
+    const glyph_J_7 = [
+      "JJJJJJJ",
+      ".....J.",
+      ".....J.",
+      ".....J.",
+      "J....J.",
+      "J....J.",
+      "JJJJJJ."
+    ];
+
+    const glyph_I_7 = [
+      "IIIIIII",
+      "...I...",
+      "...I...",
+      "...I...",
+      "...I...",
+      "...I...",
+      "IIIIIII"
+    ];
+
+    const glyph_S_9 = [
+      "*****",
+      "*SSS*",
+      "*S***",
+      "*SSS*",
+      "***S*",
+      "*SSS*",
+      "*****"
+    ];
+
+    const glyph_U_9 = [
+      "*****",
+      "*U*U*",
+      "*U*U*",
+      "*U*U*",
+      "*U*U*",
+      "*UUU*",
+      "*****"
+    ];
+
+    const glyph_D_9 = [
+      "*****",
+      "*DDD*",
+      "*D*D*",
+      "*D*D*",
+      "*D*D*",
+      "*DDD*",
+      "*****"
+    ];
+
+    const glyph_O_9 = [
+      "*****",
+      "*OOO*",
+      "*O*O*",
+      "*O*O*",
+      "*O*O*",
+      "*OOO*",
+      "*****"
+    ];
+
+    const glyph_K_9 = [
+      "*****",
+      "*K*K*",
+      "*KK**",
+      "*K***",
+      "*KK**",
+      "*K*K*",
+      "*****"
+    ];
+
+    const glyph_I_9 = [
+      "*****",
+      "**I**",
+      "**I**",
+      "**I**",
+      "**I**",
+      "**I**",
+      "*****"
+    ];
+
+    const glyph_J_9 = [
+      "*****",
+      "*JJJ*",
+      "***J*",
+      "***J*",
+      "*J*J*",
+      "*JJJ*",
+      "*****"
+    ];
+
+    const glyph_S_dsl = normalizeGlyph(7, [
+      "*******",
+      "*SSS*",
+      "*S****",
+      "*SSS*",
+      "****S*",
+      "*SSS*",
+      "*******"
+    ], "*");
+
+    const glyph_U_dsl = normalizeGlyph(7, [
+      "*******",
+      "*U***U*",
+      "*U***U*",
+      "*U***U*",
+      "*U***U*",
+      "*UUUUU*",
+      "*******"
+    ], "*");
+
+    const glyph_D_dsl = normalizeGlyph(7, [
+      "*******",
+      "*DDDD*",
+      "*D***D*",
+      "*D***D*",
+      "*D***D*",
+      "*DDDD*",
+      "*******"
+    ], "*");
+
+    const glyph_O_dsl = normalizeGlyph(7, [
+      "*******",
+      "*OOOOO*",
+      "*O***O*",
+      "*O***O*",
+      "*O***O*",
+      "*OOOOO*",
+      "*******"
+    ], "*");
+
+    const glyph_K_dsl = normalizeGlyph(7, [
+      "*******",
+      "*K***K*",
+      "*K**K**",
+      "*KKK***",
+      "*K**K**",
+      "*K***K*",
+      "*******"
+    ], "*");
+
+    const glyph_J_dsl = normalizeGlyph(7, [
+      "*******",
+      "*JJJJJ*",
+      "*****J*",
+      "*****J*",
+      "*J***J*",
+      "*JJJJ**",
+      "*******"
+    ], "*");
+
+    const glyph_I_dsl = normalizeGlyph(7, [
+      "*******",
+      "*IIIII*",
+      "***I***",
+      "***I***",
+      "***I***",
+      "*IIIII*",
+      "*******"
+    ], "*");
+
+    const GLYPH_SETS = {
+      classic3: {
+        label: "3×3 Pixel",
+        width: 3,
+        height: 3,
+        emptyChars: new Set(["X", "."]),
+        glyphs: {
+          S: glyph_S_3,
+          U: glyph_U_3,
+          D: glyph_D_3,
+          O: glyph_O_3,
+          K: glyph_K_3,
+          J: glyph_J_3,
+          I: glyph_I_3
+        }
+      },
+      classic5: {
+        label: "3×5 Pixel",
+        width: 3,
+        height: 5,
+        emptyChars: new Set(["X", "."]),
+        glyphs: {
+          S: glyph_S_5,
+          U: glyph_U_5,
+          D: glyph_D_5,
+          O: glyph_O_5,
+          K: glyph_K_5,
+          J: glyph_J_5,
+          I: glyph_I_5
+        }
+      },
+      negative7: {
+        label: "7×7 Negativform",
+        width: 7,
+        height: 7,
+        emptyChars: new Set(["."]),
+        glyphs: {
+          S: glyph_S_7,
+          U: glyph_U_7,
+          D: glyph_D_7,
+          O: glyph_O_7,
+          K: glyph_K_7,
+          J: glyph_J_7,
+          I: glyph_I_7
+        }
+      },
+      outline9: {
+        label: "5×7 Outline / Stern",
+        width: 5,
+        height: 7,
+        emptyChars: new Set(["*"]),
+        glyphs: {
+          S: glyph_S_9,
+          U: glyph_U_9,
+          D: glyph_D_9,
+          O: glyph_O_9,
+          K: glyph_K_9,
+          J: glyph_J_9,
+          I: glyph_I_9
+        }
+      },
+      dsl: {
+        label: "DSL / Stern-Material",
+        width: 7,
+        height: 7,
+        emptyChars: new Set(["*"]),
+        glyphs: {
+          S: glyph_S_dsl,
+          U: glyph_U_dsl,
+          D: glyph_D_dsl,
+          O: glyph_O_dsl,
+          K: glyph_K_dsl,
+          J: glyph_J_dsl,
+          I: glyph_I_dsl
+        }
+      }
+    };
+
+    const gridSize = 9;
+    const cells = [];
+
+    const body = document.body;
+    const gridElement = document.getElementById("grid");
+    const wordInput = document.getElementById("wordInput");
+    const glyphSetSelect = document.getElementById("glyphSetSelect");
+    const motionSelect = document.getElementById("motionSelect");
+    const themeSelect = document.getElementById("themeSelect");
+    const speedRange = document.getElementById("speedRange");
+    const speedValue = document.getElementById("speedValue");
+    const letterGapRange = document.getElementById("letterGapRange");
+    const letterGapValue = document.getElementById("letterGapValue");
+    const cellSizeRange = document.getElementById("cellSizeRange");
+    const cellSizeValue = document.getElementById("cellSizeValue");
+    const gridGapRange = document.getElementById("gridGapRange");
+    const gridGapValue = document.getElementById("gridGapValue");
+    const radiusRange = document.getElementById("radiusRange");
+    const radiusValue = document.getElementById("radiusValue");
+    const offsetYRange = document.getElementById("offsetYRange");
+    const offsetYValue = document.getElementById("offsetYValue");
+    const showLettersCheck = document.getElementById("showLettersCheck");
+    const scanCheck = document.getElementById("scanCheck");
+    const pulseCheck = document.getElementById("pulseCheck");
+    const breatheCheck = document.getElementById("breatheCheck");
+    const pauseButton = document.getElementById("pauseButton");
+    const resetButton = document.getElementById("resetButton");
+    const titleOutput = document.getElementById("titleOutput");
+    const captionOutput = document.getElementById("captionOutput");
+    const debugOutput = document.getElementById("debugOutput");
+
+    let frame = 0;
+    let timer = null;
+    let paused = false;
+    let bounceDirection = -1;
+    let bounceOffset = gridSize;
+
+    for (let i = 0; i < gridSize * gridSize; i++) {
+      const cell = document.createElement("div");
+      cell.className = "cell empty";
+      cell.textContent = "×";
+      gridElement.appendChild(cell);
+      cells.push(cell);
+    }
+
+    function getCleanWord() {
+      const selectedSet = GLYPH_SETS[glyphSetSelect.value];
+      const allowed = Object.keys(selectedSet.glyphs).join("");
+      const regexp = new RegExp(`[^${allowed}]`, "g");
+      const word = wordInput.value.toUpperCase().replace(regexp, "");
+      return word || "SUDOKJI";
+    }
+
+    function makeFallbackGlyph(char, selectedSet) {
+      return Array.from({ length: selectedSet.height }, (_, y) => {
+        if (y === 0 || y === selectedSet.height - 1) {
+          return char.repeat(selectedSet.width);
+        }
+
+        return char + ".".repeat(Math.max(0, selectedSet.width - 2)) + char;
+      });
+    }
+
+    function getGlyph(char, selectedSet) {
+      return selectedSet.glyphs[char] || makeFallbackGlyph(char, selectedSet);
+    }
+
+    function makeTextMatrix(text, selectedSet, letterGap) {
+      const width = text.length * selectedSet.width + Math.max(0, text.length - 1) * letterGap;
+      const gapChar = selectedSet.emptyChars.has("*") ? "*" : ".";
+      const matrix = Array.from(
+        { length: selectedSet.height },
+        () => Array(width).fill(gapChar)
+      );
+
+      let offsetX = 0;
+
+      for (const char of text) {
+        const glyph = getGlyph(char, selectedSet);
+
+        for (let y = 0; y < selectedSet.height; y++) {
+          for (let x = 0; x < selectedSet.width; x++) {
+            matrix[y][offsetX + x] = glyph[y][x];
+          }
+        }
+
+        offsetX += selectedSet.width + letterGap;
+      }
+
+      return matrix;
+    }
+
+    function getHorizontalOffset(textWidth) {
+      const motion = motionSelect.value;
+
+      if (motion === "static") {
+        return Math.floor((gridSize - textWidth) / 2);
+      }
+
+      if (motion === "single") {
+        return 1;
+      }
+
+      if (motion === "bounce") {
+        const minOffset = Math.min(0, gridSize - textWidth);
+        const maxOffset = gridSize;
+
+        bounceOffset += bounceDirection;
+
+        if (bounceOffset <= minOffset) {
+          bounceOffset = minOffset;
+          bounceDirection = 1;
+        }
+
+        if (bounceOffset >= maxOffset) {
+          bounceOffset = maxOffset;
+          bounceDirection = -1;
+        }
+
+        return bounceOffset;
+      }
+
+      return gridSize - (frame % (textWidth + gridSize + 1));
+    }
+
+    function getVisibleText(word, selectedSet) {
+      if (motionSelect.value !== "single") {
+        return word;
+      }
+
+      const index = Math.floor(frame / 5) % word.length;
+      return word[index];
+    }
+
+    function applyClasses() {
+      body.classList.toggle("scan-on", scanCheck.checked);
+      body.classList.toggle("pulse-on", pulseCheck.checked);
+      body.classList.toggle("breathe-on", breatheCheck.checked);
+
+      body.classList.remove("flat", "matrix", "amber", "ice");
+
+      if (themeSelect.value !== "warm") {
+        body.classList.add(themeSelect.value);
+      }
+    }
+
+    function applyCssVariables() {
+      document.documentElement.style.setProperty("--cell-size", `${cellSizeRange.value}px`);
+      document.documentElement.style.setProperty("--grid-gap", `${gridGapRange.value}px`);
+      document.documentElement.style.setProperty("--radius", `${radiusRange.value}px`);
+
+      speedValue.textContent = `${speedRange.value} ms`;
+      letterGapValue.textContent = letterGapRange.value;
+      cellSizeValue.textContent = `${cellSizeRange.value} px`;
+      gridGapValue.textContent = `${gridGapRange.value} px`;
+      radiusValue.textContent = `${radiusRange.value} px`;
+      offsetYValue.textContent = offsetYRange.value;
+    }
+
+    function draw() {
+      const selectedSet = GLYPH_SETS[glyphSetSelect.value];
+      const word = getCleanWord();
+      const visibleText = getVisibleText(word, selectedSet);
+      const letterGap = Number(letterGapRange.value);
+      const offsetY = Number(offsetYRange.value);
+      const textMatrix = makeTextMatrix(visibleText, selectedSet, letterGap);
+      const textWidth = textMatrix[0].length;
+      const horizontalOffset = getHorizontalOffset(textWidth);
+
+      const clearGrid = Array.from(
+        { length: gridSize },
+        () => Array(gridSize).fill(null)
+      );
+
+      for (let y = 0; y < selectedSet.height; y++) {
+        for (let x = 0; x < textWidth; x++) {
+          const targetY = offsetY + y;
+          const targetX = horizontalOffset + x;
+
+          if (
+            targetY >= 0 &&
+            targetY < gridSize &&
+            targetX >= 0 &&
+            targetX < gridSize
+          ) {
+            clearGrid[targetY][targetX] = textMatrix[y][x];
+          }
+        }
+      }
+
+      for (let y = 0; y < gridSize; y++) {
+        for (let x = 0; x < gridSize; x++) {
+          const value = clearGrid[y][x];
+          const cell = cells[y * gridSize + x];
+
+          if (value === null) {
+            cell.className = "cell empty";
+            cell.textContent = "×";
+          } else if (selectedSet.emptyChars.has(value)) {
+            cell.className = "cell void";
+            cell.textContent = "";
+          } else {
+            cell.className = "cell material";
+            cell.textContent = showLettersCheck.checked ? value : "";
+          }
+        }
+      }
+
+      titleOutput.textContent = `${selectedSet.label} · ${motionSelect.value}`;
+      captionOutput.textContent = `${word} · ${selectedSet.width}×${selectedSet.height} glyphs · 9×9 window`;
+      debugOutput.textContent = [
+        `word: ${word}`,
+        `visible: ${visibleText}`,
+        `set: ${selectedSet.label}`,
+        `glyph-size: ${selectedSet.width}×${selectedSet.height}`,
+        `letter-gap: ${letterGap}`,
+        `offset-y: ${offsetY}`,
+        "",
+        textMatrix.map(row => row.join("")).join("\n")
+      ].join("\n");
+
+      frame++;
+    }
+
+    function restartTimer() {
+      if (timer !== null) {
+        clearInterval(timer);
+      }
+
+      timer = setInterval(() => {
+        if (!paused) {
+          draw();
+        }
+      }, Number(speedRange.value));
+    }
+
+    function updateAll() {
+      applyClasses();
+      applyCssVariables();
+      draw();
+      restartTimer();
+    }
+
+    function resetAnimation() {
+      frame = 0;
+      bounceDirection = -1;
+      bounceOffset = gridSize;
+      draw();
+    }
+
+    const inputs = [
+      wordInput,
+      glyphSetSelect,
+      motionSelect,
+      themeSelect,
+      speedRange,
+      letterGapRange,
+      cellSizeRange,
+      gridGapRange,
+      radiusRange,
+      offsetYRange,
+      showLettersCheck,
+      scanCheck,
+      pulseCheck,
+      breatheCheck
+    ];
+
+    for (const input of inputs) {
+      input.addEventListener("input", updateAll);
+      input.addEventListener("change", updateAll);
+    }
+
+    pauseButton.addEventListener("click", () => {
+      paused = !paused;
+      pauseButton.textContent = paused ? "Play" : "Pause";
+    });
+
+    resetButton.addEventListener("click", resetAnimation);
+
+    updateAll();
+  </script>
+</body>
+</html> 

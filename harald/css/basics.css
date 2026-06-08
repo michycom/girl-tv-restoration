@@ -1,0 +1,94 @@
+
+
+/* hiding the main scrollbars */
+html{
+    overflow: hidden;
+}
+
+body{
+    background-color: #eee;
+}
+
+#frame{
+width:650px;
+height: 750px;
+border: 0px;
+}
+#hello
+
+{
+    position: absolute;
+    margin-top:700px;
+    margin-left:400px;
+font-size:12px;font-family:arial;color:#dfdfdf;
+ opacity: 0;
+
+}
+
+
+
+
+#harald {
+    position: absolute;
+    margin-top:-100px;
+    left: 0px;
+    width: 2573px;
+    height: 963px;
+}
+
+#boy img{
+    width: 100%;
+}
+
+#blog {
+	background-color: #fefefe;
+	padding:20px;position: absolute;
+	top: 15px; right: 105px;
+	width: 670px; height:800px;
+	-moz-border-radius: 15px;
+	-webkit-border-radius: 15px;
+	border-radius: 15px;
+	behavior: url(http://girl.tv/border-radius.htc);
+ opacity: 0;
+}
+
+
+/* onclick auslöser zum testen */
+#action{
+    position: absolute;
+    top: 39px; left: 1213px;
+/*    background-color: #fff; */
+    z-index: 99;
+}
+
+#pxlboy{
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    top: 280px;
+    left: 680px;
+
+}
+
+#pxl2boy{
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    top: 180px;
+    left: 780px;
+
+}
+#pxl3boy{
+    position: absolute;
+    height: 100px;
+    top: 260px;
+    left: 670px;
+}
+
+#girltv{
+    position: absolute;
+    width: 1439px;
+    height: 877px;
+    top: -53px;
+    left: 0px;
+}

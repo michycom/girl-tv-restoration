@@ -1,0 +1,50 @@
+=============================
+ Horde Development TODO List
+=============================
+
+:Last update:   $Date: 2004/12/18 19:57:32 $
+:Revision:      $Revision: 1.27 $
+:Contact:       horde@lists.horde.org
+
+In no particular order:
+
+- (Optionally) Bundle PEAR packages with the tarballs. Given a package list,
+  make-release.php should get the packages and unpack them into lib/ where we
+  install our own packages anyway. Together with pear.horde.org this should
+  lead to "lite" tarballs only containing application code and "full" tarballs
+  that don't need any external depencencies anymore.
+
+- "browse" driver for VFS that uses Horde's browse API.
+
+- Cache the Registry object so that file overhead of reading in entries from a
+  directory (registry.d) is mitigated.
+
+- Implement admin/deleteUser methods in applications' APIs to delete user
+  specific data.
+
+- Add a /services/groups/ section. Include public group homepages, including
+  any information marked public for the group (let the members list be marked
+  public/group only/admin only), add group administrators (just a flag for
+  users), add the ability to show all calendars/other shares that a group has
+  permissions to, allow creating a new calendar/poll/etc. for a group.
+
+- Add the ability to break out DataTree group_uids into their own tables (one
+  table per group).
+
+- Use the freedesktop shared-mime-info_ XML file to build our MIME_Magic magic
+  data files.
+
+- Add support for the SRM application server (http://www.vl-srm.net/).
+
+- Add UI support for more configuration files.
+
+- Since Content-Disposition (RFC 2183) is not a MUST implement, allow
+  individual MIME Viewers to allow explicit override (i.e. to auto inline 
+  display a part instead of rendering as an attachment - useful for S/MIME
+  encrypted parts, for example).
+
+- Show shared preferences on all prefs summary screens to make it
+  easier for user to find global preferences.
+
+
+.. _shared-mime-info: http://www.freedesktop.org/Software/shared-mime-info

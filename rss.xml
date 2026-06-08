@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+
+  <channel>
+<atom:link href="http://girl.tv/feed.rss" rel="self" type="application/rss+xml" />
+
+    <title>hello..</title>
+    <link>http://girl.tv</link>
+    <description>YOUR GIRL.TV TODAY </description>
+    <language>en-uk</language>
+    <copyright>all rights reserved</copyright>
+<pubDate>Wed, 21 Nov 2007 08:00:00 EST</pubDate>
+    <image>
+      <url>http://girl.tv/favicon.png</url>
+      <title>hello..</title>
+      <link>http://girl.tv</link>
+    </image>
+  
+  <item> 
+    <title>the visit</title>
+      <description>the journey to freemee
+  <![CDATA[<br>
+<br>
+me was lonley and he took his junkjet to the girl.tv country site to meet freemee there.<br>
+already from the junkjet window me saw the landscape of freemee. <br>
+arrived at girl.tv country me uploaded himself to the plattform <br>
+and watched the other site: some collective concepts in variation <br><br> the wolves were free...
+<br> 
+      ]]>
+</description>
+<pubDate>Tue, 27 Nov 2007 14:43:00 EST</pubDate>
+     <link>http://girl.tv/freemee</link>
+      <author>press@girl.tv (paris)</author>
+      <guid>http://girl.tv/freemee/index.php</guid>
+    </item>  
+ 
+  <item> 
+    <title>the great hunt</title>
+      <description>on the hunt - no shrunken prejudice
+  <![CDATA[<br>
+  out in dataspace two guy´s out for the great hunt.<br>
+  girl.tv has a jealously guarded secret. freemee found out, by dressing up like a wolfe. 
+  <br>now both are out for the great hunt and new cyber adventures. They did leave their communities for hijacking junkjets...
+      ]]>
+</description>
+<pubDate>Mon, 26 Nov 2007 10:43:00 EST</pubDate>
+     <link>http://girl.tv/junkjet</link>
+      <author>press@girl.tv (paris)</author>
+      <guid>http://girl.tv/junkjet/index.php</guid>
+    </item>
+    
+  <item> 
+    <title>the Betrayal</title>
+      <description>deconstruction of memory -
+  <![CDATA[
+Its like the Flood, emotions take controle and the destruction generates new images, of the gone by digital past. 
+      ]]>
+</description>
+<pubDate>Sun, 25 Nov 2007 08:00:00 EST</pubDate>
+     <link>http://girl.tv</link>
+      <author>press@girl.tv (paris)</author>
+      <guid>http://girl.tv/index.php</guid>
+    </item>
+
+    <item>
+      <title>press</title>
+      <description>net.art was only a substitute for girl.tv!</description>
+      <link>http://girl.tv/presse</link>
+      <author>we@girl.tv (girl.tv)</author>
+      <guid>http://girl.tv/presse/index.php</guid>
+    </item>
+
+  </channel>
+ 
+</rss>
+
+

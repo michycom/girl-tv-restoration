@@ -1,0 +1,131 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html lang="en">
+  <head>
+$META
+    $HEADER
+    <style type="text/css">
+	body {font-family: arial, sans-serif; color: black; background-color: white;}
+	td.title {color: gray; font-weight:bold; height:30px}
+	table.dashed { border: 1px dashed }
+
+	:link { color : #808; }
+	:visited { color: #800; }
+	
+	a { text-decoration: none; }
+
+	a.top {color: #808; font-weight: bold; }
+      
+	a.dir:visited {color: #A0c0f0; font-weight: bold; }
+	a.dir:link {color: #A0c0; font-weight: bold; }
+
+	a.info {color: black; font-size: 10px;}
+	a.gnump3d {color: #939393; ; font-weight: bold;}
+
+	legend {font-weight: bold; }
+      </style>
+    <title>GNUMP3d [ Bug Reporting Plugin ]</title>
+  </head>
+ <body>
+
+  <table width="100%" border="0" cellpadding="0">
+    <tr>
+      <td valign="top" width="35px">
+        <a class="top" href="http://www.gnump3d.org"><img width="20" height="400" src="/logo.png" alt="logo" border="0"></a>
+      </td>
+      <td valign="top">
+        <form action="/search" method="get">
+          <table class="dashed" width="100%" border="0" cellpadding="2">
+            <tr>
+              <td align="left" width="50%" valign="top">
+                <a class="gnump3d" href="http://www.gnump3d.org">GNUMP3d</a> server on $HOSTNAME<br>
+                <a class="info" href="http://www.gnump3d.org/FAQ.html" title="View this software's Frequently Asked Questions - with answers!">FAQ</a>
+                <a class="info" href="/bug/">Report Bug</a>
+                <br>
+                <strong>Music Search :</strong>
+                <input type="text" name="q">
+              </td>
+              <td valign="top">
+                <a class="top" href="/" title="Go to the root of the music archive.">Home</a>
+                <br>
+		<a class="top" href="/size" title="See the size of your archive">Archive Size</a>
+		<br>
+		<a class="top" href="/tagbrowse" title="Browse archive by genre">Browse by Genre</a>
+		<br>
+                <a class="top" href="/playlist/" title="Selectively stream different directories.">Custom Playlists</a>
+                <br>
+		<a class="top" href="/now/" title="See which tracks are currently playing">Currently Playing</a>
+              </td>
+              <td valign="top">
+                <a class="top" href="/stats/" title="See the most popular songs on this server.">Most Popular</a>
+                <br>
+                <a class="top" href="/recent/" title="See the most recent tracks played">Most Recent</a>
+                <br>
+                <a class="top" href="/search/" title="Search the archive for music">Search</a>
+                <br>
+		<a class="top" href="/random/" title="Listen To Random Music">Random Music</a>
+		<br>
+                <a class="top" href="/prefs/" title="Change your prefernces">Preferences</a>
+                <br>
+              </td>
+            </tr>
+          </table>
+        </form>
+        <p class="dashed">
+	    $BANNER
+	  </p>
+
+    <fieldset>
+      <legend align="left">
+	GNUMP3d Bug Reporting Plugin
+      </legend>
+
+      <table border="0" cellpadding="2" cellspacing="0" width="100%">	
+	<tr>
+	  <td>
+
+<p>&nbsp;This form allows you to easily report a bug with the <a href="http://www.gnump3d.org/">GNUMP3d</a> server.</P>
+<p>&nbsp;To try to make this a simple a process as possible some information has already been gleaned from your system, and entered here.</p>
+<P>&nbsp;Please try to describe your problem as accurately as you can, this should make solving your problem easier for me.</p>
+<table width='100%'>
+<form action="$BUG_REPORT_URL" method='post'>
+<table>
+<tr><td><b>Your Name</b></td><td><input type='text' size='50' name='name' /></td></tr>
+<tr><td><b>Email Address</b></td><td><input type='text' size='50' name='email' /></td></tr>
+<tr><td colspan='2'>(You don't need to fill in your address, but if you do I'll be able to mail you for further information, or to let you know when the problem has been resolved).</td></tr>
+<!--  Bug entry space -->
+<tr><td valign='top'><b>Please Describe Your Bug Here</b></td><td><textarea name='problem' cols='50' rows='25'>
+</textarea></td></tr>
+<tr><td colspan='2'><p>&nbsp;The following values have been automatically determined and entered for your convienence.</P>
+<p>&nbsp;If you believe any of the values conpromise your privacy, or reveal any sensitive information, feel free to remove them.  (There are no other hidden variables being used, only the information contained in these public fields will be sent).</p>
+<p>&nbsp;Please note that leaving them in could be genuinely useful to solving your problem though.</p>
+</td></tr>
+<tr><td><b>GNUMP3d release</b></td><td><input type='text' size='50' name='release' value='$RELEASE'/></td></tr>
+<tr><td><b>Current User-Agent</b></td><td><input type='text' size='50' name='user-agent' value='$USER_AGENT'/></td></tr>
+<tr><td><b>Current IP Address</b></td><td><input type='text' size='50' name='ip-address' value='$connected_address'/></td></tr>
+<tr><td><b>Requested URI</b></td><td><input type='text' size='50' name='uri' value='$REQUEST'/></td></tr>
+<tr><td><b>Server-Name</b></td><td><input type='text' size='50' name='server-name' value='http://$host/'/></td></tr>
+<tr><td><b>Perl Version</b></td><td><input type='text' size='50' name='perl-version' value='$]'/></td></tr>
+<tr><td><b>OS Name</b></td><td><input type='text' size='50' name='os-name' value='$OSNAME'/></td></tr>
+<!--  Configuration Options -->
+<tr><td valign='top'><b>Your Server Configuration</b></td><td><textarea name='gnump3d.conf' cols='50' rows='25'>
+$BUG_CONFIG
+</textarea></td></tr>
+
+<tr><td>&nbsp;</td><td><input type='submit' value='Report Bug' /></td></tr>
+</table>	    
+<p>This code is distributed under the terms of the <a href="/COPYING">GNU General Public License</a>, so any bugfixes you suggest may well be included in future releases.</p>
+	  </td>
+	</tr>
+      </table>
+    </fieldset>
+    
+  </td>
+    </tr>
+  </table>
+ </body>
+</html>
+<!--
+Local Variables: ***
+mode: html ***
+End: ***
+-->

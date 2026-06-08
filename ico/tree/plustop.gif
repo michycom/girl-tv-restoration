@@ -1,0 +1,5 @@
+modify=20191104220327;perm=adfrw;size=18;type=file;unique=808U6002AE;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; Entries
+modify=20191104220327;perm=flcdmpe;type=pdir;unique=808U6002A6;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; ..
+modify=20191104220327;perm=adfrw;size=56;type=file;unique=808U6002AF;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; Root
+modify=20191104220327;perm=adfrw;size=39;type=file;unique=808U6002B0;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; Repository
+modify=20191104220327;perm=flcdmpe;type=cdir;unique=808U6002AD;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; .

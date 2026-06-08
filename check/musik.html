@@ -1,0 +1,117 @@
+<script language="JavaScript">
+<!--
+/* a javascript function that takes a QT movie and calls its "Play" method */
+	function PlayIt(anObj)
+	{
+		anObj.Play();
+	}
+/* a javascript function that takes a QT movie and calls its "Stop" method */
+	function StopIt(anObj)
+	{
+		anObj.Stop();
+	}
+/* a javascript function that takes a QT movie and calls its "Rewind" method */
+	function StartIt(anObj)
+	{
+		anObj.Rewind();
+	}
+/* a javascript function that takes a QT movie and calls its "Reverse" method */
+        function ReverseIt(anObj)
+	{
+		anObj.Step(-1);
+	}
+/* a javascript function that takes a QT movie and calls its "Reverse" method */
+        function ForwardIt(anObj)
+	{
+		anObj.Step(1);
+	}
+//-->
+
+function pla()
+{
+document.movie1.Play();
+document.movie2.Play();
+}
+
+function la()
+{
+document.movie1.Stop();
+document.movie2.Stop();
+}
+
+</script>
+
+<input type="text" onclick="javascript:pla();"  onkeyup="javascript:la();">gogo</a>
+<input type="text" onkeyup="javascript:la();">gogo</a>
+
+
+
+This is the QuickTime embedding sample:
+
+<object classid="clsid:02BF25D5-8C17-4B23-BC80-D3488ABDDC6B"
+ codebase="http://www.apple.com/qtactivex/qtplugin.cab" id="movie1" height="240" width="320"> 
+<param name="src" value="http://girl.tv/cocaine-socialism.mp3">
+<param name="AUTOPLAY" value="false">
+<param name="CONTROLLER" value="false">
+<embed src="http://girl.tv/cocaine-socialism.mp3" name="movie1" enablejavascript="true"
+ controller="false" autoplay="false" height="240" width="320">
+</object>
+This is a sample form containing all play buttons:
+
+<form name="theform">
+<input name="reverse" value="Rwd" onclick="javascript:ReverseIt(document.movie1);" type="button">
+<input name="play" value="Play" onclick="document.movie1.Play();" type="button">
+<input name="stop" value="Stop" onclick="document.movie1.Stop();" type="button">
+<input name="forward" value="Fwd" onclick="javascript:ForwardIt(document.movie1);" type="button">
+<input name="begin" value="Start Over" onclick="javascript:StartIt(document.movie1);" type="button">
+</form>
+
+<script language="JavaScript">
+<!--
+/* a javascript function that takes a QT movie and calls its "Play" method */
+	function PlayIt(anOb)
+	{
+		anOb.Play();
+	}
+/* a javascript function that takes a QT movie and calls its "Stop" method */
+	function StopIt(anOb)
+	{
+		anOb.Stop();
+	}
+/* a javascript function that takes a QT movie and calls its "Rewind" method */
+	function StartIt(anOb)
+	{
+		anOb.Rewind();
+	}
+/* a javascript function that takes a QT movie and calls its "Reverse" method */
+        function ReverseIt(anOb)
+	{
+		anOb.Step(-1);
+	}
+/* a javascript function that takes a QT movie and calls its "Reverse" method */
+        function ForwardIt(anOb)
+	{
+		anOb.Step(1);
+	}
+//-->
+
+</script>
+This is the QuickTime embedding sample:
+
+<object classid="clsid:02BF25D5-8C17-4B23-BC80-D3488ABDDC6B"
+ codebase="http://www.apple.com/qtactivex/qtplugin.cab" id="movie2" height="240" width="320"> 
+<param name="src" value="http://girl.tv/me.mid">
+<param name="AUTOPLAY" value="false">
+<param name="CONTROLLER" value="false">
+<embed src="http://girl.tv/me.mid" name="movie2" enablejavascript="true"
+ controller="false" autoplay="false" height="240" width="320">
+</object>
+This is a sample form containing all play buttons:
+
+<form name="theform">
+<input name="reverse" value="Rwd" onclick="javascript:ReverseIt(document.movie2);" type="button">
+<input name="play" value="Play" onkeypress="document.movie2.Play();" type="button">
+<input name="stop" value="Stop" onclick="document.movie2.Stop();" type="button">
+<input name="forward" value="Fwd" onclick="javascript:ForwardIt(document.movie2);" type="button">
+<input name="begin" value="Start Over" onclick="javascript:StartIt(document.movie2);" type="button">
+</form>

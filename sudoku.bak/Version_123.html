@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sudoku Pro — Unique generator + solver + play (desktop + mobile)</title>
+<style>
+  :root{ --cell: 46px; --gap: 2px; --thick: 3px; --thin: 1px; }
+  @media (max-width: 480px){ :root{ --cell: 40px; } }
+  body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background: linear-gradient(180deg,#f7f8fc 0%, #eef2f9 60%, #e6ecf7 100%); color:#111; }
+  .wrap{ max-width: 920px; margin: 22px auto; padding: 0 16px; }
+  h1{ font-size: 20px; margin:0 0 12px; }
+  .toolbar{ display:flex; flex-wrap:wrap; gap:10px; margin: 12px 0; align-items:center; }
+  select, button{ padding:10px 14px; border:1px solid #cdd3de; border-radius:12px; background:#fff; cursor:pointer; font-size:14px; box-shadow: 0 1px 0 rgba(0,0,0,.03), 0 8px 24px rgba(39,66,123,.06); transition: transform .05s ease, box-shadow .2s ease, background .2s ease; }
+  button:hover{ background:#f2f4f8; box-shadow: 0 12px 28px rgba(39,66,123,.10); }
+  .badge{ padding:3px 8px; background:#eef1f6; border-radius:999px; font-size:12px; }
+  .grid-wrap{ display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start; }
+  .board{ display:grid; grid-template-columns: repeat(9, var(--cell)); gap: var(--gap); width: fit-content; background:#c8ccd5; padding: var(--gap); border-radius:14px; touch-action: manipulation; box-shadow: 0 16px 40px rgba(27,43,89,.12); }
+  .cell{ width:var(--cell); height:var(--cell); background:#fff; display:flex; align-items:center; justify-content:center; border: var(--thin) solid #d6dbe5; position:relative; font-weight:700; font-size:18px; user-select:none; box-sizing:border-box; z-index:0; }
+  /* subgrid borders */
+  .cell[data-r="0"], .cell[data-r="3"], .cell[data-r="6"]{ border-top-width:var(--thick); }
+  .cell[data-c="0"], .cell[data-c="3"], .cell[data-c="6"]{ border-left-width:var(--thick); }
+  .cell[data-r="8"]{ border-bottom-width:var(--thick); }
+  .cell[data-c="8"]{ border-right-width:var(--thick); }
+  .giv{ color:#222; }
+  .val{ color:#0a7a50; }
+  .guess{ color:#0858c0; }
+  .hl{ outline:2px solid #f7c52b; outline-offset:-2px; background:#fffbe6; }
+  .sel{ outline: none; }
+  .sel::after{ content:""; position:absolute; inset:0; border:2px solid #3b82f6; pointer-events:none; z-index:2; }
+  .status{ margin:10px 0 16px; min-height:1.2em; color:#333; }
+  .notes{ position:absolute; inset:3px; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr); font-size:12px; line-height:1; color:#667; }
+  .notes span{ display:flex; align-items:center; justify-content:center; opacity:.9 }
+  .ghost{ opacity:.55 }
+  /* keypad */
+  .pad{ display:grid; grid-template-columns: repeat(5, 56px); gap:8px; align-content:start; }
+  .pad button{ height:56px; font-size:18px; border-radius:12px; }
+  .pad .wide{ grid-column: span 2; }
+  @media (max-width: 480px){ .pad{ grid-template-columns: repeat(5, 52px); } .pad button{ height:52px; } }
+  /* HINT visuals (V2) */
+  .hint-unit{ background:#eafaf2 !important; }
+  .hint-peer{ background:#fff6e6 !important; }
+  .hint-target{ position:relative; }
+  .hint-target::after{ content:""; position:absolute; inset:-2px; border:3px solid #ec4899; border-radius:4px; pointer-events:none; z-index:3; }
+  /* HINT visuals (V3) */
+  .hint-unit{ background:#eafaf2 !important; }      /* affected unit (row/col/box) */
+  .hint-peer{ background:#fff6e6 !important; }      /* peers around a target (for singles) */
+  .hint-actor{ outline:2px solid #60a5fa; outline-offset:-2px; } /* key pattern cells (pairs, wings) */
+  .hint-elim{ background:#fde8e8 !important; }      /* cells where candidates are eliminated */
+  .hint-target{ position:relative; }
+  .hint-target::after{ content:""; position:absolute; inset:-2px; border:3px solid #ec4899; border-radius:4px; pointer-events:none; z-index:3; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sudoku Pro — Unique Generator + Solver + Play</h1>
+  <div class="toolbar">
+    <label>Level
+      <select id="selDiff">
+        <option value="easy">chill (62)</option>
+        <option value="medium" selected>normal (53)</option>
+        <option value="hard">hard (44)</option>
+        <option value="very-hard">strong (35)</option>
+        <option value="insane">insane (26)</option>
+        <option value="inhuman">inhuman (17)</option>
+      </select>
+    </label>
+    <label>Symmetry
+      <select id="selSym">
+        <option value="rotate" selected>rotate</option>
+        <option value="mirror">mirror</option>
+        <option value="flip-h">flip-h</option>
+        <option value="flip-v">flip-v</option>
+        <option value="none">none</option>
+      </select>
+    </label>
+    <label>Symbols
+      <select id="selSymbols">
+        <option value="numbers" selected>123</option>
+        <option value="fruits">🍎🍐🍊</option>
+        <option value="veggies">🥕🌽🍅</option>
+        <option value="animals">🐶🐱🐭</option>
+        <option value="weather">☀️⛅️☁️</option>
+      </select>
+    </label>
+    <button id="btnGen">Generate (unique)</button>
+    <button id="btnReset" class="ghost">Reset to puzzle</button>
+    <span class="badge" id="prog">0/81</span>
+  </div>
+
+  <div class="toolbar">
+    <button id="btnLogic">Apply Logic (singles wave)</button>
+    <button id="btnGuess">Guess…</button>
+    <button id="btnUndo" class="ghost">Undo guess</button>
+    <button id="btnSolve">Solve instantly</button>
+    <button id="btnCheck">Check unique?</button>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <div class="grid-wrap">
+    <div class="board" id="board" aria-label="Sudoku board" role="grid"></div>
+
+    <div class="pad" aria-label="Keypad" role="group">
+      <button class="key" data-key="1">1</button>
+      <button class="key" data-key="2">2</button>
+      <button class="key" data-key="3">3</button>
+      <button class="key" data-key="4">4</button>
+      <button class="key" data-key="5">5</button>
+      <button class="key" data-key="6">6</button>
+      <button class="key" data-key="7">7</button>
+      <button class="key" data-key="8">8</button>
+      <button class="key" data-key="9">9</button>
+      <button class="key wide" data-key="clear">Clear</button>
+      <button class="key wide" id="keyHint">Hint</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ======================= Sudoku core (production‑style) =======================
+const DIGITS = "123456789";
+const ROWS = "ABCDEFGHI";
+const COLS = DIGITS;
+const SQUARES = cross(ROWS, COLS); // ["A1",...,"I9"]
+const SQUARE_INDEX = Object.fromEntries(SQUARES.map((s,i)=>[s,i]));
+const NR_SQUARES = 81;
+const BLANK = ".";
+
+// ===== Symbol sets (UI display only; solver stays numeric 1..9) =====
+const SYMBOL_SETS = {
+  numbers: ["1","2","3","4","5","6","7","8","9"],
+  fruits:  ["🍎","🍐","🍊","🍋","🍉","🍇","🍓","🍒","🍍"],
+  veggies: ["🥕","🌽","🍆","🥦","🧅","🥔","🥬","🫑","🍅"],
+  animals: ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨"],
+  weather: ["☀️","⛅️","☁️","🌧","⛈","🌩","❄️","🌫","🌈"],
+};
+let currentSymbols = SYMBOL_SETS.numbers; // default
+function symFromDigitChar(ch){ // ch is '1'..'9'
+  const n = ch.charCodeAt(0) - 49; // '1' -> 0
+  return currentSymbols[n] || ch;
+}
+
+function cross(a, b){ const out=[]; for(let i=0;i<a.length;i++) for(let j=0;j<b.length;j++) out.push(a[i]+b[j]); return out; }
+function idxToRC(i){ return [Math.floor(i/9), i%9]; }
+function rcToIdx(r,c){ return r*9+c; }
+function shuffle(arr, rnd=Math.random){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function clone(obj){ const out={}; for(const k in obj) out[k]=obj[k]; return out; }
+function validateBoard(board){ if(typeof board!=="string"||board.length!==NR_SQUARES) return false; for(let i=0;i<NR_SQUARES;i++){ const ch=board[i]; if(ch!==BLANK && !DIGITS.includes(ch)) return false; } return true; }
+
+const MAPS = (()=>{ const units=[]; for(let r=0;r<ROWS.length;r++) units.push(cross(ROWS[r], COLS)); for(let c=0;c<COLS.length;c++) units.push(cross(ROWS, COLS[c])); const rs=["ABC","DEF","GHI"], cs=["123","456","789"]; for(const R of rs) for(const C of cs) units.push(cross(R,C)); const squareUnits={}, squarePeers={}; for(const s of SQUARES){ squareUnits[s]=units.filter(u=>u.includes(s)); const peers=[]; for(const u of squareUnits[s]) for(const t of u) if(t!==s && !peers.includes(t)) peers.push(t); squarePeers[s]=peers; } return { units, squareUnits, squarePeers }; })();
+
+function blankCandidates(){ const cand={}; for(const s of SQUARES) cand[s]=DIGITS; return cand; }
+function boardToMap(board){ const m={}; for(let i=0;i<NR_SQUARES;i++) m[SQUARES[i]]=board[i]; return m; }
+
+function assign(candidates, s, val){ const others = candidates[s].replace(val, ""); for(let k=0;k<others.length;k++){ if(!eliminate(candidates, s, others[k])) return null; } return candidates; }
+function eliminate(candidates, s, val){ if(!candidates[s].includes(val)) return candidates; candidates[s]=candidates[s].replace(val, ""); const n=candidates[s].length; if(n===0) return null; if(n===1){ const v2=candidates[s]; for(const p of MAPS.squarePeers[s]){ if(!eliminate(candidates, p, v2)) return null; } } for(const unit of MAPS.squareUnits[s]){ const places=[]; for(const t of unit) if(candidates[t].includes(val)) places.push(t); if(places.length===0) return null; if(places.length===1){ if(!assign(candidates, places[0], val)) return null; } } return candidates; }
+
+function candidatesFromBoard(board){ if(!validateBoard(board)) throw new Error("Invalid board"); const cand=blankCandidates(); const init=boardToMap(board); for(const s of SQUARES){ const v=init[s]; if(v!==BLANK){ if(!assign(cand, s, v)) return null; } } return cand; }
+
+function search(candidates, rnd=Math.random){ if(!candidates) return null; let solved=true, target=null, minLen=10; for(const s of SQUARES){ const len=candidates[s].length; if(len!==1) solved=false; if(len===0) return null; if(len>1 && len<minLen){ minLen=len; target=s; } } if(solved) return candidates; const opts=shuffle(candidates[target].split(""), rnd); for(const v of opts){ const cp=clone(candidates); const next=assign(cp, target, v); const res=search(next, rnd); if(res) return res; } return null; }
+
+function solveBoard(board, rnd=Math.random){ const cand=candidatesFromBoard(board); const solved=search(cand, rnd); if(!solved) return null; let out=""; for(const s of SQUARES) out+=solved[s]; return out; }
+
+function countSolutions(board, cap=2, rnd=Math.random){ const start=candidatesFromBoard(board); if(!start) return 0; let count=0; (function dfs(c){ if(!c||count>=cap) return; let solved=true, target=null, min=10; for(const s of SQUARES){ const len=c[s].length; if(len!==1) solved=false; if(len===0) return; if(len>1 && len<min){ min=len; target=s; } } if(solved){ count++; return; } const opts=c[target]; for(let i=0;i<opts.length;i++){ const v=opts[i]; const cp=clone(c); const next=assign(cp, target, v); dfs(next); if(count>=cap) return; } })(start); return count; }
+
+const DIFFICULTY = { easy:62, medium:53, hard:44, "very-hard":35, insane:26, inhuman:17 };
+
+function randomFullSolution(rnd=Math.random){ const empty=BLANK.repeat(NR_SQUARES); let cand=candidatesFromBoard(empty); const seeds=shuffle(SQUARES, rnd).slice(0,9); for(const s of seeds){ const opts=cand[s]; const v = opts[Math.floor(rnd()*opts.length)]; if(!assign(cand, s, v)) break; } const res=search(cand, rnd); if(!res) return randomFullSolution(rnd); let out=""; for(const sq of SQUARES) out+=res[sq]; return out; }
+
+function generatePuzzle({difficulty='medium', symmetry='rotate'}={}, rnd=Math.random){ let clues = typeof difficulty==='string' ? (DIFFICULTY[difficulty]||DIFFICULTY.medium) : difficulty; if(clues<17) clues=17; if(clues>81) clues=81; const full=randomFullSolution(rnd); let puzzle=full.split(""); const indices=[...Array(NR_SQUARES).keys()]; const order=shuffle(indices, rnd);
+  const partner=(i)=>{ const [r,c]=idxToRC(i); switch(symmetry){ case 'rotate': return rcToIdx(8-r,8-c); case 'mirror': return rcToIdx(r,8-c); case 'flip-h': return rcToIdx(8-r,c); case 'flip-v': return rcToIdx(r,8-c); default: return i; } };
+  let toRemove = NR_SQUARES - clues; for(const i of order){ if(toRemove<=0) break; if(puzzle[i]===BLANK) continue; const j=partner(i); const idxs=(j!==i)?[i,j]:[i]; const b4i=puzzle[i], b4j=puzzle[j]; idxs.forEach(k=>puzzle[k]=BLANK); const candidate=puzzle.join(""); if(countSolutions(candidate,2,rnd)===1){ toRemove -= idxs.length; if(toRemove<0) toRemove=0; } else { puzzle[i]=b4i; puzzle[j]=b4j; } }
+  if(puzzle.filter(ch=>ch!==BLANK).length>clues){ for(let i=0;i<NR_SQUARES;i++){ if(puzzle.filter(ch=>ch!==BLANK).length<=clues) break; if(puzzle[i]===BLANK) continue; const keep=puzzle[i]; puzzle[i]=BLANK; if(countSolutions(puzzle.join(""),2,rnd)!==1) puzzle[i]=keep; } }
+  return puzzle.join(""); }
+
+class HumanSolver{
+  constructor(board){ if(!validateBoard(board)) throw new Error('Invalid board'); this.initial=board; this.state=board.split(""); this.stack=[]; this.given=this.state.map(ch=>ch!==BLANK); this.guessMarks=new Set(); this.lastHighlights=new Set(); }
+  boardString(){ return this.state.join(""); }
+  applyLogicWave(){ const cand=candidatesFromBoard(this.boardString()); if(!cand) return 0; const actions=[]; // naked singles
+    for(const s of SQUARES){ const i=SQUARE_INDEX[s]; if(this.state[i]!==BLANK) continue; const cs=cand[s]; if(cs.length===1) actions.push({i, v: cs}); }
+    // hidden singles + full house
+    for(const unit of MAPS.units){ const empties = unit.filter(t=>this.state[SQUARE_INDEX[t]]===BLANK); if(empties.length===1){ const t=empties[0]; const cs=cand[t]; if(cs.length>=1) actions.push({i:SQUARE_INDEX[t], v: cs[0]}); }
+      for(const d of DIGITS){ const places = unit.filter(t=>cand[t].includes(d)); if(places.length===1){ actions.push({ i:SQUARE_INDEX[places[0]], v: d }); } }
+    }
+    const seen=new Set(); let filled=0; this.lastHighlights.clear(); for(const a of actions){ if(seen.has(a.i)) continue; if(this.state[a.i]!==BLANK) continue; this.state[a.i]=a.v; seen.add(a.i); this.lastHighlights.add(a.i); filled++; }
+    return filled; }
+  nextGuess(){ const cand=candidatesFromBoard(this.boardString()); if(!cand) return null; let best=null; for(const s of SQUARES){ const i=SQUARE_INDEX[s]; if(this.state[i]!==BLANK) continue; const cs=cand[s]; if(cs.length>1 && (!best || cs.length<best.candidates.length)) best={ index:i, candidates: cs.split("") }; }
+    return best; }
+  applyGuess(index, val){ const cand=candidatesFromBoard(this.boardString()); if(!cand) return {ok:false}; const s=SQUARES[index]; if(!cand[s].includes(String(val))) return {ok:false}; this.stack.push(this.boardString()); this.state[index]=String(val); this.guessMarks.add(index); return {ok:true}; }
+  undo(){ if(!this.stack.length) return false; const prev=this.stack.pop(); this.state=prev.split(""); this.guessMarks.clear(); this.lastHighlights.clear(); return true; }
+}
+
+class Sudoku{ constructor(rnd=Math.random){ this.rnd=rnd; } generate(options={}){ return generatePuzzle(options, this.rnd); } solve(board){ return solveBoard(board, this.rnd); } countSolutions(board, cap=2){ return countSolutions(board, cap, this.rnd); } human(board){ return new HumanSolver(board); } }
+
+// ============================ Play UI glue =============================
+const B = document.getElementById('board');
+const statusEl = document.getElementById('status');
+const progEl = document.getElementById('prog');
+const keypad = document.querySelector('.pad');
+const selSymbols = document.getElementById('selSymbols');
+
+function refreshKeypad(){
+  document.querySelectorAll('.pad .key').forEach(btn=>{
+    const k = btn.dataset.key;
+    if(/^[1-9]$/.test(k||'')){
+      btn.textContent = symFromDigitChar(k);
+      btn.setAttribute('aria-label',`Key ${k}`);
+    }
+  });
+}
+
+const s = new Sudoku();
+let currentPuzzle = '.'.repeat(81);
+let hs = new HumanSolver(currentPuzzle);
+let selectedIndex = null;
+// Hint V2 state: non-destructive, cycles through the next simplest steps
+let hintState = null;            // { kind, index, digit, unit?: number[], peers?: number[] }
+let hintList = [];               // cached list of simple hints for current board
+let hintPos = 0;                 // cursor to cycle through hints
+function clearHint(){ hintState=null; hintList=[]; hintPos=0; }
+
+function say(msg){ statusEl.textContent = msg; }
+
+function render(){
+  B.innerHTML='';
+  const boardStr = hs.boardString();
+  const cand = (()=>{ try{ return candidatesFromBoard(boardStr);}catch(e){return null;} })();
+  for(let i=0;i<81;i++){
+    const [r,c] = idxToRC(i);
+    const cell = document.createElement('div');
+    cell.className='cell'; cell.dataset.r=r; cell.dataset.c=c; cell.setAttribute('role','gridcell'); cell.setAttribute('aria-label',`R${r+1}C${c+1}`);
+    cell.tabIndex = hs.given[i]? -1 : 0; // focusable only if editable
+    if(hs.lastHighlights.has(i)) cell.classList.add('hl');
+    if(i===selectedIndex) cell.classList.add('sel');
+    // Hint layering
+    if(hintState){
+      if(i===hintState.index) cell.classList.add('hint-target');
+      if(hintState.unit && hintState.unit.includes(i)) cell.classList.add('hint-unit');
+      if(hintState.peers && hintState.peers.includes(i)) cell.classList.add('hint-peer');
+      if(hintState.actors && hintState.actors.includes(i)) cell.classList.add('hint-actor');
+      if(hintState.eliminations && hintState.eliminations.some(e=>e.index===i)) cell.classList.add('hint-elim');
+    }
+    const ch = boardStr[i];
+    if(ch!==BLANK){
+      const span = document.createElement('span');
+      const cls = hs.given[i] ? 'giv' : (hs.guessMarks.has(i)?'guess':'val');
+      span.className=cls; span.textContent=symFromDigitChar(ch); cell.appendChild(span);
+    } else {
+      const notes = document.createElement('div'); notes.className='notes';
+      const cs = cand ? cand[SQUARES[i]] : '';
+      for(let d=1; d<=9; d++){
+        const sp = document.createElement('span');
+        sp.textContent = symFromDigitChar(String(d));
+        sp.style.visibility = cs && cs.includes(String(d)) ? 'visible':'hidden';
+        notes.appendChild(sp);
+      }
+      cell.appendChild(notes);
+    }
+    B.appendChild(cell);
+  }
+  const filled = boardStr.split('').filter(ch=>ch!==BLANK).length;
+  progEl.textContent = `${filled}/81`;
+  document.getElementById('btnUndo').classList.toggle('ghost', hs.stack.length===0);
+  document.getElementById('btnReset').classList.toggle('ghost', currentPuzzle===boardStr);
+}
+
+function resetToPuzzle(){ hs = new HumanSolver(currentPuzzle); selectedIndex=null; render(); say('Reset to starting puzzle.'); }
+
+// Select cell (click/tap)
+B.addEventListener('click', e=>{
+  const cell = e.target.closest('.cell'); if(!cell) return;
+  const i = [...B.children].indexOf(cell);
+  if(hs.given[i]){ selectedIndex=null; clearHint(); render(); return; }
+  selectedIndex = i; clearHint(); render();
+});
+
+// Keyboard entry (desktop)
+document.addEventListener('keydown', e=>{
+  if(selectedIndex===null) return;
+  if(hs.given[selectedIndex]) return;
+  if(/[1-9]/.test(e.key)){
+    hs.state[selectedIndex] = e.key; clearHint();
+    render();
+    say(`Placed ${e.key} at R${Math.floor(selectedIndex/9)+1}C${(selectedIndex%9)+1}`);
+  } else if (e.key==='Backspace' || e.key==='Delete' || e.key==='0' || e.key==='.'){
+    hs.state[selectedIndex] = BLANK; clearHint(); render(); say('Cleared cell.');
+  } else if (e.key==='ArrowLeft' && selectedIndex%9>0){ selectedIndex--; render(); }
+  else if (e.key==='ArrowRight' && selectedIndex%9<8){ selectedIndex++; render(); }
+  else if (e.key==='ArrowUp' && selectedIndex>=9){ selectedIndex-=9; render(); }
+  else if (e.key==='ArrowDown' && selectedIndex<72){ selectedIndex+=9; render(); }
+});
+
+// Keypad entry (mobile + desktop)
+keypad.addEventListener('click', e=>{
+  const btn = e.target.closest('button.key');
+  if (!btn) return;
+  if (btn.id === 'keyHint') return; // handled below
+  if (selectedIndex === null || hs.given[selectedIndex]) return;
+  const key = btn.dataset.key;
+  if (key === 'clear') {
+    hs.state[selectedIndex] = BLANK;
+    clearHint(); render(); say('Cleared cell.');
+    return;
+  }
+  if (/^[1-9]$/.test(key || '')) {
+    hs.state[selectedIndex] = key;
+    clearHint(); render(); say(`Placed ${key}.`);
+  }
+});
+
+// Buttons
+const selDiff = document.getElementById('selDiff');
+const selSym  = document.getElementById('selSym');
+
+document.getElementById('btnGen').onclick = ()=>{
+  // Update symbol set in case user changed before generate
+  const setName = selSymbols?.value || 'numbers';
+  currentSymbols = SYMBOL_SETS[setName] || SYMBOL_SETS.numbers;
+  refreshKeypad();
+  const diff = selDiff.value; const sym = selSym.value==='none'?undefined:selSym.value;
+  say('Generating a unique puzzle…');
+  const puz = s.generate({ difficulty: diff, symmetry: sym });
+  currentPuzzle = puz; hs = new HumanSolver(puz); selectedIndex=null; clearHint(); render();
+  say('New unique puzzle generated.');
+};
+
+refreshKeypad();
+
+document.getElementById('btnReset').onclick = ()=>{ clearHint(); resetToPuzzle(); };
+
+document.getElementById('btnLogic').onclick = ()=>{
+  const n = hs.applyLogicWave(); clearHint(); render();
+  say(n? `Applied ${n} logical placements (singles).` : 'No logical singles found. Try a guess.');
+};
+
+document.getElementById('btnGuess').onclick = ()=>{
+  // Prefer the user's selected cell; otherwise pick MRV automatically
+  let targetIndex = selectedIndex;
+  const boardStr = hs.boardString();
+  let candMap = null;
+  try { candMap = candidatesFromBoard(boardStr); } catch(e) { candMap = null; }
+  if (!candMap) { say('Current state invalid – cannot guess.'); return; }
+
+  if (targetIndex === null) {
+    const g = hs.nextGuess();
+    if (!g) { say('No cell available to guess.'); return; }
+    targetIndex = g.index;
+    selectedIndex = targetIndex; // focus it
+  }
+
+  if (hs.given[targetIndex]) { say('Selected cell is a given. Choose another cell.'); return; }
+
+  const cs = (candMap && candMap[SQUARES[targetIndex]]) ? candMap[SQUARES[targetIndex]].split('') : [];
+  if (!cs.length) { say('Selected cell has no candidates (contradiction).'); return; }
+  if (cs.length < 2) { say('Selected cell is not guessable (only one candidate).'); return; }
+
+  // Try candidates in order until one leaves the board solvable; otherwise revert
+  const [r,c] = idxToRC(targetIndex);
+  let placed = null;
+  for (const v of cs) {
+    const ok = hs.applyGuess(targetIndex, v).ok;
+    if (!ok) continue;
+    const solvable = !!s.solve(hs.boardString());
+    if (solvable) { placed = v; break; }
+    // revert and try next candidate
+    hs.undo();
+  }
+
+  if (!placed) {
+    say(`All candidates for R${r+1}C${c+1} lead to contradictions.`);
+    render();
+    return;
+  }
+
+  render();
+  say(`Guess set R${r+1}C${c+1} = ${placed}. Candidates were [${cs.join(', ')}].`);
+};
+
+document.getElementById('btnUndo').onclick = ()=>{
+  if(hs.undo()){
+    selectedIndex=null; clearHint(); render(); say('Undid last guess.');
+  } else { say('Nothing to undo.'); }
+};
+
+document.getElementById('btnSolve').onclick = ()=>{
+  const sol = s.solve(hs.boardString()); if(!sol){ say('Unsolvable state.'); return; }
+  hs = new HumanSolver(sol); hs.given = Array(81).fill(true); selectedIndex=null; clearHint(); render(); say('Solved.');
+};
+
+document.getElementById('btnCheck').onclick = ()=>{
+  const unique = s.countSolutions(hs.boardString(), 2) === 1; say(unique? 'Unique (exactly one solution).':'Not unique (multiple solutions).');
+};
+
+// Symbol set changes
+selSymbols?.addEventListener('change', ()=>{
+  const name = selSymbols.value;
+  currentSymbols = SYMBOL_SETS[name] || SYMBOL_SETS.numbers;
+  refreshKeypad();
+  render();
+});
+
+// Hint button (V3): show exactly one next-simple hint (non-destructive), click to cycle
+document.getElementById('keyHint').onclick = ()=>{
+  const boardStr = hs.boardString();
+  if(!hintList.length){ hintList = RuleEngine.getHints(boardStr); hintPos = 0; }
+  if(!hintList.length){ say('Kein logischer Hint verfügbar.'); return; }
+  hintState = hintList[hintPos];
+  hintPos = (hintPos + 1) % hintList.length; // next hint on next click
+  render();
+  const msg = RuleEngine.hintMessage(hintState);
+  say(`Hint: ${msg}`);
+};
+
+// ============================= Rule Engine (V3) =============================
+// Returns ordered hints (simple → complex). Each hint:
+// { kind, action: 'place'|'eliminate', index?, digit?, actors?: number[], unit?: number[], peers?: number[], eliminations?: [{index,digit}] }
+const RuleEngine = (()=>{
+  const idxSet = a=>{ const s=new Set(); a.forEach(i=>s.add(i)); return s; };
+  const inter = (A,B)=>{ const sA=idxSet(A); return B.filter(x=>sA.has(x)); };
+  const uniq = arr => Array.from(new Set(arr));
+
+  function candMap(boardStr){ try{ return candidatesFromBoard(boardStr); }catch(e){ return null; } }
+  function candOf(cand, i){ return cand[SQUARES[i]]; }
+  function unitIdx(unit){ return unit.map(sq=>SQUARE_INDEX[sq]); }
+  function peersIdx(sq){ return MAPS.squarePeers[sq].map(p=>SQUARE_INDEX[p]); }
+
+  function ruleNakedSingle(boardStr, cand){
+    for(const s of SQUARES){
+      const i=SQUARE_INDEX[s];
+      if(boardStr[i]!==BLANK) continue;
+      const cs=cand[s];
+      if(cs.length===1){
+        return { kind:'naked single', action:'place', index:i, digit:cs, peers: peersIdx(s) };
+      }
+    }
+    return null;
+  }
+
+  function ruleHiddenSingle(boardStr, cand){
+    for(const unit of MAPS.units){
+      for(const d of DIGITS){
+        const places = unit.filter(t=>cand[t].includes(d));
+        if(places.length===1){
+          const t=places[0];
+          const i=SQUARE_INDEX[t];
+          if(boardStr[i]===BLANK){
+            return { kind:'hidden single', action:'place', index:i, digit:d, unit: unitIdx(unit) };
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  function ruleFullHouse(boardStr, cand){
+    for(const unit of MAPS.units){
+      const empties = unit.filter(t=>boardStr[SQUARE_INDEX[t]]===BLANK);
+      if(empties.length===1){
+        const t=empties[0];
+        const i=SQUARE_INDEX[t];
+        const cs=cand[t];
+        if(cs.length>=1){
+          return { kind:'full house', action:'place', index:i, digit:cs[0], unit: unitIdx(unit) };
+        }
+      }
+    }
+    return null;
+  }
+
+  function ruleNakedPair(boardStr, cand){
+    for(const unit of MAPS.units){
+      const idxs = unitIdx(unit);
+      const two = idxs.filter(i=>boardStr[i]===BLANK && candOf(cand,i).length===2);
+      const bySig = {};
+      for(const i of two){
+        const sig=[...candOf(cand,i)].sort().join('');
+        if(!bySig[sig]) bySig[sig] = []; bySig[sig].push(i);
+      }
+      for(const sig in bySig){
+        const cells=bySig[sig];
+        if(cells.length===2){
+          const digits = sig.split('');
+          const elim=[];
+          for(const i of idxs){
+            if(cells.includes(i)) continue;
+            const cs=candOf(cand,i);
+            for(const d of digits){ if(cs.includes(d)) elim.push({index:i,digit:d}); }
+          }
+          if(elim.length){
+            return { kind:'naked pair', action:'eliminate', actors:cells, eliminations: uniq(elim.map(e=>e.index)).map(i=>({index:i,digit:digits.join('')})), unit: idxs };
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  function ruleHiddenPair(boardStr, cand){
+    for(const unit of MAPS.units){
+      const idxs = unitIdx(unit);
+      const placesByDigit = {};
+      for(const d of DIGITS){ placesByDigit[d] = idxs.filter(i=>boardStr[i]===BLANK && candOf(cand,i).includes(d)); }
+      for(let a=0;a<9;a++) for(let b=a+1;b<9;b++){
+        const da=DIGITS[a], db=DIGITS[b];
+        const A=placesByDigit[da], B=placesByDigit[db];
+        if(A.length===2 && B.length===2 && A[0]===B[0] && A[1]===B[1]){
+          const actors=[A[0],A[1]];
+          return { kind:'hidden pair', action:'eliminate', actors, unit: idxs };
+        }
+      }
+    }
+    return null;
+  }
+
+  function rulePointing(boardStr, cand){
+    const boxes = [];
+    for(let u=18; u<27; u++){ boxes.push(MAPS.units[u]); }
+    for(const box of boxes){
+      const boxIdx = unitIdx(box);
+      for(const d of DIGITS){
+        const cells = box.filter(t=>cand[t].includes(d));
+        if(cells.length<2) continue;
+        const rows = uniq(cells.map(s=>SQUARE_INDEX[s]).map(i=>Math.floor(i/9)));
+        const cols = uniq(cells.map(s=>SQUARE_INDEX[s]).map(i=>i%9));
+        if(rows.length===1){
+          const r = rows[0];
+          const elim=[];
+          for(let c=0;c<9;c++){
+            const i=rcToIdx(r,c);
+            if(!boxIdx.includes(i)){
+              const cs=candOf(cand,i);
+              if(cs.includes(d)) elim.push({index:i,digit:d});
+            }
+          }
+          if(elim.length){
+            const actors = cells.map(s=>SQUARE_INDEX[s]);
+            const unit = [...boxIdx, ...Array(9).fill(0).map((_,c)=>rcToIdx(r,c))];
+            return { kind:'pointing pair', action:'eliminate', actors, unit: uniq(unit), eliminations: elim };
+          }
+        }
+        if(cols.length===1){
+          const c = cols[0];
+          const elim=[];
+          for(let r=0;r<9;r++){
+            const i=rcToIdx(r,c);
+            if(!boxIdx.includes(i)){
+              const cs=candOf(cand,i);
+              if(cs.includes(d)) elim.push({index:i,digit:d});
+            }
+          }
+          if(elim.length){
+            const actors = cells.map(s=>SQUARE_INDEX[s]);
+            const unit = [...boxIdx, ...Array(9).fill(0).map((_,r)=>rcToIdx(r,c))];
+            return { kind:'pointing pair', action:'eliminate', actors, unit: uniq(unit), eliminations: elim };
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  function ruleXWing(boardStr, cand){
+    for(const d of DIGITS){
+      const rows = [];
+      for(let r=0;r<9;r++){
+        const cols=[];
+        for(let c=0;c<9;c++){
+          const i=rcToIdx(r,c);
+          if(boardStr[i]===BLANK && candOf(cand,i).includes(d)) cols.push(c);
+        }
+        if(cols.length===2) rows.push({r, cols});
+      }
+      for(let i=0;i<rows.length;i++) for(let j=i+1;j<rows.length;j++){
+        const a=rows[i], b=rows[j];
+        if(a.cols[0]===b.cols[0] && a.cols[1]===b.cols[1]){
+          const c1=a.cols[0], c2=a.cols[1];
+          const wing = [rcToIdx(a.r,c1), rcToIdx(a.r,c2), rcToIdx(b.r,c1), rcToIdx(b.r,c2)];
+          const elim=[];
+          for(let r=0;r<9;r++){
+            if(r===a.r||r===b.r) continue;
+            for(const c of [c1,c2]){
+              const i=rcToIdx(r,c);
+              const cs=candOf(cand,i);
+              if(cs.includes(d)) elim.push({index:i,digit:d});
+            }
+          }
+          if(elim.length){
+            return { kind:'x-wing', action:'eliminate', actors: wing, eliminations: elim };
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  function ruleYWing(boardStr, cand){
+    const biv=[];
+    for(let i=0;i<81;i++){
+      if(boardStr[i]===BLANK){
+        const cs=candOf(cand,i);
+        if(cs.length===2) biv.push({i, pair:[...cs].sort()});
+      }
+    }
+    const peersByIdx = {};
+    for(const {i} of biv){
+      const sq=SQUARES[i];
+      peersByIdx[i]=peersIdx(sq);
+    }
+    for(const {i:p, pair:[A,B]} of biv){
+      const Ppeers = new Set(peersByIdx[p]);
+      const hinges = biv.filter(h=>Ppeers.has(h.i));
+      for(const h1 of hinges){
+        const [x,y]=h1.pair;
+        const commonA = x===A || y===A;
+        const c1 = commonA ? (x===A?y:x) : null;
+        if(!commonA) continue;
+        if(c1===B) continue;
+        for(const h2 of hinges){
+          if(h2.i===h1.i) continue;
+          const [u,v]=h2.pair;
+          const commonB = u===B || v===B;
+          const c2 = commonB ? (u===B?v:u) : null;
+          if(!commonB) continue;
+          if(c2!==c1) continue;
+          const C = c1;
+          const interPeers = inter(peersByIdx[h1.i], peersByIdx[h2.i]).filter(t=>t!==p && t!==h1.i && t!==h2.i);
+          const elim=[];
+          for(const t of interPeers){
+            const cs=candOf(cand,t);
+            if(cs.includes(C)) elim.push({index:t, digit:C});
+          }
+          if(elim.length){
+            return { kind:'y-wing', action:'eliminate', actors:[p,h1.i,h2.i], eliminations: elim };
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  const rules = [
+    ruleNakedSingle,
+    ruleHiddenSingle,
+    ruleFullHouse,
+    ruleNakedPair,
+    ruleHiddenPair,
+    rulePointing,
+    ruleXWing,
+    ruleYWing,
+  ];
+
+  function getHints(boardStr){
+    const cand = candMap(boardStr); if(!cand) return [];
+    const out=[];
+    for(const fn of rules){
+      const h=fn(boardStr,cand);
+      if(h) out.push(h);
+    }
+    return out;
+  }
+
+  function hintMessage(h){
+    if(h.action==='place' && typeof h.index==='number'){
+      const [r,c]=idxToRC(h.index);
+      return `${h.kind} ⇒ R${r+1}C${c+1} = ${h.digit}`;
+    }
+    if(h.action==='eliminate' && h.eliminations && h.eliminations.length){
+      const cells = Array.from(new Set(h.eliminations.map(e=>`R${Math.floor(e.index/9)+1}C${(e.index%9)+1}`))).join(', ');
+      const ds = Array.from(new Set(h.eliminations.map(e=>e.digit))).join('');
+      const what = ds.length===1 && ds.length<=2 ? ds : 'candidates';
+      return `${h.kind} ⇒ remove ${what} from ${h.eliminations.length} cell(s): ${cells}`;
+    }
+    return h.kind;
+  }
+
+  return { getHints, hintMessage };
+})();
+
+// Initial blank render
+refreshKeypad();
+render(); say('Tap a cell, then use the keypad or your keyboard. Generate to start.');
+</script>
+</body>
+</html>

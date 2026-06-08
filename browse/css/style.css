@@ -1,0 +1,36 @@
+body
+{ margin: 0px;
+  background-color: #FFFFFF;
+  font-family: Arial, Helvetica;
+  font-size: 10px;
+  color: #000000; }
+a
+{ color: #000000; 
+  text-decoration: none; }
+div
+{ position: absolute; }
+img
+{ border: 0px none #ffffff; }
+.navic
+{ top: 200px;
+  right: 50px;
+  width: 172px;
+  height: 55px;
+  overflow: hidden;
+  z-index:1000;
+  background-image: url(../art/bg_browse.gif);
+  visibility: visible; }
+.gtv
+{ left:5px;
+  top:15px;
+  z-index:1001; }
+.foam
+{ left:36px;
+  top:14px;
+  z-index:1002; }
+.select
+{ width: 128px;
+  font-family: arial,helvetica,sans-serif;
+  font-size: 9px;
+  color: #000000;
+  border: 1px solid #999999; }

@@ -1,0 +1,30 @@
+========================
+ Upgrading to Mnemo 2.0
+========================
+
+:Last update:   $Date: 2004/11/16 22:46:49 $
+:Revision:      $Revision: 1.1 $
+:Contact:       mnemo@lists.horde.org
+
+
+These are instructions to upgrade from Mnemo 1.1.x to Mnemo 2.0.  Please
+backup your existing data before running any of the steps described below.
+You can't use the updated data with your old Mnemo version anymore.
+
+
+SQL Backends
+============
+
+Execute the provided SQL script to update your data to the new Nag version::
+
+   mysql --user=root --password=<MySQL-root-password> <db name> < scripts/upgrades/1.1_to_2.0.mysql.sql
+
+
+Categories
+==========
+
+Categories are now being maintained centrally for all Horde applications that
+support them.  To convert the old memo categories execute the provided PHP
+script::
+
+   php scripts/upgrades/2004-05-19_convert_categories_to_strings.php

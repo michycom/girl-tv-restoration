@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tonal Space Composer — Canvas UI (Prototype)</title>
+  <style>
+    :root{
+      --bg:#0b0d12;
+      --panel:#111522;
+      --panel2:#0f1320;
+      --text:#e9eefc;
+      --muted:#a9b3cf;
+      --line:rgba(255,255,255,.10);
+      --line2:rgba(255,255,255,.18);
+      --accent:#7aa2ff;
+      --accent2:#ff7aa2;
+      --ok:#62e6a5;
+      --warn:#ffcc66;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --r:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:radial-gradient(900px 600px at 30% 20%, rgba(122,162,255,.15), transparent 55%),
+                 radial-gradient(900px 700px at 70% 70%, rgba(255,122,162,.10), transparent 60%),
+                 var(--bg);
+      color:var(--text);
+      font: 14px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+      overflow:hidden;
+    }
+    .app{
+      height:100%;
+      display:grid;
+      grid-template-columns: 340px 1fr;
+      gap:14px;
+      padding:14px;
+    }
+    .panel{
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      min-height:0;
+    }
+    .left{
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+    }
+    header{
+      padding:14px 14px 10px;
+      border-bottom:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.03), transparent);
+    }
+    header .title{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      font-weight:600;
+      letter-spacing:.2px;
+    }
+    header .subtitle{
+      margin-top:6px;
+      color:var(--muted);
+      font-size:12px;
+    }
+    .section{
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+    }
+    .section:last-child{border-bottom:0}
+    .row{
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      margin:8px 0;
+    }
+    .row label{color:var(--muted); font-size:12px}
+    .btns{display:flex; gap:8px; flex-wrap:wrap}
+    button{
+      appearance:none;
+      border:1px solid var(--line2);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      transition: transform .06s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+    }
+    button:hover{background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.28)}
+    button:active{transform:translateY(1px)}
+    button.primary{border-color:rgba(122,162,255,.45); background:rgba(122,162,255,.14)}
+    button.danger{border-color:rgba(255,122,162,.45); background:rgba(255,122,162,.10)}
+    button.ghost{background:transparent}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      color:var(--muted);
+      font-size:12px;
+      background:rgba(0,0,0,.15);
+    }
+    input[type="range"]{width:180px}
+    select, input[type="text"]{
+      width:100%;
+      border:1px solid var(--line2);
+      background:rgba(0,0,0,.18);
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:12px;
+      outline:none;
+    }
+    select:focus, input[type="text"]:focus{border-color:rgba(122,162,255,.5)}
+    .kv{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      align-items:center;
+    }
+    .mini{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+    .log{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      font-size:12px;
+      color:#cfe1ff;
+      background:rgba(0,0,0,.25);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px;
+      max-height:160px;
+      overflow:auto;
+      white-space:pre-wrap;
+    }
+    .right{
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+    }
+    .canvasWrap{
+      position:relative;
+      flex:1;
+      min-height:0;
+      background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.00));
+      border-radius:var(--r);
+      overflow:hidden;
+    }
+    canvas{
+      width:100%;
+      height:100%;
+      display:block;
+    }
+    .hud{
+      position:absolute;
+      top:12px; left:12px; right:12px;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      justify-content:space-between;
+      pointer-events:none;
+    }
+    .hud .card{
+      pointer-events:none;
+      background:rgba(17,21,34,.75);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px 12px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      max-width: 52ch;
+    }
+    .hud .card .h{
+      font-weight:600;
+      margin-bottom:4px;
+    }
+    .hud .card .p{
+      color:var(--muted);
+      font-size:12px;
+      margin:0;
+    }
+    .hint{
+      position:absolute;
+      bottom:12px; left:12px; right:12px;
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      pointer-events:none;
+    }
+    .hint .pill{pointer-events:none}
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      color:#d9e6ff;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.20);
+      padding:2px 6px;
+      border-radius:8px;
+      margin:0 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- LEFT PANEL -->
+    <aside class="panel left">
+      <header>
+        <div class="title">
+          <div>🎼 Tonal Space Composer</div>
+          <span class="pill" id="statusPill">Mode: <b style="color:var(--text);margin-left:6px" id="modeLabel">Select</b></span>
+        </div>
+        <div class="subtitle">
+          Canvas-Interface für Komponist*innen: Knoten = Noten/Akkorde, Kanten = Voice-Leading / Beziehungen.
+        </div>
+      </header>
+
+      <div class="section">
+        <div class="mini">Werkzeug</div>
+        <div class="btns" style="margin-top:10px">
+          <button class="primary" data-mode="add-note">Add Note</button>
+          <button class="primary" data-mode="add-chord">Add Chord</button>
+          <button data-mode="connect">Connect</button>
+          <button data-mode="select">Select</button>
+          <button class="danger" id="clearBtn">Clear</button>
+        </div>
+        <div class="mini" style="margin-top:10px">
+          <span class="kbd">Shift</span> = snap • <span class="kbd">Alt</span> = duplicate • <span class="kbd">Del</span> = delete selection
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="mini">Form (Symbolik für “Tonobjekte”)</div>
+        <div class="row">
+          <label for="shapeSel">Shape</label>
+          <select id="shapeSel">
+            <option value="circle">Circle (Note)</option>
+            <option value="triangle">Triangle (Triad)</option>
+            <option value="square">Square (Tetrad)</option>
+            <option value="octagon">Octagon (Extended)</option>
+            <option value="polygon">Polygon (Custom n)</option>
+          </select>
+        </div>
+        <div class="row">
+          <label for="polySides">Polygon Sides</label>
+          <input id="polySides" type="range" min="3" max="12" value="6" />
+        </div>
+        <div class="row">
+          <label>Size</label>
+          <input id="sizeRange" type="range" min="14" max="70" value="28" />
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="mini">Musikalische Metadaten (Placeholder, später MIDI/Notation)</div>
+        <div class="row" style="gap:12px">
+          <div style="flex:1">
+            <label for="labelInput">Label</label>
+            <input id="labelInput" type="text" placeholder="z.B. C, Am, G7sus4, #11 ..." />
+          </div>
+        </div>
+        <div class="row">
+          <label>Grid / Snap</label>
+          <input id="gridRange" type="range" min="8" max="80" value="24" />
+        </div>
+      </div>
+
+      <div class="section" style="flex:1; min-height:0">
+        <div class="mini">Event Log</div>
+        <div class="log" id="log"></div>
+      </div>
+    </aside>
+
+    <!-- RIGHT PANEL -->
+    <main class="panel right">
+      <div class="canvasWrap">
+        <canvas id="c"></canvas>
+
+        <div class="hud">
+          <div class="card">
+            <div class="h">Tonal Space (Prototype)</div>
+            <p class="p">
+              Idee: NRT-inspiriert (Tonnetz/3D-Denken). Hier erstmal 2D-Canvas mit geometrischen “Tonobjekten”.
+              Später: Layer (Pitch-Class, Voicing, Zeit), Export als JSON/MIDI.
+            </p>
+          </div>
+          <div class="card" style="text-align:right">
+            <div class="h" id="selInfo">No selection</div>
+            <p class="p" id="selMeta">—</p>
+          </div>
+        </div>
+
+        <div class="hint">
+          <span class="pill">Drag = move • Click = add/select • Connect: click A → click B</span>
+          <span class="pill">Zoom: <span class="kbd">Ctrl</span> + mousewheel (optional später)</span>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // ============================
+    // Minimal Canvas Composer UI
+    // ============================
+    const canvas = document.getElementById("c");
+    const ctx = canvas.getContext("2d");
+
+    // UI elements
+    const logEl = document.getElementById("log");
+    const modeLabel = document.getElementById("modeLabel");
+    const shapeSel = document.getElementById("shapeSel");
+    const polySides = document.getElementById("polySides");
+    const sizeRange = document.getElementById("sizeRange");
+    const gridRange = document.getElementById("gridRange");
+    const labelInput = document.getElementById("labelInput");
+    const clearBtn = document.getElementById("clearBtn");
+    const selInfo = document.getElementById("selInfo");
+    const selMeta = document.getElementById("selMeta");
+
+    // State
+    let mode = "select"; // select | add-note | add-chord | connect
+    let nodes = [];      // {id,x,y,r,shape,label,meta}
+    let edges = [];      // {a,b}
+    let selection = null; // node id
+    let dragging = null; // {id,dx,dy}
+    let connectFrom = null; // node id
+    let isShift = false;
+    let isAlt = false;
+
+    // HiDPI resize
+    function resize() {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      draw();
+    }
+    window.addEventListener("resize", resize);
+
+    // Logging
+    function log(msg){
+      const t = new Date().toLocaleTimeString();
+      logEl.textContent = `[${t}] ${msg}\n` + logEl.textContent;
+    }
+
+    // Helpers
+    const uid = () => Math.random().toString(16).slice(2) + "-" + Math.random().toString(16).slice(2);
+
+    function gridSize(){ return Number(gridRange.value); }
+
+    function snap(v){
+      const g = gridSize();
+      return Math.round(v / g) * g;
+    }
+
+    function getMouse(e){
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      return {x, y};
+    }
+
+    function nodeAt(x,y){
+      for(let i=nodes.length-1;i>=0;i--){
+        const n = nodes[i];
+        const dx = x - n.x, dy = y - n.y;
+        if(Math.hypot(dx,dy) <= n.r + 6) return n;
+      }
+      return null;
+    }
+
+    function addNode(x,y, kind){
+      const r = Number(sizeRange.value);
+      const shape = (kind === "add-note") ? "circle" : shapeSel.value;
+      const label = labelInput.value.trim() || (kind === "add-note" ? "N" : "Chord");
+      const n = {
+        id: uid(),
+        x: isShift ? snap(x) : x,
+        y: isShift ? snap(y) : y,
+        r,
+        shape,
+        label,
+        meta: {
+          type: (kind === "add-note") ? "note" : "chord",
+          sides: Number(polySides.value)
+        }
+      };
+      nodes.push(n);
+      selection = n.id;
+      updateSelectionHud();
+      log(`Added ${n.meta.type}: "${n.label}" (${n.shape})`);
+      draw();
+    }
+
+    function connect(aId,bId){
+      if(!aId || !bId || aId === bId) return;
+      // avoid duplicates
+      const exists = edges.some(e => (e.a===aId && e.b===bId) || (e.a===bId && e.b===aId));
+      if(exists) return;
+      edges.push({a:aId,b:bId});
+      log(`Connected ${aId.slice(0,6)} ↔ ${bId.slice(0,6)}`);
+      draw();
+    }
+
+    function removeSelected(){
+      if(!selection) return;
+      const id = selection;
+      nodes = nodes.filter(n => n.id !== id);
+      edges = edges.filter(e => e.a !== id && e.b !== id);
+      selection = null;
+      connectFrom = null;
+      updateSelectionHud();
+      log(`Deleted node ${id.slice(0,6)}`);
+      draw();
+    }
+
+    function duplicateSelected(){
+      if(!selection) return;
+      const n = nodes.find(n => n.id === selection);
+      if(!n) return;
+      const clone = JSON.parse(JSON.stringify(n));
+      clone.id = uid();
+      clone.x += 18; clone.y += 18;
+      nodes.push(clone);
+      selection = clone.id;
+      updateSelectionHud();
+      log(`Duplicated "${clone.label}"`);
+      draw();
+    }
+
+    function setMode(m){
+      mode = m;
+      modeLabel.textContent = ({
+        "select":"Select",
+        "add-note":"Add Note",
+        "add-chord":"Add Chord",
+        "connect":"Connect"
+      })[m] || m;
+      connectFrom = null;
+      log(`Mode → ${modeLabel.textContent}`);
+      draw();
+    }
+
+    // Draw shapes
+    function pathPolygon(x,y,r,sides,rot=0){
+      ctx.beginPath();
+      for(let i=0;i<sides;i++){
+        const a = rot + (i * Math.PI*2 / sides);
+        const px = x + Math.cos(a)*r;
+        const py = y + Math.sin(a)*r;
+        if(i===0) ctx.moveTo(px,py);
+        else ctx.lineTo(px,py);
+      }
+      ctx.closePath();
+    }
+
+    function drawGrid(){
+      const g = gridSize();
+      const w = canvas.getBoundingClientRect().width;
+      const h = canvas.getBoundingClientRect().height;
+
+      ctx.save();
+      ctx.globalAlpha = 0.55;
+      ctx.strokeStyle = "rgba(255,255,255,0.06)";
+      ctx.lineWidth = 1;
+
+      for(let x=0;x<=w;x+=g){
+        ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
+      }
+      for(let y=0;y<=h;y+=g){
+        ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawEdges(){
+      ctx.save();
+      ctx.lineWidth = 2;
+      for(const e of edges){
+        const a = nodes.find(n=>n.id===e.a);
+        const b = nodes.find(n=>n.id===e.b);
+        if(!a || !b) continue;
+
+        const selA = (selection && (selection===a.id || selection===b.id));
+        ctx.strokeStyle = selA ? "rgba(122,162,255,0.8)" : "rgba(255,255,255,0.18)";
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+
+      // connect preview line
+      if(mode==="connect" && connectFrom){
+        const a = nodes.find(n=>n.id===connectFrom);
+        if(a && lastMouse){
+          ctx.strokeStyle = "rgba(255,204,102,0.85)";
+          ctx.setLineDash([6,6]);
+          ctx.beginPath();
+          ctx.moveTo(a.x,a.y);
+          ctx.lineTo(lastMouse.x,lastMouse.y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      }
+      ctx.restore();
+    }
+
+    function drawNode(n){
+      const isSel = (selection === n.id);
+      const w = 2;
+
+      ctx.save();
+
+      // outer glow
+      if(isSel){
+        ctx.shadowColor = "rgba(122,162,255,0.55)";
+        ctx.shadowBlur = 18;
+      } else {
+        ctx.shadowColor = "rgba(0,0,0,0.0)";
+        ctx.shadowBlur = 0;
+      }
+
+      // fill
+      ctx.fillStyle = isSel ? "rgba(122,162,255,0.20)" : "rgba(255,255,255,0.06)";
+      ctx.strokeStyle = isSel ? "rgba(122,162,255,0.95)" : "rgba(255,255,255,0.22)";
+      ctx.lineWidth = w;
+
+      // path
+      if(n.shape==="circle"){
+        ctx.beginPath();
+        ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+        ctx.closePath();
+      } else if(n.shape==="triangle"){
+        pathPolygon(n.x,n.y,n.r,3, -Math.PI/2);
+      } else if(n.shape==="square"){
+        pathPolygon(n.x,n.y,n.r,4, Math.PI/4);
+      } else if(n.shape==="octagon"){
+        pathPolygon(n.x,n.y,n.r,8, Math.PI/8);
+      } else if(n.shape==="polygon"){
+        pathPolygon(n.x,n.y,n.r, Math.max(3, n.meta?.sides ?? 6), -Math.PI/2);
+      } else {
+        // fallback
+        ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.closePath();
+      }
+
+      ctx.fill();
+      ctx.stroke();
+
+      // label
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "rgba(233,238,252,0.92)";
+      ctx.font = "600 12px -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(n.label, n.x, n.y);
+
+      // tiny id hint
+      ctx.fillStyle = "rgba(169,179,207,0.70)";
+      ctx.font = "10px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+      ctx.fillText(n.id.slice(0,6), n.x, n.y + n.r + 14);
+
+      ctx.restore();
+    }
+
+    function draw(){
+      const w = canvas.getBoundingClientRect().width;
+      const h = canvas.getBoundingClientRect().height;
+
+      ctx.clearRect(0,0,w,h);
+
+      drawGrid();
+      drawEdges();
+
+      for(const n of nodes) drawNode(n);
+
+      // mode hint
+      ctx.save();
+      ctx.fillStyle = "rgba(233,238,252,0.7)";
+      ctx.font = "12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+      ctx.fillText(`mode=${mode}`, 12, h - 16);
+      ctx.restore();
+    }
+
+    // Selection HUD
+    function updateSelectionHud(){
+      if(!selection){
+        selInfo.textContent = "No selection";
+        selMeta.textContent = "—";
+        return;
+      }
+      const n = nodes.find(n=>n.id===selection);
+      if(!n){
+        selInfo.textContent = "No selection";
+        selMeta.textContent = "—";
+        return;
+      }
+      selInfo.textContent = n.label;
+      selMeta.textContent = `${n.meta.type} • ${n.shape} • r=${n.r}px`;
+    }
+
+    // Input handling
+    let lastMouse = null;
+
+    canvas.addEventListener("mousemove", (e)=>{
+      lastMouse = getMouse(e);
+
+      if(dragging){
+        const n = nodes.find(n=>n.id===dragging.id);
+        if(n){
+          let nx = lastMouse.x + dragging.dx;
+          let ny = lastMouse.y + dragging.dy;
+          if(isShift){ nx = snap(nx); ny = snap(ny); }
+          n.x = nx; n.y = ny;
+          draw();
+        }
+      } else if(mode==="connect" && connectFrom){
+        draw();
+      }
+    });
+
+    canvas.addEventListener("mousedown", (e)=>{
+      const m = getMouse(e);
+      const hit = nodeAt(m.x,m.y);
+
+      if(mode==="select"){
+        if(hit){
+          selection = hit.id;
+          updateSelectionHud();
+          // drag start
+          dragging = {id: hit.id, dx: hit.x - m.x, dy: hit.y - m.y};
+          draw();
+        } else {
+          selection = null;
+          updateSelectionHud();
+          draw();
+        }
+        return;
+      }
+
+      if(mode==="add-note"){
+        if(hit){
+          selection = hit.id;
+          updateSelectionHud();
+          draw();
+        } else {
+          addNode(m.x,m.y,"add-note");
+        }
+        return;
+      }
+
+      if(mode==="add-chord"){
+        if(hit){
+          selection = hit.id;
+          updateSelectionHud();
+          draw();
+        } else {
+          addNode(m.x,m.y,"add-chord");
+        }
+        return;
+      }
+
+      if(mode==="connect"){
+        if(!hit) return;
+        if(!connectFrom){
+          connectFrom = hit.id;
+          selection = hit.id;
+          updateSelectionHud();
+          log(`Connect from ${hit.id.slice(0,6)} (click target…)`);
+          draw();
+        } else {
+          const a = connectFrom;
+          const b = hit.id;
+          connectFrom = null;
+          connect(a,b);
+        }
+        return;
+      }
+    });
+
+    window.addEventListener("mouseup", ()=>{
+      dragging = null;
+    });
+
+    // Keyboard modifiers
+    window.addEventListener("keydown", (e)=>{
+      if(e.key === "Shift") isShift = true;
+      if(e.key === "Alt") isAlt = true;
+
+      if(e.key === "Delete" || e.key === "Backspace"){
+        // don't delete while typing in inputs
+        const tag = document.activeElement?.tagName?.toLowerCase();
+        if(tag !== "input" && tag !== "select" && tag !== "textarea"){
+          e.preventDefault();
+          removeSelected();
+        }
+      }
+
+      if((e.ctrlKey || e.metaKey) && e.key.toLowerCase()==="d"){
+        e.preventDefault();
+        duplicateSelected();
+      }
+    });
+
+    window.addEventListener("keyup", (e)=>{
+      if(e.key === "Shift") isShift = false;
+      if(e.key === "Alt") isAlt = false;
+    });
+
+    // Buttons / modes
+    document.querySelectorAll("button[data-mode]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        setMode(btn.getAttribute("data-mode"));
+      });
+    });
+
+    clearBtn.addEventListener("click", ()=>{
+      nodes = [];
+      edges = [];
+      selection = null;
+      connectFrom = null;
+      updateSelectionHud();
+      log("Cleared canvas");
+      draw();
+    });
+
+    // Keep polygon sides in node meta if shape=polygon is used later
+    polySides.addEventListener("input", ()=>{
+      // update selected node's sides if polygon
+      const n = nodes.find(n=>n.id===selection);
+      if(n && n.shape==="polygon"){
+        n.meta.sides = Number(polySides.value);
+        draw();
+      }
+    });
+
+    shapeSel.addEventListener("change", ()=>{
+      const n = nodes.find(n=>n.id===selection);
+      if(n && n.meta.type==="chord"){
+        n.shape = shapeSel.value;
+        if(n.shape==="polygon") n.meta.sides = Number(polySides.value);
+        draw();
+      }
+    });
+
+    sizeRange.addEventListener("input", ()=>{
+      const n = nodes.find(n=>n.id===selection);
+      if(n){
+        n.r = Number(sizeRange.value);
+        updateSelectionHud();
+        draw();
+      }
+    });
+
+    labelInput.addEventListener("change", ()=>{
+      const n = nodes.find(n=>n.id===selection);
+      if(n){
+        n.label = labelInput.value.trim() || n.label;
+        updateSelectionHud();
+        draw();
+      }
+    });
+
+    // Init
+    setMode("select");
+    log("Ready. Add Note/Add Chord → click canvas. Select → drag nodes. Connect → click A then B.");
+    resize();
+  </script>
+</body>
+</html>

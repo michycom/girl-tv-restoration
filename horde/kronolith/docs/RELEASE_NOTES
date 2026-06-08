@@ -1,0 +1,51 @@
+<?php
+/**
+ * Release focus. Possible values:
+ * 0 - N/A
+ * 1 - Initial freshmeat announcement
+ * 2 - Documentation
+ * 3 - Code cleanup
+ * 4 - Minor feature enhancements
+ * 5 - Major feature enhancements
+ * 6 - Minor bugfixes
+ * 7 - Major bugfixes
+ * 8 - Minor security fixes
+ * 9 - Major security fixes
+ */
+$this->notes['fm']['focus'] = 8;
+
+/* Mailing list release notes. */
+$this->notes['ml']['changes'] = <<<ML
+The Horde Team is pleased to announce the final release of the Kronolith
+Calendar Application version H3 (2.1.7).
+
+This is a bugfix release that also fixes privilege escalation in the Horde API
+and missing ownership validation in the share management. All users are
+encouraged to upgrade to this version.
+
+Kronolith is the Horde calendar application.  It provides web-based calendars
+backed by a SQL database or a Kolab server.  Supported features include shared
+calendars, remote calendars, meeting management, alarms, recurring events, and
+a sophisticated day/week view which handles arbitrary numbers of overlapping
+events.
+
+Major changes compared to the Kronolith H3 (2.1.6) version are:
+    * Fixed privilege escalation in the Horde API.
+    * Fixed missing ownership validation on share changes.
+    * Updated Japanese translation.
+    * Small bugfixes and improvements.
+ML;
+
+/* Freshmeat release notes, not more than 600 characters. */
+$this->notes['fm']['changes'] = <<<FM
+A privilege escalation in the Horde API has been fixed.
+A missing ownership validation on share changes has been fixed.
+The Japanese translation has been updated.
+Small bugfixes and improvements have been made.
+FM;
+
+$this->notes['name'] = 'Kronolith';
+$this->notes['fm']['project'] = 'kronolith';
+$this->notes['fm']['branch'] = 'Horde 3';
+
+/* $Horde: kronolith/docs/RELEASE_NOTES,v 1.24.2.43.2.1 2008/01/09 13:32:28 jan Exp $ */

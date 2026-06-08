@@ -1,0 +1,43 @@
+<?php
+/**
+ * Release focus. Possible values:
+ * 0 - N/A
+ * 1 - Initial freshmeat announcement
+ * 2 - Documentation
+ * 3 - Code cleanup
+ * 4 - Minor feature enhancements
+ * 5 - Major feature enhancements
+ * 6 - Minor bugfixes
+ * 7 - Major bugfixes
+ * 8 - Minor security fixes
+ * 9 - Major security fixes
+ */
+$this->notes['fm']['focus'] = 4;
+
+/* Mailing list release notes. */
+$this->notes['ml']['changes'] = <<<ML
+The Horde Team is pleased to announce the final release of the Nag Task List
+Manager version H3 (2.1.3).
+
+Nag is a web-based application built upon the Horde Application Framework which
+provides a simple, clean interface for managing online task lists (i.e., TODO
+lists).  It also includes strong integration with the other Horde applications
+and offers shared task lists.
+
+The major changes compared to the Nag H3 (2.1.2) version are:
+    * Small bug fixes and improvements.
+    * Added Catalan translation.
+    * Updated Finnish, German, Portuguese, and Traditional Chinese
+      translations.
+ML;
+
+/* Freshmeat release notes, not more than 600 characters. */
+$this->notes['fm']['changes'] = <<<FM
+Small bug fixes and improvements have been made.
+A Catalan translation has been added and Finnish, German, Portuguese, and
+Traditional Chinese translations have been updated.
+FM;
+
+$this->notes['name'] = 'Nag';
+$this->notes['fm']['project'] = 'nag';
+$this->notes['fm']['branch'] = 'Horde 3';

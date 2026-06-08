@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>Chord Presets – Root + 3/4/5/6-Note Chords</title>
+  <style>
+    :root{
+      color-scheme:dark;
+      --bg:#05060a;
+      --panel:#10131c;
+      --panel-soft:#141829;
+      --text:#f5f7fd;
+      --muted:#9aa3b8;
+      --accent:#4fd1ff;
+      --accent-soft:rgba(79,209,255,.16);
+      --danger:#ff6b81;
+      --radius:16px;
+      --shadow:0 18px 40px rgba(0,0,0,.7);
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:radial-gradient(circle at top,#181a26 0,#05060a 55%,#000 100%);
+      color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+    }
+    .app{
+      background:var(--panel);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px 18px 14px;
+      max-width:980px;
+      width:96vw;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .header{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      margin-bottom:4px;
+    }
+    .title-block h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .title-block .subtitle{
+      margin-top:2px;
+      font-size:11px;
+      color:var(--muted);
+    }
+    .root-selector{
+      background:var(--panel-soft);
+      border-radius:999px;
+      padding:6px 10px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .root-label{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .root-buttons{
+      display:flex;
+      flex-wrap:wrap;
+      gap:4px;
+    }
+    .root-btn{
+      border:none;
+      padding:2px 8px;
+      border-radius:999px;
+      background:#181c2a;
+      color:var(--muted);
+      font-size:11px;
+      cursor:pointer;
+      transition:background .15s,color .15s,transform .1s;
+    }
+    .root-btn:hover{
+      background:#22273a;
+      transform:translateY(-1px);
+    }
+    .root-btn.active{
+      background:var(--accent);
+      color:#05060a;
+      font-weight:600;
+    }
+
+    .status-bar{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      background:#0c0f18;
+      border-radius:10px;
+      padding:8px 10px;
+      font-size:11px;
+      color:var(--muted);
+    }
+    .status-label{
+      text-transform:uppercase;
+      letter-spacing:.1em;
+      font-size:10px;
+      margin-bottom:2px;
+    }
+    .status-value{
+      font-family:SFMono-Regular,ui-monospace,Menlo,Monaco,Consolas,"Courier New",monospace;
+      font-size:12px;
+      color:var(--text);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .toolbox-screen-internal{
+      margin-top:4px;
+      background:#0b0f18;
+      border-radius:12px;
+      padding:10px 10px 6px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      max-height:70vh;
+      overflow:auto;
+    }
+    .toolbox-radio{
+      background:#111522;
+      border-radius:10px;
+      padding:6px 7px 4px;
+      min-width:200px;
+      max-width:440px;
+      flex:1 1 200px;
+      border:1px solid #222739;
+    }
+    .toolbox-radio-label{
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      color:var(--muted);
+      margin-bottom:4px;
+    }
+    .toolbox-radio-options{
+      display:flex;
+      flex-wrap:wrap;
+      gap:4px;
+    }
+    .toolbox-radio-options > div{
+      /* chord button */
+      display:inline-flex;
+      align-items:flex-end;
+      gap:1px;
+      padding:3px 5px;
+      border-radius:8px;
+      background:#171b2a;
+      border:1px solid #272c3f;
+      font-size:12px;
+      color:var(--text);
+      cursor:pointer;
+      transition:background .12s,border-color .12s,transform .08s;
+    }
+    .toolbox-radio-options > div:hover{
+      background:#1f2536;
+      border-color:#383f56;
+      transform:translateY(-1px);
+    }
+    .toolbox-radio-options > div[playing="yes"],
+    .toolbox-radio-options > div.active{
+      background:var(--accent-soft);
+      border-color:var(--accent);
+      box-shadow:0 0 0 1px rgba(79,209,255,.35);
+    }
+
+    .toolbox-radio-options span[root-placeholder]{
+      font-weight:600;
+      font-size:13px;
+    }
+    .toolbox-radio-options small{
+      font-size:11px;
+    }
+    .toolbox-radio-options sup{
+      font-size:10px;
+      line-height:1;
+    }
+
+    @media (max-width:800px){
+      .header{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+      .status-bar{
+        flex-direction:column;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="title-block">
+      <h1>Chord Presets</h1>
+      <div class="subtitle">Root wählen · dann aus 3/4/5/6-Note Akkord-Presets anklicken</div>
+    </div>
+    <div class="root-selector">
+      <div class="root-label">Root</div>
+      <div class="root-buttons">
+        <!-- du kannst hier nach Geschmack noch H / B-Variante ergänzen -->
+        <button class="root-btn active" data-root="C">C</button>
+        <button class="root-btn" data-root="C#">C#</button>
+        <button class="root-btn" data-root="D">D</button>
+        <button class="root-btn" data-root="D#">D#</button>
+        <button class="root-btn" data-root="E">E</button>
+        <button class="root-btn" data-root="F">F</button>
+        <button class="root-btn" data-root="F#">F#</button>
+        <button class="root-btn" data-root="G">G</button>
+        <button class="root-btn" data-root="G#">G#</button>
+        <button class="root-btn" data-root="A">A</button>
+        <button class="root-btn" data-root="A#">A#</button>
+        <button class="root-btn" data-root="B">B</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div>
+      <div class="status-label">Ausgewählter Akkord</div>
+      <div id="currentChordLabel" class="status-value">–</div>
+    </div>
+    <div>
+      <div class="status-label">Option-ID</div>
+      <div id="currentChordOption" class="status-value">–</div>
+    </div>
+  </div>
+
+  <!-- TOOLBOX: dein Stil, leicht bereinigt -->
+  <div class="toolbox-screen-internal">
+
+    <!-- 3-NOTES -->
+    <div class="toolbox-radio">
+      <div class="toolbox-radio-label">3-notes</div>
+      <div class="toolbox-radio-options">
+        <div class="chord-btn" option="major">
+          <span root-placeholder>C</span>
+        </div>
+        <div class="chord-btn" option="minor">
+          <span root-placeholder>C</span><small>m</small>
+        </div>
+        <div class="chord-btn" option="diminished">
+          <span root-placeholder>C</span><small>o</small>
+        </div>
+        <div class="chord-btn" option="augmented">
+          <span root-placeholder>C</span><small>+</small>
+        </div>
+        <div class="chord-btn" option="suspended2">
+          <span root-placeholder>C</span><small>sus2</small>
+        </div>
+        <div class="chord-btn" option="suspended4">
+          <span root-placeholder>C</span><small>sus4</small>
+        </div>
+        <div class="chord-btn" option="flat5">
+          <span root-placeholder>C</span><small>(♭5)</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4-NOTES -->
+    <div class="toolbox-radio">
+      <div class="toolbox-radio-label">4-notes</div>
+      <div class="toolbox-radio-options">
+        <div class="chord-btn" option="seven">
+          <span root-placeholder>C</span><sup>7</sup>
+        </div>
+        <div class="chord-btn" option="minor7">
+          <span root-placeholder>C</span><small>m</small><sup>7</sup>
+        </div>
+        <div class="chord-btn" option="half-diminished7">
+          <span root-placeholder>C</span><small>ø</small><sup>7</sup>
+        </div>
+        <div class="chord-btn" option="diminished7">
+          <span root-placeholder>C</span><small>o</small><sup>7</sup>
+        </div>
+        <div class="chord-btn" option="augmented7">
+          <span root-placeholder>C</span><small>+</small><sup>7</sup>
+        </div>
+        <div class="chord-btn" option="seven-flat5">
+          <span root-placeholder>C</span><sup>7</sup><small>(♭5)</small>
+        </div>
+        <div class="chord-btn" option="seven-sus2">
+          <span root-placeholder>C</span><sup>7</sup><small>sus2</small>
+        </div>
+        <div class="chord-btn" option="seven-sus4">
+          <span root-placeholder>C</span><sup>7</sup><small>sus4</small>
+        </div>
+        <div class="chord-btn" option="major7">
+          <span root-placeholder>C</span><sup>△7</sup>
+        </div>
+        <div class="chord-btn" option="minor-major7">
+          <span root-placeholder>C</span><small>m</small><sup>△7</sup>
+        </div>
+        <div class="chord-btn" option="augmented-major7">
+          <span root-placeholder>C</span><small>+</small><sup>△7</sup>
+        </div>
+        <div class="chord-btn" option="major7-flat5">
+          <span root-placeholder>C</span><sup>△7</sup><small>(♭5)</small>
+        </div>
+        <div class="chord-btn" option="major7-sus2">
+          <span root-placeholder>C</span><sup>△7</sup><small>sus2</small>
+        </div>
+        <div class="chord-btn" option="major7-sus4">
+          <span root-placeholder>C</span><sup>△7</sup><small>sus4</small>
+        </div>
+        <div class="chord-btn" option="six">
+          <span root-placeholder>C</span><sup>6</sup>
+        </div>
+        <div class="chord-btn" option="minor6">
+          <span root-placeholder>C</span><small>m</small><sup>6</sup>
+        </div>
+        <div class="chord-btn" option="nine">
+          <span root-placeholder>C</span><sup>add9</sup>
+        </div>
+        <div class="chord-btn" option="minor9">
+          <span root-placeholder>C</span><small>m</small><sup>add9</sup>
+        </div>
+        <div class="chord-btn" option="add-eleven">
+          <span root-placeholder>C</span><sup>add11</sup>
+        </div>
+        <div class="chord-btn" option="sharp-eleven">
+          <span root-placeholder>C</span><sup>add♯11</sup>
+        </div>
+        <div class="chord-btn" option="minor-add11">
+          <span root-placeholder>C</span><small>m</small><sup>add11</sup>
+        </div>
+        <div class="chord-btn" option="nine-flat5">
+          <span root-placeholder>C</span><sup>add9</sup><small>(♭5)</small>
+        </div>
+        <div class="chord-btn" option="nine-sus4">
+          <span root-placeholder>C</span><sup>add9</sup><small>sus4</small>
+        </div>
+        <div class="chord-btn" option="augmented9">
+          <span root-placeholder>C</span><small>+</small><sup>add9</sup>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5-NOTES -->
+    <div class="toolbox-radio">
+      <div class="toolbox-radio-label">5-notes</div>
+      <div class="toolbox-radio-options">
+        <div class="chord-btn" option="seven-9">
+          <span root-placeholder>C</span><sup>7(9)</sup>
+        </div>
+        <div class="chord-btn" option="minor7-add9">
+          <span root-placeholder>C</span><small>m</small><sup>7(9)</sup>
+        </div>
+        <div class="chord-btn" option="seven-sharp-add11">
+          <span root-placeholder>C</span><sup>7(#11)</sup>
+        </div>
+        <div class="chord-btn" option="minor7-add11">
+          <span root-placeholder>C</span><small>m</small><sup>7(11)</sup>
+        </div>
+        <div class="chord-btn" option="seven-13">
+          <span root-placeholder>C</span><sup>7(13)</sup>
+        </div>
+        <div class="chord-btn" option="major9-add6">
+          <span root-placeholder>C</span><sup>6(9)</sup>
+        </div>
+        <div class="chord-btn" option="major7-add9">
+          <span root-placeholder>C</span><sup>△7(9)</sup>
+        </div>
+        <div class="chord-btn" option="minor9-add6">
+          <span root-placeholder>C</span><small>m</small><sup>6(9)</sup>
+        </div>
+        <div class="chord-btn" option="major7-add6">
+          <span root-placeholder>C</span><sup>△7(13)</sup>
+        </div>
+        <div class="chord-btn" option="major7-9-sus4">
+          <span root-placeholder>C</span><sup>△7(9)</sup><small>sus4</small>
+        </div>
+        <div class="chord-btn" option="seven-flat9">
+          <span root-placeholder>C</span><sup>7(♭9)</sup>
+        </div>
+        <div class="chord-btn" option="seven-sharp9">
+          <span root-placeholder>C</span><sup>7(♯9)</sup>
+        </div>
+        <div class="chord-btn" option="seven-flat13">
+          <span root-placeholder>C</span><sup>7(♭13)</sup>
+        </div>
+        <div class="chord-btn" option="minor-major7-9">
+          <span root-placeholder>C</span><small>m</small><sup>△7(9)</sup>
+        </div>
+        <div class="chord-btn" option="diminished7-9">
+          <span root-placeholder>C</span><small>o</small><sup>7(9)</sup>
+        </div>
+        <div class="chord-btn" option="diminished7-flat9">
+          <span root-placeholder>C</span><small>o</small><sup>7(♭9)</sup>
+        </div>
+        <div class="chord-btn" option="augmented7-9">
+          <span root-placeholder>C</span><small>+</small><sup>7(9)</sup>
+        </div>
+        <div class="chord-btn" option="augmented7-flat9">
+          <span root-placeholder>C</span><small>+</small><sup>7(♭9)</sup>
+        </div>
+        <div class="chord-btn" option="augmented7-sharp9">
+          <span root-placeholder>C</span><small>+</small><sup>7(♯9)</sup>
+        </div>
+        <div class="chord-btn" option="augmented-major7-9">
+          <span root-placeholder>C</span><small>+</small><sup>△7(9)</sup>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6-NOTES -->
+    <div class="toolbox-radio">
+      <div class="toolbox-radio-label">6-notes</div>
+      <div class="toolbox-radio-options">
+        <div class="chord-btn" option="seven-9-13">
+          <span root-placeholder>C</span><sup>7(9,13)</sup>
+        </div>
+        <div class="chord-btn" option="seven-9-flat13">
+          <span root-placeholder>C</span><sup>7(9,♭13)</sup>
+        </div>
+        <div class="chord-btn" option="seven-flat9-13">
+          <span root-placeholder>C</span><sup>7(♭9,13)</sup>
+        </div>
+        <div class="chord-btn" option="seven-flat9-flat13">
+          <span root-placeholder>C</span><sup>7(♭9,♭13)</sup>
+        </div>
+        <div class="chord-btn" option="seven-sharp9-13">
+          <span root-placeholder>C</span><sup>7(♯9,13)</sup>
+        </div>
+        <div class="chord-btn" option="seven-sharp9-flat13">
+          <span root-placeholder>C</span><sup>7(♯9,♭13)</sup>
+        </div>
+        <div class="chord-btn" option="major7-9-13">
+          <span root-placeholder>C</span><sup>△7(9,13)</sup>
+        </div>
+        <div class="chord-btn" option="minor7-9-11">
+          <span root-placeholder>C</span><small>m</small><sup>7(9,11)</sup>
+        </div>
+        <div class="chord-btn" option="minor-major7-9-11">
+          <span root-placeholder>C</span><small>m</small><sup>△7(9,11)</sup>
+        </div>
+        <div class="chord-btn" option="minor9-6-11">
+          <span root-placeholder>C</span><small>m</small><sup>6(9,11)</sup>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /toolbox-screen-internal -->
+
+</div><!-- /app -->
+
+<script>
+(function(){
+  let currentRoot = 'C';
+
+  const rootButtons = document.querySelectorAll('.root-btn');
+  const chordButtons = document.querySelectorAll('.chord-btn');
+  const currentChordLabel = document.getElementById('currentChordLabel');
+  const currentChordOption = document.getElementById('currentChordOption');
+
+  function setRoot(root){
+    currentRoot = root;
+    // Buttons visuell updaten
+    rootButtons.forEach(btn=>{
+      btn.classList.toggle('active', btn.getAttribute('data-root') === root);
+    });
+    // alle Platzhalter aktualisieren
+    document.querySelectorAll('[root-placeholder]').forEach(span=>{
+      span.textContent = root;
+    });
+    // Status aktualisieren (falls ein Akkord bereits gewählt ist)
+    const activeChord = document.querySelector('.chord-btn.active');
+    if(activeChord){
+      updateChordStatus(activeChord);
+    }
+  }
+
+  function updateChordStatus(btn){
+    // HTML-Inhalt des Buttons als Chord-Label verwenden
+    const clone = btn.cloneNode(true);
+    // Root-Platzhalter im Klon wieder mit Root überschreiben (Sicherheit)
+    clone.querySelectorAll('[root-placeholder]').forEach(span=>{
+      span.textContent = currentRoot;
+    });
+    // Als Text oben anzeigen (inline HTML)
+    currentChordLabel.innerHTML = clone.innerHTML.trim() || currentRoot;
+    // Option-ID
+    const opt = btn.getAttribute('option') || btn.dataset.chord || '–';
+    currentChordOption.textContent = opt;
+  }
+
+  // Root-Buttons verkabeln
+  rootButtons.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      setRoot(btn.getAttribute('data-root'));
+    });
+  });
+
+  // Chord-Buttons verkabeln
+  chordButtons.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      // „active“ exklusiv
+      chordButtons.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      updateChordStatus(btn);
+    });
+  });
+
+  // Initial
+  setRoot(currentRoot);
+})();
+</script>
+</body>
+</html>

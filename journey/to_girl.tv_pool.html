@@ -1,0 +1,90 @@
+<title>
+i found myself in the junkjet again, ready for visiting a highly interesting site. 
+but we had delay... 
+the window was shut so i walked out by foot...
+</title>
+<!--one second>
+i will open it with slices. ..
+<ond second-->
+
+<meta http-equiv="refresh" content="30;URL=http://girl.tv/journey">
+<SCRIPT language=JavaScript1.2>
+setTimeout("location.href=\'http://girl.tv/journey\'",30000);
+</script>
+<meta name="author" content="me" />
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+
+<script> var repeat=1
+var title=document.title
+var leng=title.length
+var start=1
+function titlemove() {
+titl=title.substring(start, leng) + title.substring(0, start)
+document.title=titl
+start++
+if (start==leng+1) {
+start=0
+if (repeat==0)
+return
+}
+setTimeout("titlemove()",120)
+}
+if (document.title)
+titlemove()
+</script>
+
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<script language="JavaScript" type="text/JavaScript">
+<!--
+function MM_reloadPage(init) {  //reloads the window if Nav4 resized
+  if (init==true) with (navigator) {if ((appName=="Netscape")&&(parseInt(appVersion)==4)) {
+    document.MM_pgW=innerWidth; document.MM_pgH=innerHeight; onresize=MM_reloadPage; }}
+  else if (innerWidth!=document.MM_pgW || innerHeight!=document.MM_pgH) location.reload();
+}
+MM_reloadPage(true);
+//-->
+</script>
+
+<SCRIPT language=JavaScript1.2>
+//change 1 to another integer to alter the scroll speed. Greater is faster
+var speed=1000
+var currentpos=0,alt=1,curpos1=0,curpos2=-1
+function initialize(){
+startit()
+}
+function scrollwindow(){
+if (document.all)
+temp=meinIframe.body.scrollLeft
+else
+temp=meinIframe.pageXOffset
+if (alt==0)
+alt=1
+else
+alt=0
+if (alt==0)
+curpos1=temp
+else
+curpos2=temp
+if (curpos1!=curpos2){
+if (document.all)
+currentpos=meinIframe.document.body.scrollLeft+speed
+else
+currentpos=meinIframe.pageXOffset+speed
+meinIframe.scroll(currentpos,0)
+}
+else{
+currentpos=0
+meinIframe.scroll(currentpos,200)
+}
+}
+function startit(){
+setInterval("scrollwindow()",10)
+}
+window.onload=initialize
+</SCRIPT>
+
+<body onload="initialize()" bgcolor="#000000">
+<img style="position:absolute;z-index:10;width:900;height:665px; top:0px;" src="window-to-freemee1.png">
+<a style="color: black; position:absolute;z-index:11;  top500:0px; background: white;color:black;font-family:arial;font-size:10px;text-decoration:none"  href="http://girl.tv/landed">_</a>
+<div ><iframe  style="position:absolute;z-index:1; width:890;height:600; top:0px; background:99CCCC;" src="http://girl.tv/mountains" name="meinIframe"
+frameborder="0" scrolling="no"></iframe></div>

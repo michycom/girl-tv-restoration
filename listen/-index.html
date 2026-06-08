@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Klaviertastatur</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="feedback" style="display:none; color: silver; font-family;arial;font-size: 20px;background:white; position: absolute; top: 250px; right: 70%; transform: translateX(70%);"></div>
+
+    <div id="settings">
+        <label for="octaves">Anzahl der Oktaven (zwischen 1 und 5):</label>
+        <select id="octaves">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+        </select>
+        <button id="startButton">Start</button>
+    </div>
+    <div id="piano"></div>
+    <script src="piano.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+  const startButton = document.getElementById('startButton');
+  const octaveSelector = document.getElementById('octaves');
+
+  startButton.addEventListener('click', function() {
+    const selectedOctaves = parseInt(octaveSelector.value, 10);
+    
+    if (!window.audioContext) {
+      window.audioContext = new AudioContext();
+    }
+
+    if (window.audioContext.state === 'suspended') {
+      window.audioContext.resume();
+    }
+
+    // Erstelle hier alle benötigten Instanzen neu, unter Verwendung der ausgewählten Oktavenanzahl
+    const noteGenerator = new NoteGenerator(window.audioContext);
+    const pianoBuilder = new PianoBuilder('piano', selectedOctaves);
+    const trainer = new EarTrainer(pianoBuilder, noteGenerator, { octaveRange: [3, 4] });
+    trainer.init();
+
+    startButton.style.display = 'none';
+  });
+});
+
+    </script>
+</body>
+</html>

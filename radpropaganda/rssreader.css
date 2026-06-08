@@ -1,0 +1,44 @@
+a.rsslink:link {color:silver; text-decoration:none;}
+a.rsslink:visited {color:silver; text-decoration:none;}
+a.rsslink:active {color:#cc0000; text-decoration:underline;}
+a.rsslink:hover {color:#cc0000; text-decoration:underline;}
+
+p a {color: white;}
+
+.rsstitlebox {display: none;}
+
+.rssitembox {
+    background-color: white;
+    margin-top: 5px;
+    margin-bottom: 80px;
+    padding: 10px;
+    font-size: 10px;
+    height: auto;
+    color: gray;
+    font-family: arial;
+}
+
+.rssitemtitle {
+  font-size: 10px;
+  font-weight:bold;
+}
+.rssitemnolinktitle {
+  font-size: 10px;
+  font-weight:bold;
+  color:#666666;
+}
+
+.rssiteminfo {
+  font-size:8pt;
+  color:#666666;
+}
+
+.rssdescription {
+  margin-top:5px;
+}
+
+.rssenclosure {
+  margin-top:5px;
+  font-size:8pt;
+  color:#666666;
+}

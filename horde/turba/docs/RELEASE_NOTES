@@ -1,0 +1,44 @@
+<?php
+/**
+ * Release focus. Possible values:
+ * 0 - N/A
+ * 1 - Initial freshmeat announcement
+ * 2 - Documentation
+ * 3 - Code cleanup
+ * 4 - Minor feature enhancements
+ * 5 - Major feature enhancements
+ * 6 - Minor bugfixes
+ * 7 - Major bugfixes
+ * 8 - Minor security fixes
+ * 9 - Major security fixes
+ */
+$this->notes['fm']['focus'] = 8;
+
+/* Mailing list release notes. */
+$this->notes['ml']['changes'] = <<<ML
+The Horde Team is pleased to announce the final release of the Turba Contact
+Manager version H3 (2.1.7).
+
+This is a security release that fixes unchecked access to contacts in
+the same SQL table, if the unique key of another user's contact can be
+guessed.  All users are encouraged to upgrade to this version.
+
+Turba is the Horde contact management application. It is a production level
+address book, and makes heavy use of the Horde framework to provide
+integration with IMP and other Horde applications. It supports SQL, LDAP,
+Kolab, and IMSP address books.
+
+Major changes compared to the Turba H3 (2.1.6) version are:
+    * Fixed unchecked access to contacts in the same SQL table (Bug #6208).
+ML;
+
+/* Freshmeat release notes, not more than 600 characters. */
+$this->notes['fm']['changes'] = <<<FM
+Fix unchecked access to contacts in the same SQL table.
+FM;
+
+$this->notes['name'] = 'Turba';
+$this->notes['fm']['project'] = 'turba';
+$this->notes['fm']['branch'] = 'Horde 3';
+
+/* $Horde: turba/docs/RELEASE_NOTES,v 1.22.2.28.2.3 2008/02/15 16:44:11 chuck Exp $ */

@@ -1,0 +1,9 @@
+<html>
+<body>
+<!--#exec cgi="http://www.girl.tv/cgi-bin/random.cgi"--> 
+
+                                                     This is a demo of Random Text. Hit reload for test... 
+
+                                                                        Random text 1 
+</body>
+</html> 

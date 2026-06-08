@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/html4/loose.dtd">
+<html><head>
+<title></title>
+<!--  Live WebCam Update, CamSpinner Javascript Copyright 2003-2008, Optima System. All rights reserved. -->
+<link rel="stylesheet" href="cam.css" type="text/css">
+<meta http-equiv="refresh" content="3; URL=cam.html">
+<meta http-equiv="no-cache">
+<meta http-equiv="expires" content="Wed, 26 Feb 1997 08:21:57 GMT"> 
+<meta http-equiv="Content-type" content="text/html; charset=iso-8859-1">
+<meta name="viewport" content="width=device-width, user-scalable=yes">
+
+<script language="JavaScript1.1" type="text/javascript">
+<!-- 
+// version: 00200
+window.csLastImage = 0;
+window.csMaxImage = 4;
+window.csLastImageTime = '' ;
+window.csCamOnline = true;
+window.csShowHistory = false;
+window.csMessage = '';
+window.csRefresh = 20;
+-->
+</script>
+<script language="JavaScript1.1" type="text/javascript" src="cam.js">
+</script>
+<script language="JavaScript" type="text/javascript">
+<!--
+	function StartCam()
+	{ setTimeout("ShowCam()", (window.csRefresh-0.2)*1000 ); }
+	
+	function ShowCam()
+	{ 	 window.location.reload( true ); }
+
+	function GetLastImage() 
+	{
+		if(window.csLastImage==0)
+		{
+			window.csLastImage = 1;
+			window.location.reload( true );
+		}
+
+		//images["cam"].src='webcam' + window.csLastImage + '.jpg' ;
+		return window.csLastImage;
+	}
+	
+	function GetRandomNumber() 
+	{
+		return ( (Math.round(Math.random()*9)) + "7" + (Math.round(Math.random()*9)) + "9" + (Math.round(Math.random()*9)) +"1"+ (Math.round(Math.random()*9)) );
+	}
+// -->
+</script>
+
+<body bgcolor="#FFFFFF" onLoad="StartCam()">
+
+<div align="center">
+<table border="0" cellspacing="0" cellpadding="0"><tr><td align="center">
+
+<h1></h1>
+
+<script language="JavaScript" type="text/javascript">
+<!--
+document.write( '<div class="message">' );
+
+if(window.csCamOnline || (!window.csCamOnline && !window.csHideCam))
+{
+document.write( '<img src="webcam' + GetLastImage() + '.jpg?nr=' + GetRandomNumber() + '" name="cam" class="camImg" width="768" height="576">' );
+document.write( '<br clear="all">' );
+}
+else
+{
+document.write( '<img src="camoffline.jpg" name="cam" class="camImg" alt="WebCam" width="768" height="576">' );
+document.write( '<br clear="all">' );
+}
+
+if(window.csLastImageTime != '')
+	document.write( window.csLastImageTime + '<br>');
+else
+{
+	if(!window.csCamOnline)
+		document.write( '<br>' );
+}
+
+if(window.csMessage != '')
+	document.write(  window.csMessage + '<br>');
+
+
+if(window.csShowHistory)
+{
+	document.write( '<span class="history"><a href="camhistory.html" target="camHistory">Show recent images<\/a><\/span>');
+}
+
+document.write( '<br><\/div>');
+
+// -->
+</script>
+
+<noscript><img src="webcam1.jpg" name="cam" class="camImg" alt="WebCam" width="768" height="576"></noscript>
+
+<p>Powered by CamSpinner</p>
+</td></tr></table>
+</div>
+</body>
+</html>

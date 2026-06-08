@@ -1,0 +1,1318 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Snippet Playlist PDF TTS – Prototype</title>
+  <style>
+    :root { --bg:#0b0f14; --panel:#111826; --muted:#7f8aa3; --text:#e7eefc; --accent:#4aa3ff; --danger:#ff5a5f; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background:var(--bg); color:var(--text); }
+    header { padding:14px 16px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; gap:12px; align-items:center; justify-content:space-between; }
+    header .left { display:flex; gap:12px; align-items:center; }
+    header h1 { margin:0; font-size:16px; font-weight:650; letter-spacing:.2px; }
+    header .sub { color:var(--muted); font-size:12px; }
+    main { display:grid; grid-template-columns: 1.25fr .9fr; gap:12px; padding:12px; height: calc(100vh - 56px); }
+    .panel { background:var(--panel); border:1px solid rgba(255,255,255,.08); border-radius:12px; overflow:hidden; display:flex; flex-direction:column; }
+    .panel .bar { padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.08); display:flex; gap:10px; align-items:center; justify-content:space-between; }
+    .panel .bar .title { font-size:13px; font-weight:650; }
+    .panel .bar .meta { color:var(--muted); font-size:12px; }
+    .panel .content { padding:10px 12px; overflow:auto; }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    button, input[type="text"], select {
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      color:var(--text);
+      border-radius:10px;
+      padding:8px 10px;
+      font-size:12px;
+      outline:none;
+    }
+    button { cursor:pointer; }
+    button.primary { background: rgba(74,163,255,.18); border-color: rgba(74,163,255,.35); }
+    button.danger { background: rgba(255,90,95,.16); border-color: rgba(255,90,95,.35); }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    input[type="file"] { color:var(--muted); font-size:12px; }
+    .split { display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size:11px; padding:2px 6px; border:1px solid rgba(255,255,255,.12); border-radius:6px; color:var(--muted); }
+    .docList, .playlist { display:flex; flex-direction:column; gap:8px; }
+    .card {
+      padding:10px; border:1px solid rgba(255,255,255,.10); border-radius:12px;
+      background: rgba(255,255,255,.04);
+    }
+    .card .top { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+    .card .name { font-size:12px; font-weight:650; }
+    .card .small { color:var(--muted); font-size:11px; line-height:1.35; }
+    .card .actions { display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+    .pill { display:inline-flex; gap:6px; align-items:center; padding:3px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.12); color:var(--muted); font-size:11px; }
+    .readerText {
+      line-height:1.6;
+      font-size:13px;
+      white-space:pre-wrap;
+      user-select:text;
+    }
+    .readerText mark { background: rgba(74,163,255,.25); color:var(--text); padding:0 2px; border-radius:4px; }
+    .toast { position: fixed; bottom: 12px; left: 12px; right: 12px; display:flex; justify-content:center; pointer-events:none; }
+    .toast .box {
+      pointer-events:auto;
+      max-width: 980px; width:100%;
+      padding:10px 12px; border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(17,24,38,.92);
+      color: var(--text);
+      display:none;
+    }
+    .dragHint { color:var(--muted); font-size:11px; }
+    .draggable { cursor:grab; }
+    .draggable.dragging { opacity:.6; }
+    .nowPlaying { border-color: rgba(74,163,255,.45); box-shadow: 0 0 0 1px rgba(74,163,255,.25) inset; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .hr { height:1px; background: rgba(255,255,255,.08); margin:10px 0; }
+
+    /* Now Reading panel */
+    .nowReading {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 12px;
+      background: rgba(255,255,255,.03);
+    }
+    .nowReading .label { color: var(--muted); font-size: 11px; }
+    .nowReading .text {
+      margin-top: 6px;
+      line-height: 1.6;
+      font-size: 13px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .nowReading .text .w {
+      padding: 0 2px;
+      border-radius: 4px;
+    }
+    .nowReading .text .w.active {
+      background: rgba(74,163,255,.25);
+      box-shadow: 0 0 0 1px rgba(74,163,255,.25) inset;
+    }
+
+    /* Mobile bottom toolbar */
+    .mobileToolbar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1000;
+      padding: 10px 12px;
+      border-top: 1px solid rgba(255,255,255,.10);
+      background: rgba(17,24,38,.94);
+      backdrop-filter: blur(10px);
+      display: none;
+    }
+    .mobileToolbar .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.2fr 1fr 1fr;
+      gap: 8px;
+      align-items: center;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+    .mobileToolbar button {
+      width: 100%;
+      padding: 12px 12px;
+      font-size: 12px;
+      border-radius: 12px;
+    }
+    .mobileToolbar .center {
+      text-align: center;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    /* Collapsible snippets (mobile-only) */
+    .snippetBody {
+      display: block;
+      margin-top: 8px;
+    }
+    /* On desktop we keep bodies visible even if the class is present */
+    .snippetBody.collapsed {
+      display: block;
+    }
+    /* Toggle button is only shown on mobile */
+    .snippetToggle {
+      display: none;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 6px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 980px) {
+      .snippetToggle { display: inline-flex; }
+      .snippetBody.collapsed { display: none; }
+    }
+
+    @media (max-width: 980px) {
+      /* show mobile toolbar + reserve space so it doesn't cover content */
+      .mobileToolbar { display: block; }
+      body { padding-bottom: 86px; }
+      footer { padding-bottom: 14px; }
+    }
+
+    /* Footer / License */
+    footer {
+      padding: 10px 12px;
+      color: var(--muted);
+      font-size: 11px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      background: rgba(17,24,38,.55);
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    /* Mobile / small screens */
+    @media (max-width: 980px) {
+      main { grid-template-columns: 1fr; height: auto; }
+      header { flex-direction: column; align-items: flex-start; gap: 8px; }
+      header .row { width: 100%; }
+      .split { grid-template-columns: 1fr; }
+      .panel .bar { flex-direction: column; align-items: stretch; gap: 10px; }
+      .panel .bar .meta { margin-top: 2px; }
+      .panel .bar .row { width: 100%; }
+      button, input[type="text"], select { width: 100%; }
+      input[type="file"] { width: 100%; }
+      .card .top { flex-direction: column; align-items: stretch; }
+      .card .actions { justify-content: flex-start; }
+      .kbd { display: none; }
+    }
+
+    @media (max-width: 520px) {
+      body { font-size: 14px; }
+      header h1 { font-size: 15px; }
+      .panel .content { padding: 10px; }
+      .readerText { font-size: 14px; }
+      button { padding: 10px 12px; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="left">
+    <h1>Snippet Playlist PDF TTS – Prototype</h1>
+    <div class="sub">PDF → Markierung → Snippet → Playlist → Satz/Absatz/Snippet Navigation</div>
+  </div>
+  <div class="row">
+    <span class="kbd">Space</span><span class="sub">Play/Pause</span>
+    <span class="kbd">←/→</span><span class="sub">Prev/Next Satz</span>
+    <span class="kbd">↑/↓</span><span class="sub">Prev/Next Snippet</span>
+  </div>
+</header>
+
+<main>
+  <!-- LEFT: PDF Reader -->
+  <section class="panel" id="readerPanel">
+    <div class="bar">
+      <div>
+        <div class="title">Reader</div>
+        <div class="meta" id="readerMeta">Kein Dokument geladen.</div>
+      </div>
+      <div class="row">
+        <input id="pdfFile" type="file" accept="application/pdf" />
+        <button class="primary" id="btnLoadPdf">PDF laden</button>
+        <select id="pageSelect" disabled></select>
+        <button id="btnSaveSnippet" class="primary" disabled>Markierung → Snippet</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="split">
+        <div class="card">
+          <div class="name">Dokumente</div>
+          <div class="small">Mehrere PDFs möglich. Snippets referenzieren immer die Quelle.</div>
+          <div class="hr"></div>
+          <div class="docList" id="docList"></div>
+        </div>
+
+        <div class="card">
+          <div class="name">Aktuelle Seite (Text)</div>
+          <div class="small">Markiere Text mit der Maus. Danach: „Markierung → Snippet“</div>
+          <div class="hr"></div>
+          <div class="readerText" id="pageText">(PDF laden, dann Seite wählen)</div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="card">
+        <div class="top">
+          <div>
+            <div class="name">Markierung / Snippet-Preview</div>
+            <div class="small">Wird als immutable Text-Snapshot gespeichert. Quelle wird angezeigt.</div>
+          </div>
+          <div class="actions">
+            <input type="text" id="snippetTitle" placeholder="Snippet Titel (optional)" style="min-width:220px;" />
+            <input type="text" id="snippetTags" placeholder="Tags: komma-getrennt" style="min-width:220px;" />
+          </div>
+        </div>
+        <div class="hr"></div>
+        <div class="small mono" id="selectionInfo">Keine Markierung.</div>
+        <div class="hr"></div>
+        <div class="readerText" id="selectionPreview"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT: Playlist + Player -->
+  <section class="panel" id="playlistPanel">
+    <div class="bar">
+      <div>
+        <div class="title">Playlist / Player</div>
+        <div class="meta" id="playerMeta">Bereit. Keine Snippets.</div>
+      </div>
+      <div class="row">
+        <button id="btnNewPlaylist">Neue Playlist</button>
+        <input type="text" id="playlistTitle" placeholder="Playlist Titel" style="min-width:160px;" />
+        <button class="danger" id="btnClearAll">Reset (localStorage)</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="card">
+        <div class="top">
+          <div>
+            <div class="name">Player Controls</div>
+            <div class="small">Navigation ist segmentbasiert (Satz/Absatz) statt Timecode.</div>
+          </div>
+          <div class="actions">
+            <select id="segmentMode">
+              <option value="sentence">Satz</option>
+              <option value="paragraph">Absatz</option>
+            </select>
+            <button id="btnPlayPause" class="primary" disabled>Play</button>
+            <button id="btnPrevSeg" disabled>Prev</button>
+            <button id="btnNextSeg" disabled>Next</button>
+            <button id="btnPrevSnippet" disabled>Prev Snip</button>
+            <button id="btnNextSnippet" disabled>Next Snip</button>
+            <button id="btnStop" disabled>Stop</button>
+          </div>
+        </div>
+        <div class="hr"></div>
+        <div class="small" id="nowPlayingInfo">Kein Snippet ausgewählt.</div>
+        <div class="nowReading" id="nowReadingPanel">
+          <div class="label">Now Reading (aktuelles Segment)</div>
+          <div class="text" id="nowReadingText">—</div>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="card">
+        <div class="top">
+          <div>
+            <div class="name">Snippets</div>
+            <div class="small dragHint">Drag & Drop: Reihenfolge ändern. Klick: als „Now Playing“ setzen.</div>
+          </div>
+          <div class="actions">
+            <button id="btnExport" title="Export JSON (für Debug/Port)">Export JSON</button>
+            <button id="btnImport" title="Import JSON (paste)">Import JSON</button>
+          </div>
+        </div>
+        <div class="hr"></div>
+        <div class="playlist" id="playlistList"></div>
+      </div>
+    </div>
+  </section>
+<\/main>
+
+<footer>
+  Open-Source Hinweis: Dieses Projekt nutzt <b>PDF.js</b> (pdfjs-dist 4.10.38) unter der <b>Apache License 2.0</b>. 
+  Lizenztext: <a href="./vendor/pdfjs/4.10.38/LICENSE.txt" target="_blank" rel="noopener">LICENSE.txt</a>
+</footer>
+
+<div class="mobileToolbar" id="mobileToolbar">
+  <div class="grid">
+    <button id="mPrevSnippet" disabled>◀ Snip</button>
+    <button id="mPrevSeg" disabled>◀ Satz</button>
+    <button id="mPlayPause" class="primary" disabled>Play</button>
+    <button id="mNextSeg" disabled>Satz ▶</button>
+    <button id="mNextSnippet" disabled>Snip ▶</button>
+  </div>
+  <div class="center" id="mNowMeta">—</div>
+</div>
+
+<div class="toast" id="toast"><div class="box" id="toastBox"></div></div>
+
+<!-- PDF.js (ESM build) -->
+<script type="module">
+  import * as pdfjsLib from "./vendor/pdfjs/4.10.38/pdf.min.mjs";
+  // IMPORTANT: worker must match the same pdfjs-dist version
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "./vendor/pdfjs/4.10.38/pdf.worker.min.mjs";
+  // Expose for the rest of the prototype code (keeps the Swift-portable architecture)
+  window.pdfjsLib = pdfjsLib;
+</script>
+
+<script type="module">
+/**
+ * =========================
+ * Models
+ * =========================
+ */
+class DocumentModel {
+  constructor({ id, name, pageCount, pagesText }) {
+    this.id = id;
+    this.name = name;
+    this.pageCount = pageCount;
+    this.pagesText = pagesText; // Array<string> page text
+    this.createdAt = Date.now();
+  }
+}
+
+class SnippetModel {
+  constructor({
+    id, documentId, documentName,
+    pageNumber, text,
+    title, tags,
+    locator
+  }) {
+    this.id = id;
+    this.documentId = documentId;
+    this.documentName = documentName;
+    this.pageNumber = pageNumber; // 1-based
+    this.text = text; // immutable snapshot
+    this.title = title || "";
+    this.tags = tags || [];
+    this.locator = locator; // {prefix,start,suffix,normalizedHash}
+    this.createdAt = Date.now();
+  }
+}
+
+class PlaylistModel {
+  constructor({ id, title, snippetIds }) {
+    this.id = id;
+    this.title = title || "Playlist";
+    this.snippetIds = snippetIds || [];
+    this.createdAt = Date.now();
+  }
+}
+
+class PlayerState {
+  constructor() {
+    this.playlistId = null;
+    this.currentSnippetId = null;
+    this.segmentMode = "sentence"; // 'sentence' | 'paragraph'
+    this.segmentIndex = 0;
+    this.isPlaying = false;
+  }
+}
+
+/**
+ * =========================
+ * Utilities
+ * =========================
+ */
+const uid = () => crypto.randomUUID();
+const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+const normalizeText = (s) => (s || "")
+  .normalize("NFKC")
+  .replace(/\r\n/g, "\n")
+  .replace(/[ \t]+/g, " ")
+  .replace(/-\n/g, "")         // naive de-hyphenation across line breaks
+  .replace(/\n{3,}/g, "\n\n")
+  .trim();
+
+async function sha256Hex(input) {
+  const enc = new TextEncoder().encode(input);
+  const buf = await crypto.subtle.digest("SHA-256", enc);
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,"0")).join("");
+}
+
+function toast(msg) {
+  const box = document.getElementById("toastBox");
+  const wrap = document.getElementById("toast");
+  box.textContent = msg;
+  box.style.display = "block";
+  wrap.style.pointerEvents = "auto";
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => {
+    box.style.display = "none";
+    wrap.style.pointerEvents = "none";
+  }, 1600);
+}
+
+/**
+ * =========================
+ * Store (state + persistence)
+ * =========================
+ */
+class AppStore {
+  constructor() {
+    this.documents = new Map();   // id -> DocumentModel
+    this.snippets = new Map();    // id -> SnippetModel
+    this.playlists = new Map();   // id -> PlaylistModel
+    this.player = new PlayerState();
+
+    this.currentDocumentId = null;
+    this.currentPageNumber = 1;
+
+    this._load();
+    if (this.playlists.size === 0) {
+      const pl = new PlaylistModel({ id: uid(), title: "Default", snippetIds: [] });
+      this.playlists.set(pl.id, pl);
+      this.player.playlistId = pl.id;
+      this._save();
+    } else {
+      // pick first playlist
+      const first = [...this.playlists.values()][0];
+      this.player.playlistId = first.id;
+    }
+  }
+
+  _serialize() {
+    return {
+      documents: [...this.documents.values()],
+      snippets: [...this.snippets.values()],
+      playlists: [...this.playlists.values()],
+      player: this.player,
+      currentDocumentId: this.currentDocumentId,
+      currentPageNumber: this.currentPageNumber
+    };
+  }
+
+  _save() {
+    localStorage.setItem("snippet_tts_prototype_v1", JSON.stringify(this._serialize()));
+  }
+
+  _load() {
+    const raw = localStorage.getItem("snippet_tts_prototype_v1");
+    if (!raw) return;
+    try {
+      const data = JSON.parse(raw);
+      (data.documents || []).forEach(d => this.documents.set(d.id, new DocumentModel(d)));
+      (data.snippets || []).forEach(s => this.snippets.set(s.id, new SnippetModel(s)));
+      (data.playlists || []).forEach(p => this.playlists.set(p.id, new PlaylistModel(p)));
+      if (data.player) Object.assign(this.player, data.player);
+      this.currentDocumentId = data.currentDocumentId || this.currentDocumentId;
+      this.currentPageNumber = data.currentPageNumber || this.currentPageNumber;
+    } catch (e) {
+      console.warn("Store load failed:", e);
+    }
+  }
+
+  resetAll() {
+    localStorage.removeItem("snippet_tts_prototype_v1");
+    location.reload();
+  }
+}
+
+const store = new AppStore();
+
+/**
+ * =========================
+ * Services
+ * =========================
+ */
+class PDFService {
+  constructor() {
+    // PDF.js worker config
+    if (window.pdfjsLib?.GlobalWorkerOptions) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "./vendor/pdfjs/4.10.38/pdf.worker.min.mjs";
+    }
+  }
+
+  async loadPdfFromFile(file) {
+    const ab = await file.arrayBuffer();
+    const pdf = await window.pdfjsLib.getDocument({ data: ab }).promise;
+
+    const pageCount = pdf.numPages;
+    const pagesText = [];
+    for (let i = 1; i <= pageCount; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      // join items with spaces; keep rough line breaks
+      const strings = content.items.map(it => it.str);
+      const text = normalizeText(strings.join(" "));
+      pagesText.push(text);
+    }
+    return new DocumentModel({
+      id: uid(),
+      name: file.name,
+      pageCount,
+      pagesText
+    });
+  }
+}
+
+class SegmentService {
+  segment(text, mode) {
+    const s = (text || "").trim();
+    if (!s) return [];
+
+    if (mode === "paragraph") {
+      // simple paragraph split: double newline or strong breaks
+      return s.split(/\n{2,}/).map(x => x.trim()).filter(Boolean);
+    }
+
+    // sentence mode: Intl.Segmenter if available; fallback regex
+    if (window.Intl && Intl.Segmenter) {
+      const seg = new Intl.Segmenter("de", { granularity: "sentence" });
+      return [...seg.segment(s)].map(x => x.segment.trim()).filter(Boolean);
+    }
+
+    // fallback: naive split
+    return s.split(/(?<=[.!?])\s+/).map(x => x.trim()).filter(Boolean);
+  }
+}
+
+class SpeechService {
+  constructor() {
+    this.synth = window.speechSynthesis;
+    this.voice = null;
+    this.rate = 1.0;
+    this.pitch = 1.0;
+
+    // load voices
+    this._loadVoices();
+    window.speechSynthesis.onvoiceschanged = () => this._loadVoices();
+  }
+
+  _loadVoices() {
+    const voices = this.synth.getVoices() || [];
+    // prefer German
+    this.voice = voices.find(v => (v.lang || "").toLowerCase().startsWith("de")) || voices[0] || null;
+  }
+
+  stop() {
+    this.synth.cancel();
+  }
+
+  speak(text, { onEnd, onError, onBoundary } = {}) {
+    this.stop();
+    const u = new SpeechSynthesisUtterance(text);
+    if (this.voice) u.voice = this.voice;
+    u.rate = this.rate;
+    u.pitch = this.pitch;
+
+    // NOTE: 'boundary' events are not consistently supported across all browsers/voices.
+    // We use them opportunistically to highlight the current word in the "Now Reading" panel.
+    u.onboundary = (ev) => {
+      try { onBoundary && onBoundary(ev); } catch (_) {}
+    };
+
+    u.onend = () => onEnd && onEnd();
+    u.onerror = (e) => onError && onError(e);
+    this.synth.speak(u);
+  }
+}
+
+const pdfService = new PDFService();
+const segmentService = new SegmentService();
+const speechService = new SpeechService();
+
+/**
+ * =========================
+ * Controller (Actions)
+ * =========================
+ */
+const Actions = {
+  async importPdf(file) {
+    const doc = await pdfService.loadPdfFromFile(file);
+    store.documents.set(doc.id, doc);
+    store.currentDocumentId = doc.id;
+    store.currentPageNumber = 1;
+    store._save();
+    toast("PDF importiert: " + doc.name);
+    UI.renderAll();
+  },
+
+  selectDocument(docId) {
+    store.currentDocumentId = docId;
+    store.currentPageNumber = 1;
+    store._save();
+    UI.renderAll();
+  },
+
+  selectPage(pageNumber) {
+    store.currentPageNumber = pageNumber;
+    store._save();
+    UI.renderReader();
+  },
+
+  async createSnippetFromSelection({ title, tags }) {
+    const sel = window.getSelection();
+    const raw = sel ? sel.toString() : "";
+    const text = normalizeText(raw);
+
+    const doc = store.documents.get(store.currentDocumentId);
+    if (!doc) { toast("Kein Dokument aktiv."); return; }
+    if (!text || text.length < 5) { toast("Markiere erst etwas Text (mind. 5 Zeichen)."); return; }
+
+    const pageText = doc.pagesText[store.currentPageNumber - 1] || "";
+    const normPage = normalizeText(pageText);
+    const normSnippet = normalizeText(text);
+
+    // build anchors from page text around first occurrence (best-effort)
+    const idx = normPage.indexOf(normSnippet.slice(0, Math.min(160, normSnippet.length)));
+    const anchorIndex = idx >= 0 ? idx : 0;
+    const prefix = normPage.slice(Math.max(0, anchorIndex - 80), anchorIndex);
+    const start = normSnippet.slice(0, 140);
+    const suffix = normPage.slice(anchorIndex + start.length, anchorIndex + start.length + 80);
+
+    const normalizedHash = await sha256Hex(normSnippet);
+
+    const snippet = new SnippetModel({
+      id: uid(),
+      documentId: doc.id,
+      documentName: doc.name,
+      pageNumber: store.currentPageNumber,
+      text,
+      title: (title || "").trim(),
+      tags: (tags || "").split(",").map(t => t.trim()).filter(Boolean),
+      locator: { prefix, start, suffix, normalizedHash }
+    });
+
+    store.snippets.set(snippet.id, snippet);
+
+    const pl = store.playlists.get(store.player.playlistId);
+    pl.snippetIds.push(snippet.id);
+
+    // if nothing playing, set as current
+    if (!store.player.currentSnippetId) {
+      store.player.currentSnippetId = snippet.id;
+      store.player.segmentIndex = 0;
+    }
+
+    store._save();
+    toast("Snippet gespeichert.");
+    UI.renderAll();
+  },
+
+  newPlaylist(title) {
+    const pl = new PlaylistModel({ id: uid(), title: (title || "Playlist").trim() || "Playlist", snippetIds: [] });
+    store.playlists.set(pl.id, pl);
+    store.player.playlistId = pl.id;
+    store.player.currentSnippetId = null;
+    store.player.segmentIndex = 0;
+    store._save();
+    toast("Playlist erstellt.");
+    UI.renderAll();
+  },
+
+  setNowPlaying(snippetId) {
+    store.player.currentSnippetId = snippetId;
+    store.player.segmentIndex = 0;
+    store._save();
+    UI.renderPlayer();
+    UI.renderPlaylist();
+  },
+
+  reorderSnippet(draggedId, targetId) {
+    const pl = store.playlists.get(store.player.playlistId);
+    const a = pl.snippetIds;
+    const from = a.indexOf(draggedId);
+    const to = a.indexOf(targetId);
+    if (from < 0 || to < 0 || from === to) return;
+    a.splice(to, 0, a.splice(from, 1)[0]);
+    store._save();
+    UI.renderPlaylist();
+  },
+
+  removeSnippet(snippetId) {
+    const pl = store.playlists.get(store.player.playlistId);
+    pl.snippetIds = pl.snippetIds.filter(id => id !== snippetId);
+    store.snippets.delete(snippetId);
+
+    if (store.player.currentSnippetId === snippetId) {
+      store.player.currentSnippetId = pl.snippetIds[0] || null;
+      store.player.segmentIndex = 0;
+      speechService.stop();
+      store.player.isPlaying = false;
+    }
+
+    store._save();
+    UI.renderAll();
+  },
+
+  setSegmentMode(mode) {
+    store.player.segmentMode = mode;
+    store.player.segmentIndex = 0;
+    store._save();
+    UI.renderPlayer();
+  },
+
+  stopPlayback() {
+    speechService.stop();
+    store.player.isPlaying = false;
+    store._save();
+    UI.renderPlayer();
+  },
+
+  playPause() {
+    const pl = store.playlists.get(store.player.playlistId);
+    if (!pl || pl.snippetIds.length === 0) return;
+
+    if (!store.player.currentSnippetId) {
+      store.player.currentSnippetId = pl.snippetIds[0];
+      store.player.segmentIndex = 0;
+    }
+
+    if (store.player.isPlaying) {
+      // Pause: we stop; resume will restart current segment (sentence boundary)
+      speechService.stop();
+      store.player.isPlaying = false;
+      store._save();
+      UI.renderPlayer();
+      return;
+    }
+
+    // Play current segment
+    store.player.isPlaying = true;
+    store._save();
+    Controller._speakCurrentSegment();
+    UI.renderPlayer();
+  }
+};
+
+const Controller = {
+  _getCurrentSnippet() {
+    const id = store.player.currentSnippetId;
+    return id ? store.snippets.get(id) : null;
+  },
+
+  _getSegments(snippet) {
+    return segmentService.segment(snippet.text, store.player.segmentMode);
+  },
+
+  _speakCurrentSegment() {
+    const snippet = this._getCurrentSnippet();
+    if (!snippet) { Actions.stopPlayback(); return; }
+
+    const segments = this._getSegments(snippet);
+    if (segments.length === 0) { Actions.stopPlayback(); return; }
+
+    store.player.segmentIndex = clamp(store.player.segmentIndex, 0, segments.length - 1);
+    store._save();
+
+    const segText = segments[store.player.segmentIndex];
+    // Render segment immediately (without word highlight). Word highlight may update via boundary events.
+    renderNowReading(segText, -1);
+
+    speechService.speak(segText, {
+      onBoundary: (ev) => {
+        // Some engines report boundary at word start; use charIndex when available.
+        const idx = (typeof ev.charIndex === "number") ? ev.charIndex : -1;
+        if (idx >= 0) renderNowReading(segText, idx);
+      },
+      onEnd: () => {
+        if (!store.player.isPlaying) return;
+        // auto-advance to next segment; if last, go next snippet
+        const nextIndex = store.player.segmentIndex + 1;
+        if (nextIndex < segments.length) {
+          store.player.segmentIndex = nextIndex;
+          store._save();
+          UI.renderPlayer();
+          this._speakCurrentSegment();
+        } else {
+          this.nextSnippet(true);
+        }
+      },
+      onError: (e) => {
+        console.warn("Speech error:", e);
+        Actions.stopPlayback();
+      }
+    });
+    UI.renderPlayer();
+  },
+
+  prevSegment() {
+    const snippet = this._getCurrentSnippet();
+    if (!snippet) return;
+    const segs = this._getSegments(snippet);
+    if (segs.length === 0) return;
+
+    store.player.segmentIndex = clamp(store.player.segmentIndex - 1, 0, segs.length - 1);
+    store._save();
+    if (store.player.isPlaying) this._speakCurrentSegment();
+    UI.renderPlayer();
+  },
+
+  nextSegment() {
+    const snippet = this._getCurrentSnippet();
+    if (!snippet) return;
+    const segs = this._getSegments(snippet);
+    if (segs.length === 0) return;
+
+    store.player.segmentIndex = clamp(store.player.segmentIndex + 1, 0, segs.length - 1);
+    store._save();
+    if (store.player.isPlaying) this._speakCurrentSegment();
+    UI.renderPlayer();
+  },
+
+  prevSnippet(autoPlay = false) {
+    const pl = store.playlists.get(store.player.playlistId);
+    if (!pl || pl.snippetIds.length === 0) return;
+
+    const cur = store.player.currentSnippetId;
+    const i = cur ? pl.snippetIds.indexOf(cur) : 0;
+    const ni = clamp(i - 1, 0, pl.snippetIds.length - 1);
+    store.player.currentSnippetId = pl.snippetIds[ni];
+    store.player.segmentIndex = 0;
+    store._save();
+
+    if (store.player.isPlaying || autoPlay) {
+      store.player.isPlaying = true;
+      store._save();
+      this._speakCurrentSegment();
+    }
+    UI.renderAll();
+  },
+
+  nextSnippet(autoPlay = false) {
+    const pl = store.playlists.get(store.player.playlistId);
+    if (!pl || pl.snippetIds.length === 0) return;
+
+    const cur = store.player.currentSnippetId;
+    const i = cur ? pl.snippetIds.indexOf(cur) : -1;
+    const ni = clamp(i + 1, 0, pl.snippetIds.length - 1);
+    store.player.currentSnippetId = pl.snippetIds[ni];
+    store.player.segmentIndex = 0;
+    store._save();
+
+    if (store.player.isPlaying || autoPlay) {
+      store.player.isPlaying = true;
+      store._save();
+      this._speakCurrentSegment();
+    } else {
+      UI.renderAll();
+    }
+  }
+};
+
+/**
+ * =========================
+ * UI Rendering
+ * =========================
+ */
+const UI = {
+  init() {
+    // PDF Load
+    document.getElementById("btnLoadPdf").addEventListener("click", async () => {
+      const input = document.getElementById("pdfFile");
+      const file = input.files && input.files[0];
+      if (!file) return toast("Bitte PDF auswählen.");
+      try {
+        await Actions.importPdf(file);
+        input.value = "";
+      } catch (e) {
+        console.error(e);
+        toast("PDF Laden fehlgeschlagen (PDF.js).");
+      }
+    });
+
+    // Save Snippet
+    document.getElementById("btnSaveSnippet").addEventListener("click", async () => {
+      const title = document.getElementById("snippetTitle").value;
+      const tags = document.getElementById("snippetTags").value;
+      await Actions.createSnippetFromSelection({ title, tags });
+      document.getElementById("snippetTitle").value = "";
+      document.getElementById("snippetTags").value = "";
+      window.getSelection()?.removeAllRanges();
+      this.renderSelection();
+    });
+
+    // Selection change preview
+    document.addEventListener("selectionchange", () => this.renderSelection());
+
+    // Page select
+    document.getElementById("pageSelect").addEventListener("change", (e) => {
+      Actions.selectPage(parseInt(e.target.value, 10));
+    });
+
+    // Playlist buttons
+    document.getElementById("btnNewPlaylist").addEventListener("click", () => {
+      const title = document.getElementById("playlistTitle").value;
+      Actions.newPlaylist(title);
+      document.getElementById("playlistTitle").value = "";
+    });
+
+    document.getElementById("btnClearAll").addEventListener("click", () => {
+      if (confirm("Wirklich alles löschen (localStorage Reset)?")) store.resetAll();
+    });
+
+    // Player controls
+    document.getElementById("segmentMode").addEventListener("change", (e) => Actions.setSegmentMode(e.target.value));
+    document.getElementById("btnPlayPause").addEventListener("click", () => Actions.playPause());
+    document.getElementById("btnStop").addEventListener("click", () => Actions.stopPlayback());
+    document.getElementById("btnPrevSeg").addEventListener("click", () => Controller.prevSegment());
+    document.getElementById("btnNextSeg").addEventListener("click", () => Controller.nextSegment());
+    document.getElementById("btnPrevSnippet").addEventListener("click", () => Controller.prevSnippet());
+    document.getElementById("btnNextSnippet").addEventListener("click", () => Controller.nextSnippet());
+
+    // Mobile toolbar controls (same actions as desktop controls)
+    document.getElementById("mPlayPause").addEventListener("click", () => Actions.playPause());
+    document.getElementById("mPrevSeg").addEventListener("click", () => Controller.prevSegment());
+    document.getElementById("mNextSeg").addEventListener("click", () => Controller.nextSegment());
+    document.getElementById("mPrevSnippet").addEventListener("click", () => Controller.prevSnippet());
+    document.getElementById("mNextSnippet").addEventListener("click", () => Controller.nextSnippet());
+
+    // Export/Import
+    document.getElementById("btnExport").addEventListener("click", () => {
+      const json = JSON.stringify(store._serialize(), null, 2);
+      navigator.clipboard.writeText(json).then(() => toast("JSON in Clipboard kopiert."));
+    });
+    document.getElementById("btnImport").addEventListener("click", async () => {
+      const raw = prompt("JSON hier einfügen:");
+      if (!raw) return;
+      try {
+        const data = JSON.parse(raw);
+        // crude import: overwrite localStorage
+        localStorage.setItem("snippet_tts_prototype_v1", JSON.stringify(data));
+        toast("Import ok. Reload…");
+        setTimeout(() => location.reload(), 600);
+      } catch (e) {
+        toast("Import fehlgeschlagen (JSON invalid).");
+      }
+    });
+
+    // Keyboard shortcuts
+    window.addEventListener("keydown", (e) => {
+      if (e.target && ["INPUT","TEXTAREA","SELECT"].includes(e.target.tagName)) return;
+      if (e.code === "Space") { e.preventDefault(); Actions.playPause(); }
+      else if (e.key === "ArrowLeft") { e.preventDefault(); Controller.prevSegment(); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); Controller.nextSegment(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); Controller.prevSnippet(); }
+      else if (e.key === "ArrowDown") { e.preventDefault(); Controller.nextSnippet(); }
+    });
+
+    this.renderAll();
+  },
+
+  renderAll() {
+    this.renderDocs();
+    this.renderReader();
+    this.renderSelection();
+    this.renderPlaylist();
+    this.renderPlayer();
+  },
+
+  renderDocs() {
+    const docList = document.getElementById("docList");
+    docList.innerHTML = "";
+
+    const docs = [...store.documents.values()].sort((a,b) => b.createdAt - a.createdAt);
+    if (docs.length === 0) {
+      docList.innerHTML = `<div class="small">Noch keine PDFs importiert.</div>`;
+      return;
+    }
+
+    docs.forEach(doc => {
+      const card = document.createElement("div");
+      card.className = "card";
+      const active = store.currentDocumentId === doc.id;
+
+      card.innerHTML = `
+        <div class="top">
+          <div>
+            <div class="name">${doc.name}</div>
+            <div class="small">Seiten: ${doc.pageCount} · ID: <span class="mono">${doc.id.slice(0,8)}</span></div>
+          </div>
+          <div class="actions">
+            <button class="${active ? "primary" : ""}">${active ? "Aktiv" : "Wählen"}</button>
+          </div>
+        </div>
+      `;
+      card.querySelector("button").addEventListener("click", () => Actions.selectDocument(doc.id));
+      docList.appendChild(card);
+    });
+  },
+
+  renderReader() {
+    const meta = document.getElementById("readerMeta");
+    const pageSelect = document.getElementById("pageSelect");
+    const pageText = document.getElementById("pageText");
+    const btnSave = document.getElementById("btnSaveSnippet");
+
+    const doc = store.currentDocumentId ? store.documents.get(store.currentDocumentId) : null;
+
+    if (!doc) {
+      meta.textContent = "Kein Dokument geladen.";
+      pageSelect.disabled = true;
+      btnSave.disabled = true;
+      pageSelect.innerHTML = "";
+      pageText.textContent = "(PDF laden, dann Seite wählen)";
+      return;
+    }
+
+    meta.textContent = `${doc.name} · Seite ${store.currentPageNumber}/${doc.pageCount}`;
+    pageSelect.disabled = false;
+    btnSave.disabled = false;
+
+    // fill page select
+    pageSelect.innerHTML = "";
+    for (let p=1; p<=doc.pageCount; p++) {
+      const opt = document.createElement("option");
+      opt.value = String(p);
+      opt.textContent = "Seite " + p;
+      if (p === store.currentPageNumber) opt.selected = true;
+      pageSelect.appendChild(opt);
+    }
+
+    const text = doc.pagesText[store.currentPageNumber - 1] || "";
+    pageText.textContent = text || "(Keine Textdaten extrahiert – PDF evtl. bildbasiert.)";
+  },
+
+  renderSelection() {
+    const info = document.getElementById("selectionInfo");
+    const preview = document.getElementById("selectionPreview");
+
+    const sel = window.getSelection();
+    const raw = sel ? sel.toString() : "";
+    const text = normalizeText(raw);
+
+    if (!text) {
+      info.textContent = "Keine Markierung.";
+      preview.textContent = "";
+      return;
+    }
+
+    const doc = store.currentDocumentId ? store.documents.get(store.currentDocumentId) : null;
+    const src = doc ? `${doc.name} – Seite ${store.currentPageNumber}` : "(keine Quelle)";
+
+    info.textContent = `Quelle: ${src} · Länge: ${text.length} Zeichen`;
+    preview.textContent = text.slice(0, 5000);
+  },
+
+  renderPlaylist() {
+    const plEl = document.getElementById("playlistList");
+    plEl.innerHTML = "";
+
+    const pl = store.playlists.get(store.player.playlistId);
+    if (!pl) return;
+
+    const ids = pl.snippetIds.slice();
+    if (ids.length === 0) {
+      plEl.innerHTML = `<div class="small">Keine Snippets in dieser Playlist. Markiere Text im Reader und speichere ihn.</div>`;
+      return;
+    }
+
+    ids.forEach(snippetId => {
+      const snip = store.snippets.get(snippetId);
+      if (!snip) return;
+
+      const card = document.createElement("div");
+      const isNow = store.player.currentSnippetId === snip.id;
+      card.className = "card draggable" + (isNow ? " nowPlaying" : "");
+      card.draggable = true;
+      card.dataset.snipId = snip.id;
+
+      const title = snip.title || snip.text.slice(0, 64).replace(/\s+/g, " ") + (snip.text.length > 64 ? "…" : "");
+      const tagStr = snip.tags.length ? snip.tags.join(", ") : "—";
+
+      card.innerHTML = `
+        <div class="top">
+          <div style="min-width:0;">
+            <div class="name">${escapeHtml(title)}</div>
+            <div class="small">Quelle: ${escapeHtml(snip.documentName)} · Seite ${snip.pageNumber}</div>
+            <div class="small">Tags: ${escapeHtml(tagStr)}</div>
+          </div>
+          <div class="actions">
+            <span class="pill mono">#${snip.id.slice(0,6)}</span>
+            <button class="danger">Löschen</button>
+          </div>
+        </div>
+        <div class="hr"></div>
+        <div class="row">
+          <button class="snippetToggle" type="button">Details</button>
+        </div>
+        <div class="snippetBody collapsed">
+          <div class="small">${escapeHtml(snip.text.slice(0, 800).replace(/\s+/g, " "))}${snip.text.length>800?"…":""}</div>
+        </div>
+      `;
+
+      card.addEventListener("click", (e) => {
+        if (e.target && e.target.tagName === "BUTTON") return;
+        Actions.setNowPlaying(snip.id);
+      });
+
+      card.querySelector("button.danger").addEventListener("click", (e) => {
+        e.stopPropagation();
+        Actions.removeSnippet(snip.id);
+      });
+
+      // Collapsible details (mobile)
+      const toggleBtn = card.querySelector("button.snippetToggle");
+      const bodyEl = card.querySelector(".snippetBody");
+      if (toggleBtn && bodyEl) {
+        toggleBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          bodyEl.classList.toggle("collapsed");
+          toggleBtn.textContent = bodyEl.classList.contains("collapsed") ? "Details" : "Weniger";
+        });
+      }
+
+      // DnD
+      card.addEventListener("dragstart", (e) => {
+        card.classList.add("dragging");
+        e.dataTransfer.setData("text/plain", snip.id);
+      });
+      card.addEventListener("dragend", () => card.classList.remove("dragging"));
+      card.addEventListener("dragover", (e) => e.preventDefault());
+      card.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const draggedId = e.dataTransfer.getData("text/plain");
+        Actions.reorderSnippet(draggedId, snip.id);
+      });
+
+      plEl.appendChild(card);
+    });
+  },
+
+  renderPlayer() {
+    const meta = document.getElementById("playerMeta");
+    const now = document.getElementById("nowPlayingInfo");
+    const btnPlay = document.getElementById("btnPlayPause");
+    const btnStop = document.getElementById("btnStop");
+    const btnPrevSeg = document.getElementById("btnPrevSeg");
+    const btnNextSeg = document.getElementById("btnNextSeg");
+    const btnPrevSnip = document.getElementById("btnPrevSnippet");
+    const btnNextSnip = document.getElementById("btnNextSnippet");
+
+    document.getElementById("segmentMode").value = store.player.segmentMode;
+
+    const pl = store.playlists.get(store.player.playlistId);
+    const snip = store.player.currentSnippetId ? store.snippets.get(store.player.currentSnippetId) : null;
+
+    const count = pl ? pl.snippetIds.length : 0;
+    meta.textContent = `Playlist: ${(pl?.title)||"—"} · Snippets: ${count}`;
+
+    const enabled = count > 0;
+    btnPlay.disabled = !enabled;
+    btnStop.disabled = !enabled;
+    btnPrevSeg.disabled = !enabled;
+    btnNextSeg.disabled = !enabled;
+    btnPrevSnip.disabled = !enabled;
+    btnNextSnip.disabled = !enabled;
+
+    btnPlay.textContent = store.player.isPlaying ? "Pause" : "Play";
+
+    if (!snip) {
+      now.textContent = "Kein Snippet ausgewählt.";
+      // Reset Now Reading panel
+      renderNowReading("", -1);
+      // Mobile toolbar sync
+      const mPlay = document.getElementById("mPlayPause");
+      const mPrevSeg = document.getElementById("mPrevSeg");
+      const mNextSeg = document.getElementById("mNextSeg");
+      const mPrevSnip = document.getElementById("mPrevSnippet");
+      const mNextSnip = document.getElementById("mNextSnippet");
+      const mMeta = document.getElementById("mNowMeta");
+
+      if (mPlay) mPlay.textContent = store.player.isPlaying ? "Pause" : "Play";
+      if (mPlay) mPlay.disabled = !enabled;
+      if (mPrevSeg) mPrevSeg.disabled = !enabled;
+      if (mNextSeg) mNextSeg.disabled = !enabled;
+      if (mPrevSnip) mPrevSnip.disabled = !enabled;
+      if (mNextSnip) mNextSnip.disabled = !enabled;
+      if (mMeta) mMeta.textContent = "—";
+      return;
+    }
+
+    const segs = segmentService.segment(snip.text, store.player.segmentMode);
+    const segCount = segs.length || 0;
+    const idx = clamp(store.player.segmentIndex, 0, Math.max(0, segCount - 1));
+    const currentSeg = segs[idx] || "";
+    // Keep the Now Reading panel useful even when paused or when the user navigates segments.
+    // When playing, word highlight (if supported) is driven by boundary events.
+    if (!store.player.isPlaying) renderNowReading(currentSeg, -1);
+    const title = snip.title || snip.text.slice(0, 60).replace(/\s+/g," ") + (snip.text.length>60?"…":"");
+
+    now.innerHTML = `
+      <div><b>Now Playing:</b> ${escapeHtml(title)}</div>
+      <div class="small">Quelle: ${escapeHtml(snip.documentName)} · Seite ${snip.pageNumber}</div>
+      <div class="small">Modus: ${store.player.segmentMode} · Segment: ${idx+1}/${segCount || 1}</div>
+      <div class="hr"></div>
+      <div class="small mono">${escapeHtml(currentSeg.slice(0, 260))}${currentSeg.length>260?"…":""}</div>
+    `;
+
+    // Mobile toolbar sync
+    const mPlay = document.getElementById("mPlayPause");
+    const mPrevSeg = document.getElementById("mPrevSeg");
+    const mNextSeg = document.getElementById("mNextSeg");
+    const mPrevSnip = document.getElementById("mPrevSnippet");
+    const mNextSnip = document.getElementById("mNextSnippet");
+    const mMeta = document.getElementById("mNowMeta");
+
+    if (mPlay) mPlay.textContent = store.player.isPlaying ? "Pause" : "Play";
+    if (mPlay) mPlay.disabled = !enabled;
+    if (mPrevSeg) mPrevSeg.disabled = !enabled;
+    if (mNextSeg) mNextSeg.disabled = !enabled;
+    if (mPrevSnip) mPrevSnip.disabled = !enabled;
+    if (mNextSnip) mNextSnip.disabled = !enabled;
+
+    if (mMeta) {
+      const t = snip ? (snip.title || snip.text.slice(0, 44).replace(/\s+/g, " ") + (snip.text.length > 44 ? "…" : "")) : "—";
+      const segs2 = snip ? segmentService.segment(snip.text, store.player.segmentMode) : [];
+      const segCount2 = segs2.length || 0;
+      const idx2 = snip ? clamp(store.player.segmentIndex, 0, Math.max(0, segCount2 - 1)) : 0;
+      mMeta.textContent = snip ? `${t} · ${store.player.segmentMode} ${idx2 + 1}/${segCount2 || 1}` : "—";
+    }
+  }
+};
+
+// PRODUCTION NOTE (iOS/Swift, max usability):
+// In the native app, prefer PDFKit over PDF.js. When the user creates a snippet from a PDFSelection,
+// persist: document identifier, page index, and the selection's bounds (PDF coordinates) as rects.
+// Playback: use AVSpeechSynthesizer for segment/word progress (delegate callbacks provide ranges),
+// and render a PDFView cropped/scrolled to the stored rect, overlaying highlight rects for the active segment.
+// This yields reliable "read along" directly in the PDF, without brittle text-to-layout matching.
+
+function tokenizeWordsWithOffsets(text) {
+  const tokens = [];
+  const re = /\S+/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    tokens.push({ word: m[0], start: m.index, end: m.index + m[0].length });
+  }
+  return tokens;
+}
+
+function renderNowReading(segmentText, activeCharIndex) {
+  const el = document.getElementById("nowReadingText");
+  if (!el) return;
+  const s = (segmentText || "").trim();
+  if (!s) { el.textContent = "—"; return; }
+
+  // If we don't have a reliable char index, render plain text for robustness.
+  if (typeof activeCharIndex !== "number" || !Number.isFinite(activeCharIndex) || activeCharIndex < 0) {
+    el.textContent = s;
+    return;
+  }
+
+  const tokens = tokenizeWordsWithOffsets(s);
+  if (tokens.length === 0) { el.textContent = s; return; }
+
+  const activeIdx = tokens.findIndex(t => activeCharIndex >= t.start && activeCharIndex < t.end);
+  if (activeIdx < 0) { el.textContent = s; return; }
+
+  // Build HTML with minimal escaping and highlight on token spans.
+  const parts = [];
+  let cursor = 0;
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+    if (t.start > cursor) parts.push(escapeHtml(s.slice(cursor, t.start)));
+    const cls = i === activeIdx ? "w active" : "w";
+    parts.push(`<span class="${cls}">${escapeHtml(s.slice(t.start, t.end))}</span>`);
+    cursor = t.end;
+  }
+  if (cursor < s.length) parts.push(escapeHtml(s.slice(cursor)));
+  el.innerHTML = parts.join("");
+}
+
+function escapeHtml(s) {
+  return (s || "").replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m]));
+}
+
+UI.init();
+</script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+Hallo Michael,
+
+hier ein php-basierter Versuch.
+
+Es wird das File (kann in testtail.php eingetragen werden) als  
+Streaming-Resource geöffnet und es werden die letzten 45 Zeilen gelesen.
+
+Dann werden alle Zeichefolgen der Art "http//..." mit einem A-Tag  
+versehen. Schau mal, ob das ausreichend ist.
+
+Das Ergebnis wird in einem Datei-basierten Cache abgespeichert und  
+angezeigt (Sourcen aus dem Web in cache/Lite.php, hat LGPL-Lizenz),  
+der alle 5 Sekunden refreshed wird (Intervall läßt sich auch in  
+testtail.php definieren). Wo der Cache sein tmp-Verzeichnis  
+hinschreibt, habe ich noch so genau durchschaut (glaube, ins  
+root-Verzeichnis).
+
+Na, ja, wie ich schon sagte, ich weiß ehrlich gesagt nicht, ob es  
+rechtlich zulässig ist, das access-Log zu veröffentlichen. Bin von  
+meinem lokalen Webserver auf girl.tv gesurft und schwupps stand da  
+mein Computer-Name (der sich blöderweise aus meinem Vor- und Nachnamen  
+zusammensetzt) in der Log-Anzeige. Fand' ich nicht lustig ;-)))
+
+Ich hoffe, Du bekommst das php-Ding bei Dir zum Laufen.
+
+Viele Grüße
+
+Johann
+

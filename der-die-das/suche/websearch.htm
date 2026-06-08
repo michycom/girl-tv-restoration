@@ -1,0 +1,36 @@
+<form method="POST" action="cgi-bin/websearch/websearch.cgi">
+<input type=hidden name=sort value="0">
+<input type=hidden name=noinput value="http://127.0.0.1/demo/_archiv/suche/noinput.htm">
+
+<p>
+Suchbegriff(e):<br>
+<input type=text name="sbeg" value="" size=40 maxlength=140>
+</p>
+
+<p>
+Sollten mehrere Suchbegriffe eingegeben werden, kann hier die Art
+der Verkn&uuml;pfung gew&auml;hlt werden. Das Schl&uuml;sselwort ODER steht f&uuml;r
+einen Treffer eines der eingebenen Suchbegriffe in einem Dokument, 
+das Schl&uuml;sselwort UND f&uuml;r das Zutreffen aller Suchbegriffe in einem 
+Dokument.<br>
+<input type="radio" checked name="verbindung" value="ODER"> oder
+<br>
+<input type="radio" name="verbindung" value="UND"> und
+</p>
+
+<p>
+Zum Schlu&szlig; kann noch der Umfang der Suche angegeben werden. Zur Auswahl stehen 
+das ganze Dokument, der Meta-Tag: DISCREPTION oder der Titel. Standardm&auml;&szlig;ig 
+wird das ganze Dokument durchsucht.<br>
+<input type="radio" checked name="sort" value="doku"> ganzes Dokument 
+<br>
+<input type="radio" name="sort" value="meta"> nur META-TAG
+<br>
+<input type="radio" name="sort" value="titel"> nur Titel
+</p>
+	
+<p>
+<input type=submit value="Suche starten">
+</p>
+
+</form>

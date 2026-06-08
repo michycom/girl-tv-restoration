@@ -1,0 +1,12 @@
+modify=20191104220308;perm=adfrw;size=795;type=file;unique=808U482973;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; Maps.xml
+modify=20191104220308;perm=adfrw;size=253;type=file;unique=808U482985;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; Entities.inc
+modify=20191104220308;perm=flcdmpe;type=pdir;unique=808U48294B;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; ..
+modify=20191104220308;perm=adfrw;size=2056;type=file;unique=808U482983;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; Getid3Toolkit.class
+modify=20191104220308;perm=adfrw;size=19809;type=file;unique=808U482975;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; Getid3Helper.class
+modify=20191104220308;perm=flcdmpe;type=dir;unique=808U482977;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; GalleryStorage
+modify=20191104220308;perm=adfrw;size=362;type=file;unique=808U482974;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; Maps.inc
+modify=20191104220308;perm=adfrw;size=2925;type=file;unique=808U482976;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; Getid3Extractor.class
+modify=20191104220308;perm=flcdmpe;type=dir;unique=808U48297E;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; CVS
+modify=20191104220308;perm=adfrw;size=51;type=file;unique=808U482982;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; GNUmakefile
+modify=20191104220308;perm=flcdmpe;type=cdir;unique=808U482972;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; .
+modify=20191104220308;perm=adfrw;size=1802;type=file;unique=808U482984;UNIX.group=1002;UNIX.groupname=eszett;UNIX.mode=0755;UNIX.owner=1002;UNIX.ownername=eszett; Getid3Interface_1_0.class

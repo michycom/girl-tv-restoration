@@ -1,0 +1,85 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BROKEN</title>
+    <meta charset="UTF-8">
+    <style>
+        /* CSS to style the text */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        h1 {
+            font-size: 10em;
+            color: red;
+        }
+
+        /* Stil für den Button */
+        #playButton {
+            position: fixed;
+            bottom: 20px; /* Platzierung des Buttons am unteren Rand */
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+visibility:hidden;
+        }
+
+
+    </style>
+</head>
+<body>
+    <h1>temporarily out of order</h1>
+ <audio id="myAudio" loop>
+        <source src="https://girl.tv/music/a_piece_of_peace.mp3" type="audio/mpeg">
+        Dein Browser unterstützt das Audio-Element nicht.
+    </audio>
+
+    <button id="playButton">listen to some music in between</button>
+
+    <script>
+        var myAudio = document.getElementById("myAudio");
+        var playButton = document.getElementById("playButton");
+        var isPlaying = false;
+
+        function togglePlay() {
+            if (isPlaying) {
+                myAudio.pause();
+            } else {
+                myAudio.play();
+            }
+            isPlaying = !isPlaying;
+        }
+
+        // Event Listener für Klick auf den Button
+        playButton.addEventListener("click", togglePlay);
+
+        // Event Listener für Touch auf den Button (für Touch-fähige Geräte)
+        playButton.addEventListener("touchstart", function(event) {
+            event.preventDefault(); // Verhindert zusätzlichen 'click'-Event
+            togglePlay();
+        });
+
+        // Event Listener für Klick auf den Body (außerhalb des Buttons)
+        document.body.addEventListener("click", function(event) {
+            if (event.target !== playButton) {
+                togglePlay();
+            }
+        });
+
+        // Event Listener für Touch auf den Body (außerhalb des Buttons)
+        document.body.addEventListener("touchstart", function(event) {
+            if (event.target !== playButton) {
+                event.preventDefault(); // Verhindert zusätzlichen 'click'-Event
+                togglePlay();
+            }
+        });
+    </script>
+</body></html>

@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>Eigenschwingungen einer Saite – SVG Demo</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: #eee;
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body>
+<svg viewBox="0 0 800 360" width="800" height="360">
+  <!-- Hintergrund -->
+  <rect x="0" y="0" width="800" height="360" fill="#111"/>
+
+  <!-- Achsen / Beschriftung -->
+  <text x="400" y="20" text-anchor="middle" fill="#eee" font-size="18">
+    Stehende Wellen auf einer gespannten Saite (Moden 1–4)
+  </text>
+
+  <!-- Allgemeine Legende -->
+  <circle cx="40" cy="40" r="4" fill="#ffcc33"/>
+  <text x="55" y="44" fill="#ffcc33" font-size="12">Punkt in der geometrischen Mitte der Saite</text>
+  <line x1="40" y1="55" x2="60" y2="55" stroke="#888" stroke-width="2"/>
+  <text x="65" y="59" fill="#888" font-size="12">Saite (Ruhelage)</text>
+  <line x1="40" y1="70" x2="60" y2="70" stroke="#4fd1ff" stroke-width="2"/>
+  <text x="65" y="74" fill="#4fd1ff" font-size="12">Schwingungsform (Mode)</text>
+
+  <!-- Grundeinstellungen -->
+  <!-- Saite von x=50 bis x=750 -->
+  <!-- y-Koordinaten pro Modus: 60, 140, 220, 300 -->
+  <!-- Mitte bei x=400 -->
+
+  <!-- MODE 1: Grundton (ein Bauch in der Mitte) -->
+  <text x="20" y="64" fill="#eee" font-size="12">n=1</text>
+  <text x="760" y="64" fill="#aaa" font-size="12" text-anchor="end">Grundton – Bauch in der Mitte</text>
+
+  <!-- Ruhelage der Saite -->
+  <line x1="50" y1="60" x2="750" y2="60" stroke="#555" stroke-width="2"/>
+
+  <!-- Schwingungsform als Polyline (ein Bauch) -->
+  <polyline
+    fill="none"
+    stroke="#4fd1ff"
+    stroke-width="3"
+    points="
+      50,60
+      400,30
+      750,60
+    " />
+
+  <!-- Punkt in der Mitte der Saite -->
+  <circle cx="400" cy="30" r="4" fill="#ffcc33"/>
+
+  <!-- MODE 2: erste Oberwelle / Oktave (Knoten in der Mitte) -->
+  <text x="20" y="144" fill="#eee" font-size="12">n=2</text>
+  <text x="760" y="144" fill="#aaa" font-size="12" text-anchor="end">
+    Oktave – Knoten in der Mitte
+  </text>
+
+  <!-- Ruhelage -->
+  <line x1="50" y1="140" x2="750" y2="140" stroke="#555" stroke-width="2"/>
+
+  <!-- Schwingungsform: zwei Bäuche, Knoten in der Mitte -->
+  <polyline
+    fill="none"
+    stroke="#4fd1ff"
+    stroke-width="3"
+    points="
+      50,140
+      225,110
+      400,170
+      575,110
+      750,140
+    " />
+
+  <!-- Punkt in der Mitte: liegt auf der Ruhelinie = Knoten -->
+  <circle cx="400" cy="140" r="4" fill="#ffcc33"/>
+
+  <!-- MODE 3: zweite Oberwelle (wieder Bauch in der Mitte) -->
+  <text x="20" y="224" fill="#eee" font-size="12">n=3</text>
+  <text x="760" y="224" fill="#aaa" font-size="12" text-anchor="end">
+    3. Mode – wieder Bauch in der Mitte
+  </text>
+
+  <!-- Ruhelage -->
+  <line x1="50" y1="220" x2="750" y2="220" stroke="#555" stroke-width="2"/>
+
+  <!-- Schwingungsform: drei Bäuche -->
+  <polyline
+    fill="none"
+    stroke="#4fd1ff"
+    stroke-width="3"
+    points="
+      50,220
+      166.7,190
+      283.3,250
+      400,190
+      516.7,250
+      633.3,190
+      750,220
+    " />
+
+  <!-- Punkt in der Mitte: liegt wieder auf einem Bauch -->
+  <circle cx="400" cy="190" r="4" fill="#ffcc33"/>
+
+  <!-- MODE 4: dritte Oberwelle (Knoten in der Mitte) -->
+  <text x="20" y="304" fill="#eee" font-size="12">n=4</text>
+  <text x="760" y="304" fill="#aaa" font-size="12" text-anchor="end">
+    4. Mode – Knoten in der Mitte
+  </text>
+
+  <!-- Ruhelage -->
+  <line x1="50" y1="300" x2="750" y2="300" stroke="#555" stroke-width="2"/>
+
+  <!-- Schwingungsform: vier Bäuche -->
+  <polyline
+    fill="none"
+    stroke="#4fd1ff"
+    stroke-width="3"
+    points="
+      50,300
+      137.5,270
+      225,330
+      312.5,270
+      400,330
+      487.5,270
+      575,330
+      662.5,270
+      750,300
+    " />
+
+  <!-- Punkt in der Mitte: liegt auf der Ruhelinie = Knoten -->
+  <circle cx="400" cy="300" r="4" fill="#ffcc33"/>
+
+</svg>
+</body>
+</html>

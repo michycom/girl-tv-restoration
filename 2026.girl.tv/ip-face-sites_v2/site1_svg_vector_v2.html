@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>IP Face — Vector (SVG) v2</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#0b0f14; color:#e6eef7; }
+    header { padding: 18px 16px 10px; border-bottom: 1px solid rgba(255,255,255,.08); }
+    h1 { margin: 0 0 8px; font-size: 16px; font-weight: 650; letter-spacing:.2px; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    input { background:#0f1620; border:1px solid rgba(255,255,255,.12); color:#e6eef7; padding:10px 12px; border-radius:10px; min-width: 210px; outline:none; }
+    button { background:#132235; border:1px solid rgba(255,255,255,.14); color:#e6eef7; padding:10px 12px; border-radius:10px; cursor:pointer; }
+    button:hover { background:#17304d; }
+    main { padding: 16px; display:grid; gap: 14px; grid-template-columns: 1fr; }
+    .card { background:#0f1620; border:1px solid rgba(255,255,255,.10); border-radius:14px; padding:14px; }
+    .meta { font-size:12px; opacity:.85; line-height:1.5; }
+    .grid { display:grid; gap:14px; grid-template-columns: minmax(260px, 520px) 1fr; }
+    @media (max-width: 860px){ .grid{ grid-template-columns: 1fr; } }
+    #svgWrap { display:flex; justify-content:center; align-items:center; }
+    svg { width: min(520px, 92vw); height: auto; }
+    .tiny { font-size:11px; opacity:.7; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>IP Face — Vector (SVG) v2</h1>
+    <div class="row">
+      <input id="ip" placeholder="z.B. 203.0.113.42" inputmode="numeric" />
+      <button id="rnd">Random IP</button>
+      <button id="render">Render</button>
+      <span class="tiny">mehr Formvielfalt: asymmetry · eyelids · lip thickness · nose styles</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="grid">
+      <div class="card" id="svgWrap">
+        <svg id="face" viewBox="0 0 400 480" aria-label="Generated face">
+          <defs>
+            <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="blur"/>
+              <feColorMatrix in="blur" type="matrix"
+                values="0 0 0 0 0
+                        0 0 0 0 0
+                        0 0 0 0 0
+                        0 0 0 .45 0" result="shadow"/>
+              <feOffset in="shadow" dx="0" dy="10" result="offset"/>
+              <feMerge>
+                <feMergeNode in="offset"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+
+          <rect x="0" y="0" width="400" height="480" rx="18" fill="#0b0f14"/>
+
+          <g id="grp">
+            <path id="head" filter="url(#softShadow)" fill="#d9c3b0" stroke="rgba(255,255,255,.10)" stroke-width="2"/>
+            <path id="earL" fill="#d2b8a4" stroke="rgba(0,0,0,.08)" stroke-width="1.5"/>
+            <path id="earR" fill="#d2b8a4" stroke="rgba(0,0,0,.08)" stroke-width="1.5"/>
+
+            <!-- eyes + brows -->
+            <path id="browL" fill="none" stroke="#1a1d22" stroke-width="8" stroke-linecap="round"/>
+            <path id="browR" fill="none" stroke="#1a1d22" stroke-width="8" stroke-linecap="round"/>
+
+            <path id="eyeL" fill="#ffffff" stroke="rgba(0,0,0,.18)" stroke-width="2"/>
+            <path id="eyeR" fill="#ffffff" stroke="rgba(0,0,0,.18)" stroke-width="2"/>
+
+            <path id="lidL" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="2.2" stroke-linecap="round" opacity="0"/>
+            <path id="lidR" fill="none" stroke="rgba(0,0,0,.35)" stroke-width="2.2" stroke-linecap="round" opacity="0"/>
+
+            <circle id="irisL" r="10" fill="#5e7f7a"/>
+            <circle id="irisR" r="10" fill="#5e7f7a"/>
+            <circle id="pupilL" r="4.5" fill="#14161a"/>
+            <circle id="pupilR" r="4.5" fill="#14161a"/>
+
+            <!-- nose -->
+            <path id="nose" fill="none" stroke="rgba(0,0,0,.38)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path id="nostril" fill="none" stroke="rgba(0,0,0,.28)" stroke-width="2.5" stroke-linecap="round" opacity="0"/>
+
+            <!-- mouth -->
+            <path id="mouth" fill="none" stroke="#5a2a2a" stroke-width="5" stroke-linecap="round"/>
+            <path id="mouth2" fill="none" stroke="rgba(90,42,42,.55)" stroke-width="3.2" stroke-linecap="round" opacity="0"/>
+
+            <!-- marks -->
+            <circle id="mark" r="4" fill="rgba(90,60,45,.45)" opacity="0"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="card">
+        <div class="meta" id="meta"></div>
+      </div>
+    </div>
+  </main>
+
+<script>
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+function lerp(a,b,t){ return a + (b-a)*t; }
+function u32(n){ return n >>> 0; }
+
+function ipToU32(ip){
+  const p = ip.trim().split(".");
+  if(p.length !== 4) return null;
+  const a = Number(p[0]), b = Number(p[1]), c = Number(p[2]), d = Number(p[3]);
+  if([a,b,c,d].some(x => !Number.isInteger(x) || x<0 || x>255)) return null;
+  return u32((a<<24) | (b<<16) | (c<<8) | d);
+}
+
+function mix32(x){
+  x = u32(x + 0x9e3779b9);
+  x ^= x >>> 16; x = u32(Math.imul(x, 0x85ebca6b));
+  x ^= x >>> 13; x = u32(Math.imul(x, 0xc2b2ae35));
+  x ^= x >>> 16;
+  return u32(x);
+}
+function bits(x, start, len){
+  return (x >>> start) & ((1<<len)-1);
+}
+function mulberry32(seed){
+  let t = seed>>>0;
+  return function(){
+    t = (t + 0x6D2B79F5) >>> 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/* 32-bit discrete layout (same as v1) + extra continuous params via PRNG */
+function decode(ip){
+  const raw = ipToU32(ip);
+  if(raw === null) return null;
+  const x = mix32(raw);
+  const prng = mulberry32(x ^ (raw>>>0));
+  return {
+    ip, raw, x, prng,
+    nose: bits(x,0,6),
+    eyesBrows: bits(x,6,5),
+    mouth: bits(x,11,5),
+    jawChin: bits(x,16,4),
+    faceShape: bits(x,20,3),
+    hairline: bits(x,23,3),
+    ears: bits(x,26,3),
+    cheeks: bits(x,29,2),
+    forehead: bits(x,31,1),
+  };
+}
+
+function randIP(){
+  return [0,0,0,0].map(_ => Math.floor(Math.random()*256)).join(".");
+}
+
+/* SVG helpers */
+function renderFace(d){
+  const R = d.prng;
+
+  // continuous micro-variation (deterministic)
+  const asymX = lerp(-10, 10, R());         // left/right asymmetry
+  const asymY = lerp(-8, 8, R());
+  const headTilt = lerp(-5.5, 5.5, R());    // degrees
+  const scale = lerp(0.98, 1.03, R());
+
+  const grp = document.getElementById("grp");
+  grp.setAttribute("transform", `translate(${asymX.toFixed(2)},${asymY.toFixed(2)}) rotate(${headTilt.toFixed(2)} 200 240) scale(${scale.toFixed(3)})`);
+
+  // core discrete
+  const faceType = d.faceShape; // 0..7
+  const jaw = d.jawChin;        // 0..15
+  const cheeks = d.cheeks;      // 0..3
+  const forehead = d.forehead;  // 0..1
+  const ears = d.ears;          // 0..7
+  const eyes = d.eyesBrows;     // 0..31
+  const nose = d.nose;          // 0..63
+  const mouth = d.mouth;        // 0..31
+
+  // Head geometry (more variety)
+  const cx = 200, cy = 240;
+  const wBase = lerp(148, 192, faceType/7);
+  const hBase = lerp(188, 232, (7-faceType)/7);
+
+  const w = wBase * lerp(0.92, 1.10, R());
+  const h = hBase * lerp(0.92, 1.10, R());
+
+  const jawW = lerp(w*0.70, w*0.98, jaw/15) * lerp(0.92, 1.08, R());
+  const chinDrop = lerp(44, 80, jaw/15) + lerp(-6, 8, R());
+  const cheekBulge = lerp(16, 38, cheeks/3) * lerp(0.85, 1.10, R());
+  const foreheadH = (forehead ? 54 : 36) + lerp(-6, 10, R());
+
+  const headPath =
+    `M ${cx-w} ${cy- h + foreheadH}
+     C ${cx-w+20} ${cy-h}, ${cx-w+70} ${cy-h}, ${cx} ${cy-h}
+     C ${cx+w-70} ${cy-h}, ${cx+w-20} ${cy-h}, ${cx+w} ${cy-h+foreheadH}
+     C ${cx+w+10} ${cy-40}, ${cx+jawW+cheekBulge*0.15} ${cy+86}, ${cx} ${cy+chinDrop}
+     C ${cx-jawW-cheekBulge*0.15} ${cy+86}, ${cx-w-10} ${cy-40}, ${cx-w} ${cy-h+foreheadH}
+     Z`;
+
+  const head = document.getElementById("head");
+  head.setAttribute("d", headPath);
+
+  // Ears (more types)
+  const earType = (ears + ((d.raw>>>12)&7)) % 12; // 0..11
+  const earSize = lerp(24, 46, ears/7) * lerp(0.92, 1.12, R());
+  const earY = cy - 24 + lerp(-18, 18, (earType%6)/5) + lerp(-6, 8, R());
+  const earX = cx - w - 12;
+
+  function earPath(x,y,flip=false){
+    const s = earSize;
+    const k = flip ? -1 : 1;
+    const inner = lerp(0.25, 0.55, (earType%4)/3);
+    const topTight = lerp(0.45, 0.75, ((earType>>2)%3)/2);
+    return `M ${x} ${y}
+            C ${x + k*s*0.18} ${y - s*topTight}, ${x + k*s*0.85} ${y - s*topTight}, ${x + k*s} ${y}
+            C ${x + k*s*1.08} ${y + s*0.62}, ${x + k*s*0.36} ${y + s*0.86}, ${x} ${y + s*0.72}
+            C ${x - k*s*inner} ${y + s*0.40}, ${x - k*s*inner} ${y + s*0.12}, ${x} ${y}
+            Z`;
+  }
+  const earL = document.getElementById("earL");
+  const earR = document.getElementById("earR");
+  earL.setAttribute("d", earPath(earX, earY, false));
+  earR.setAttribute("d", earPath(cx + w + 12, earY, true));
+
+  // Eyes + Brows (expanded archetypes)
+  const eyesType = eyes >>> 2;      // 0..7
+  const eyesVar = eyes & 0b11;      // 0..3
+  const eyesSub = ((d.raw>>>19) & 0b11); // +0..3 => 0..11 total when combined
+  const eyeArche = (eyesType + eyesSub) % 12; // 12 archetypes
+
+  const eyeSpacing = lerp(58, 84, (eyesType/7)) + lerp(-4, 4, R());
+  const eyeY = cy - 44 + lerp(-16, 16, eyesVar/3) + lerp(-6, 6, R());
+  const eyeW = lerp(38, 70, (7-eyesType)/7) * lerp(0.90, 1.12, R());
+  const eyeH = lerp(16, 34, (eyesType)/7) * lerp(0.90, 1.12, R());
+  const tilt = lerp(-18, 18, (eyesVar/3)) + lerp(-6, 6, R());
+
+  function eyePath(x,y,flip){
+    const k = flip ? -1 : 1;
+    const t = (tilt * k) * (Math.PI/180);
+    // archetype shapes
+    const a = eyeArche % 4; // 0 almond,1 round,2 hooded,3 monolid-ish
+    const topLift = [1.0, 0.75, 0.55, 0.35][a];
+    const botLift = [0.70, 0.95, 0.55, 0.55][a];
+    const pinch = [0.0, 0.0, 0.18, 0.10][a];
+
+    const lx = x-eyeW/2, rx = x+eyeW/2;
+    const ty = y-eyeH*topLift, by = y+eyeH*botLift;
+
+    // rotate endpoints slightly around center (cheap "tilt")
+    const dx = eyeW/2;
+    const dy = 0;
+    const rx2 = x + (dx*Math.cos(t) - dy*Math.sin(t));
+    const ry2 = y + (dx*Math.sin(t) + dy*Math.cos(t));
+    const lx2 = x + (-dx*Math.cos(t) - dy*Math.sin(t));
+    const ly2 = y + (-dx*Math.sin(t) + dy*Math.cos(t));
+
+    const c1x = x - eyeW*0.18;
+    const c2x = x + eyeW*0.18;
+
+    return `M ${lx2} ${ly2}
+            Q ${c1x} ${ty} ${x} ${ty + eyeH*0.12*pinch}
+            Q ${c2x} ${ty} ${rx2} ${ry2}
+            Q ${x} ${by} ${lx2} ${ly2}
+            Z`;
+  }
+
+  const eyeL = document.getElementById("eyeL");
+  const eyeR = document.getElementById("eyeR");
+  const exL = cx - eyeSpacing/2 + lerp(-2,2,R());
+  const exR = cx + eyeSpacing/2 + lerp(-2,2,R());
+  eyeL.setAttribute("d", eyePath(exL, eyeY, false));
+  eyeR.setAttribute("d", eyePath(exR, eyeY, true));
+
+  // eyelids (optional)
+  const lid = document.getElementById("lidL");
+  const lidR = document.getElementById("lidR");
+  const showLid = (eyeArche >= 6); // half of them
+  lid.setAttribute("opacity", showLid ? "1" : "0");
+  lidR.setAttribute("opacity", showLid ? "1" : "0");
+
+  function lidPath(x){
+    const lidY = eyeY - lerp(2, 8, (eyeArche%6)/5) + lerp(-2, 2, R());
+    const lw = eyeW * lerp(0.75, 0.95, R());
+    const arch = lerp(6, 16, (eyeArche%6)/5);
+    return `M ${x - lw/2} ${lidY}
+            Q ${x} ${lidY - arch} ${x + lw/2} ${lidY}`;
+  }
+  lid.setAttribute("d", lidPath(exL));
+  lidR.setAttribute("d", lidPath(exR));
+
+  // iris/pupil
+  const irisShiftX = lerp(-5, 5, R());
+  const irisShiftY = lerp(-2, 3, R());
+  const irisR = lerp(8.5, 12.5, R());
+  ["irisL","irisR"].forEach((id, idx) => {
+    const el = document.getElementById(id);
+    el.setAttribute("r", irisR.toFixed(2));
+    el.setAttribute("cx", (idx?exR:exL) + irisShiftX);
+    el.setAttribute("cy", eyeY + 2 + irisShiftY);
+  });
+  ["pupilL","pupilR"].forEach((id, idx) => {
+    const el = document.getElementById(id);
+    el.setAttribute("r", lerp(3.8, 5.3, R()).toFixed(2));
+    el.setAttribute("cx", (idx?exR:exL) + irisShiftX);
+    el.setAttribute("cy", eyeY + 2 + irisShiftY);
+  });
+
+  // Brows (12 styles)
+  const browType = (eyeArche + ((d.raw>>>9)&7)) % 12;
+  const browY = eyeY - 26 + lerp(-6, 6, R());
+  const browLen = lerp(48, 86, (7-eyesType)/7) * lerp(0.90, 1.15, R());
+  const browThick = lerp(5.5, 12, (eyesVar)/3) * lerp(0.90, 1.10, R());
+  const browLift = lerp(-14, 14, (d.hairline)/7) + lerp(-6, 6, R());
+  const browArch = lerp(4, 24, (browType%6)/5);
+  const browAngle = lerp(-10, 12, ((browType>>1)%6)/5); // degrees
+
+  const browL = document.getElementById("browL");
+  const browR = document.getElementById("browR");
+  browL.setAttribute("stroke-width", browThick);
+  browR.setAttribute("stroke-width", browThick);
+
+  function browPath(x, flip){
+    const ang = (browAngle * (flip?-1:1)) * Math.PI/180;
+    const dx = browLen/2;
+    const x0 = x - dx, x1 = x + dx;
+    const y0 = browY + browLift;
+    const y1 = y0 + Math.sin(ang)*6;
+    const cY = y0 - browArch;
+    // straight vs arched vs angled
+    const mode = browType % 3; // 0 arched, 1 straighter, 2 angled
+    if(mode === 1){
+      return `M ${x0} ${y0} Q ${x} ${y0 - browArch*0.55} ${x1} ${y0}`;
+    }
+    if(mode === 2){
+      return `M ${x0} ${y0+2} Q ${x} ${cY} ${x1} ${y1}`;
+    }
+    return `M ${x0} ${y0} Q ${x} ${cY} ${x1} ${y0}`;
+  }
+  browL.setAttribute("d", browPath(exL, false));
+  browR.setAttribute("d", browPath(exR, true));
+
+  // Nose (more styles)
+  const noseType = nose >>> 3;   // 0..7
+  const noseVar = nose & 0b111;  // 0..7
+  const noseStyle = (noseType + ((d.raw>>>21)&7)) % 12; // 12 styles
+
+  const noseY0 = eyeY + 26 + lerp(-4, 6, R());
+  const noseLen = lerp(48, 98, noseType/7) * lerp(0.92, 1.10, R());
+  const noseW = lerp(10, 40, noseVar/7) * lerp(0.90, 1.15, R());
+  const hook = lerp(-18, 20, noseType/7) + lerp(-10, 10, (noseStyle%6)/5);
+  const tipUp = lerp(-14, 14, (7-noseVar)/7) + lerp(-6, 6, R());
+  const nx = cx + lerp(-10, 10, (noseVar)/7) + lerp(-4, 4, R());
+  const bridgeBend = lerp(-12, 12, ((noseStyle>>1)%6)/5);
+
+  // choose curve (concave/convex/straight-ish)
+  const curveMode = noseStyle % 3;
+  let c1 = hook*0.25, c2 = hook*0.9;
+  if(curveMode === 1){ c1 *= 0.4; c2 *= 0.55; } // straighter
+  if(curveMode === 2){ c1 *= 0.9; c2 *= 1.15; } // stronger
+
+  const nosePath =
+    `M ${nx} ${noseY0}
+     C ${nx + c1} ${noseY0 + noseLen*0.30}, ${nx + c2 + bridgeBend*0.35} ${noseY0 + noseLen*0.52}, ${nx + hook*0.70 + bridgeBend*0.20} ${noseY0 + noseLen*0.78}
+     C ${nx + hook*0.25} ${noseY0 + noseLen*0.95}, ${nx - noseW*0.30} ${noseY0 + noseLen + tipUp}, ${nx - noseW*0.62} ${noseY0 + noseLen + tipUp}
+     C ${nx - noseW*0.22} ${noseY0 + noseLen + tipUp + 10}, ${nx + noseW*0.22} ${noseY0 + noseLen + tipUp + 10}, ${nx + noseW*0.62} ${noseY0 + noseLen + tipUp}`;
+  document.getElementById("nose").setAttribute("d", nosePath);
+
+  // optional nostril line (for some styles)
+  const nostril = document.getElementById("nostril");
+  const showNostril = (noseStyle >= 7);
+  nostril.setAttribute("opacity", showNostril ? "1" : "0");
+  if(showNostril){
+    const ny = noseY0 + noseLen + tipUp + 8;
+    const nw = noseW * lerp(0.65, 1.05, R());
+    nostril.setAttribute("d", `M ${nx - nw/2} ${ny} Q ${nx} ${ny + lerp(4,10,R())} ${nx + nw/2} ${ny}`);
+  }
+
+  // Mouth (more shapes)
+  const mouthType = mouth >>> 2;  // 0..7
+  const mouthVar = mouth & 0b11;  // 0..3
+  const mouthStyle = (mouthType + ((d.raw>>>3)&7)) % 12;
+
+  const my = cy + 84 + lerp(-14, 18, mouthVar/3) + lerp(-6, 8, R());
+  const mw = lerp(58, 132, mouthType/7) * lerp(0.90, 1.18, R());
+  const smile = lerp(-24, 22, mouthVar/3) + lerp(-10, 10, (mouthStyle%6)/5);
+  const mcurve = lerp(4, 26, mouthType/7) * lerp(0.85, 1.20, R());
+  const cupid = lerp(0, 10, ((mouthStyle>>1)%6)/5);
+  const lipThick = lerp(0, 1, (mouthStyle>=6)?1:0) * lerp(0.3, 1.0, R());
+
+  const mouthPath =
+    `M ${cx - mw/2} ${my}
+     Q ${cx} ${my + smile - mcurve} ${cx + mw/2} ${my}`;
+  document.getElementById("mouth").setAttribute("d", mouthPath);
+
+  // optional second lip line (thicker / cupid bow)
+  const mouth2 = document.getElementById("mouth2");
+  const showLip = (mouthStyle >= 6);
+  mouth2.setAttribute("opacity", showLip ? "1" : "0");
+  if(showLip){
+    const my2 = my + lerp(6, 14, lipThick);
+    const mw2 = mw * lerp(0.88, 1.02, R());
+    const bow = cupid * lerp(0.6, 1.2, R());
+    mouth2.setAttribute("d",
+      `M ${cx - mw2/2} ${my2}
+       Q ${cx - mw2*0.14} ${my2 - bow} ${cx} ${my2}
+       Q ${cx + mw2*0.14} ${my2 - bow} ${cx + mw2/2} ${my2}`
+    );
+  }
+
+  // Mark (distinctive)
+  const mark = document.getElementById("mark");
+  const showMark = ((d.raw >>> 7) & 1) === 1;
+  mark.setAttribute("opacity", showMark ? "1" : "0");
+  if(showMark){
+    const mx = cx + lerp(-80, 80, ((d.raw>>>8)&255)/255);
+    const my2 = cy + lerp(-40, 80, ((d.raw>>>16)&255)/255);
+    mark.setAttribute("cx", mx.toFixed(2));
+    mark.setAttribute("cy", my2.toFixed(2));
+    mark.setAttribute("r", (lerp(2.2, 6.2, ((d.raw>>>24)&255)/255)).toFixed(2));
+  }
+
+  // Skin tone variation
+  const tone = ((d.raw >>> 0) & 255) / 255;
+  const headFill = `rgb(${Math.round(195+tone*42)},${Math.round(168+tone*30)},${Math.round(150+tone*24)})`;
+  head.setAttribute("fill", headFill);
+  document.getElementById("earL").setAttribute("fill", `rgb(${Math.round(188+tone*38)},${Math.round(160+tone*26)},${Math.round(144+tone*20)})`);
+  document.getElementById("earR").setAttribute("fill", `rgb(${Math.round(188+tone*38)},${Math.round(160+tone*26)},${Math.round(144+tone*20)})`);
+
+  document.getElementById("meta").innerHTML = `
+    <div><b>IP:</b> <code>${d.ip}</code></div>
+    <div><b>raw u32:</b> <code>${d.raw >>> 0}</code> · <b>mixed:</b> <code>${d.x >>> 0}</code></div>
+    <div style="margin-top:10px"><b>Discrete:</b></div>
+    <div class="tiny">nose=${d.nose} · eyes+brows=${d.eyesBrows} · mouth=${d.mouth} · jaw=${d.jawChin} · face=${d.faceShape} · hairline=${d.hairline} · ears=${d.ears} · cheeks=${d.cheeks} · forehead=${d.forehead}</div>
+  `;
+}
+
+function go(ip){
+  const d = decode(ip);
+  if(!d){ alert("Ungültige IP. Format: a.b.c.d (0..255)"); return; }
+  renderFace(d);
+}
+
+document.getElementById("rnd").addEventListener("click", () => {
+  const ip = randIP();
+  document.getElementById("ip").value = ip;
+  go(ip);
+});
+document.getElementById("render").addEventListener("click", () => go(document.getElementById("ip").value));
+document.getElementById("ip").addEventListener("keydown", (e) => { if(e.key === "Enter") go(e.target.value); });
+
+const init = "203.0.113.42";
+document.getElementById("ip").value = init;
+go(init);
+</script>
+</body>
+</html>

@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>Chord Wheel – Root & Triaden</title>
+  <style>
+    :root{
+      color-scheme: dark;
+      --bg:#0b0c10;
+      --panel:#11141c;
+      --line:#262b3b;
+      --text:#f4f6fb;
+      --muted:#9aa3b5;
+      --accent:#4fd1ff;
+      --accent-soft:rgba(79,209,255,.12);
+      --radius:16px;
+      --shadow:0 18px 45px rgba(0,0,0,.6);
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:radial-gradient(circle at top, #141826 0, #05060a 55%, #000 100%);
+      color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+    }
+    .shell{
+      background:var(--panel);
+      box-shadow:var(--shadow);
+      border-radius:var(--radius);
+      padding:20px 24px 16px;
+    }
+    h1{
+      margin:0 0 4px;
+      font-size:18px;
+      text-align:center;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .subtitle{
+      text-align:center;
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:8px;
+    }
+    svg{
+      display:block;
+      margin:auto;
+    }
+    .segment-inner{
+      fill:#151927;
+      stroke:var(--line);
+      stroke-width:1;
+      cursor:pointer;
+      transition:fill .15s, stroke .15s;
+    }
+    .segment-inner:hover{
+      fill:#1c2133;
+      stroke:var(--accent);
+    }
+    .segment-outer{
+      fill:#151927;
+      stroke:var(--line);
+      stroke-width:1;
+      cursor:pointer;
+      transition:fill .15s, stroke .15s;
+    }
+    .segment-outer:hover{
+      fill:#1b2838;
+      stroke:var(--accent);
+    }
+    .segment-root-selected{
+      fill:var(--accent-soft);
+      stroke:var(--accent);
+      stroke-width:2;
+    }
+    .note-ring-segment{
+      fill:#101520;
+      stroke:#272d40;
+      stroke-width:1;
+      cursor:pointer;
+      transition:fill .15s, stroke .15s;
+    }
+    .note-ring-segment:hover{
+      fill:#182131;
+      stroke:var(--accent);
+    }
+    .note-ring-label,
+    .root-label{
+      font-size:11px;
+      fill:var(--muted);
+      pointer-events:none;
+      text-anchor:middle;
+      dominant-baseline:middle;
+    }
+    .root-label{
+      fill:#dfe4ff;
+      font-weight:500;
+    }
+    .triad-box{
+      fill:#151826;
+      stroke:var(--accent);
+      stroke-width:1;
+      filter:url(#shadow-soft);
+    }
+    .triad-text-main{
+      font-size:11px;
+      fill:var(--accent);
+    }
+    .triad-text{
+      font-size:10px;
+      fill:var(--text);
+    }
+    .triad-text-muted{
+      font-size:9px;
+      fill:var(--muted);
+    }
+    .legend{
+      font-size:11px;
+      fill:var(--muted);
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <h1>Chord Wheel</h1>
+  <div class="subtitle">Innen: Note spielen · Außen: Root wählen · Ring: Triaden anzeigen</div>
+
+  <svg id="wheelSvg" viewBox="0 0 520 520" width="520" height="520">
+    <defs>
+      <filter id="shadow-soft" x="-40%" y="-40%" width="180%" height="180%">
+        <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity="0.7"/>
+      </filter>
+    </defs>
+
+    <!-- Hintergrundkreis -->
+    <circle cx="260" cy="260" r="220" fill="#090b11"/>
+
+    <!-- Gruppen für Wheel -->
+    <g id="rootWheel"></g>
+    <g id="noteRing"></g>
+    <g id="triadLayer"></g>
+
+    <!-- Legende -->
+    <text x="260" y="500" class="legend" text-anchor="middle">
+      A ist oben (12 Uhr). Notennamen hier noch englisch, Mapping auf H/B können wir anpassen.
+    </text>
+  </svg>
+</div>
+
+<script>
+(function(){
+  const svgns = "http://www.w3.org/2000/svg";
+
+  // 12 Halbtöne, A oben (Index 0)
+  const NOTES = ['A','A#','B','C','C#','D','D#','E','F','F#','G','G#'];
+
+  const centerX = 260;
+  const centerY = 260;
+  const innerRadius = 80;    // innerer Radius des inneren Rings
+  const midRadius   = 150;   // Grenze inner/outer
+  const outerRadius = 210;   // äußerer Rand des Root-Wheels
+  const noteRingInner = 220; // äußerer Notenring innen
+  const noteRingOuter = 250; // äußerer Notenring außen
+  const triadRadius   = 280; // Radius für Triaden-"Trichter"
+
+  const rootWheelGroup = document.getElementById('rootWheel');
+  const noteRingGroup  = document.getElementById('noteRing');
+  const triadLayer     = document.getElementById('triadLayer');
+
+  let audioCtx = null;
+  let currentRootIndex = null;
+
+  function polarToCartesian(cx, cy, r, angle){
+    return {
+      x: cx + r * Math.cos(angle),
+      y: cy + r * Math.sin(angle)
+    };
+  }
+
+  function arcSlicePath(cx, cy, rInner, rOuter, startAngle, endAngle){
+    const p0 = polarToCartesian(cx, cy, rOuter, startAngle);
+    const p1 = polarToCartesian(cx, cy, rOuter, endAngle);
+    const p2 = polarToCartesian(cx, cy, rInner, endAngle);
+    const p3 = polarToCartesian(cx, cy, rInner, startAngle);
+    const largeArc = (endAngle - startAngle) > Math.PI ? 1 : 0;
+    return [
+      "M", p0.x, p0.y,
+      "A", rOuter, rOuter, 0, largeArc, 1, p1.x, p1.y,
+      "L", p2.x, p2.y,
+      "A", rInner, rInner, 0, largeArc, 0, p3.x, p3.y,
+      "Z"
+    ].join(" ");
+  }
+
+  function createPath(d, className){
+    const p = document.createElementNS(svgns, 'path');
+    p.setAttribute('d', d);
+    p.setAttribute('class', className);
+    return p;
+  }
+
+  function createText(x, y, text, className){
+    const t = document.createElementNS(svgns, 'text');
+    t.setAttribute('x', x);
+    t.setAttribute('y', y);
+    t.textContent = text;
+    if(className) t.setAttribute('class', className);
+    return t;
+  }
+
+  // Frequenz für Note berechnen: A4 = 440 Hz
+  function noteIndexToFrequency(noteIndex){
+    const semitoneOffset = noteIndex; // A oben = 0, dann chromatisch hoch
+    return 440 * Math.pow(2, semitoneOffset / 12);
+  }
+
+  function playNote(noteIndex){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    const freq = noteIndexToFrequency(noteIndex);
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.6);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.65);
+  }
+
+  function computeTriads(rootIdx){
+    function triad(offsets){
+      return offsets.map(o => NOTES[(rootIdx + o + 12) % 12]);
+    }
+    return {
+      major: triad([0,4,7]),
+      minor: triad([0,3,7]),
+      dim:   triad([0,3,6]),
+      aug:   triad([0,4,8]),
+    };
+  }
+
+  function clearTriads(){
+    while(triadLayer.firstChild) triadLayer.removeChild(triadLayer.firstChild);
+  }
+
+  function showTriadsFor(noteIdx){
+    clearTriads();
+    const angleStep = 2 * Math.PI / 12;
+    const startAngle = -Math.PI/2; // A oben
+    const angle = startAngle + noteIdx * angleStep + angleStep/2;
+
+    const boxWidth  = 150;
+    const boxHeight = 90;
+
+    const pos = polarToCartesian(centerX, centerY, triadRadius, angle);
+    const bx = pos.x - boxWidth/2;
+    const by = pos.y - boxHeight/2;
+
+    const rect = document.createElementNS(svgns, 'rect');
+    rect.setAttribute('x', bx);
+    rect.setAttribute('y', by);
+    rect.setAttribute('width', boxWidth);
+    rect.setAttribute('height', boxHeight);
+    rect.setAttribute('rx', 10);
+    rect.setAttribute('ry', 10);
+    rect.setAttribute('class', 'triad-box');
+    triadLayer.appendChild(rect);
+
+    const triads = computeTriads(noteIdx);
+    const rootName = NOTES[noteIdx];
+
+    const tRoot = createText(bx + 10, by + 16, rootName + " – Triaden", 'triad-text-main');
+    tRoot.setAttribute('text-anchor','start');
+    triadLayer.appendChild(tRoot);
+
+    const lines = [
+      "Dur:  "   + triads.major.join(" – "),
+      "Moll: "   + triads.minor.join(" – "),
+      "dim:  "   + triads.dim.join(" – "),
+      "aug:  "   + triads.aug.join(" – ")
+    ];
+    lines.forEach((line, i) => {
+      const t = createText(bx + 10, by + 32 + i*14, line, 'triad-text');
+      t.setAttribute('text-anchor','start');
+      triadLayer.appendChild(t);
+    });
+
+    const hint = createText(bx + boxWidth - 8, by + boxHeight - 6, "Klick auf anderen Ring-Ton für neue Triaden", 'triad-text-muted');
+    hint.setAttribute('text-anchor','end');
+    triadLayer.appendChild(hint);
+  }
+
+  function setRoot(rootIdx){
+    currentRootIndex = rootIdx;
+    // alle Root-Segmente zurücksetzen
+    const allOuter = rootWheelGroup.querySelectorAll('.segment-outer');
+    allOuter.forEach(el => el.classList.remove('segment-root-selected'));
+    // dieses markieren
+    const seg = rootWheelGroup.querySelector(`.segment-outer[data-note-index="${rootIdx}"]`);
+    if(seg) seg.classList.add('segment-root-selected');
+    buildNoteRing();
+    clearTriads();
+  }
+
+  function buildRootWheel(){
+    const angleStep = 2 * Math.PI / 12;
+    const startAngle = -Math.PI/2; // A oben
+
+    for(let i=0;i<12;i++){
+      const a0 = startAngle + i * angleStep;
+      const a1 = a0 + angleStep;
+      const midAngle = a0 + angleStep/2;
+
+      // innerer klickbarer Bereich: Note spielen
+      const dInner = arcSlicePath(centerX, centerY, innerRadius, midRadius, a0, a1);
+      const pInner = createPath(dInner, 'segment-inner');
+      pInner.dataset.noteIndex = i;
+      pInner.addEventListener('click', () => playNote(i));
+      rootWheelGroup.appendChild(pInner);
+
+      // äußerer klickbarer Bereich: Root setzen
+      const dOuter = arcSlicePath(centerX, centerY, midRadius, outerRadius, a0, a1);
+      const pOuter = createPath(dOuter, 'segment-outer');
+      pOuter.dataset.noteIndex = i;
+      pOuter.addEventListener('click', () => setRoot(i));
+      rootWheelGroup.appendChild(pOuter);
+
+      // Label im äußeren Sektor
+      const labelPos = polarToCartesian(centerX, centerY, (midRadius+outerRadius)/2, midAngle);
+      const text = createText(labelPos.x, labelPos.y, NOTES[i], 'root-label');
+      rootWheelGroup.appendChild(text);
+    }
+  }
+
+  function buildNoteRing(){
+    // alten Ring löschen
+    while(noteRingGroup.firstChild) noteRingGroup.removeChild(noteRingGroup.firstChild);
+    if(currentRootIndex === null) return;
+
+    const angleStep = 2 * Math.PI / 12;
+    const startAngle = -Math.PI/2;
+
+    for(let i=0;i<12;i++){
+      const a0 = startAngle + i * angleStep;
+      const a1 = a0 + angleStep;
+      const midAngle = a0 + angleStep/2;
+
+      // Note im Ring: ABSOLUTE Tonhöhe, damit C beim Root-C auch radial bei C liegt
+      const absoluteIndex = i; // 0..11 = A..G#
+      const d = arcSlicePath(centerX, centerY, noteRingInner, noteRingOuter, a0, a1);
+      const seg = createPath(d, 'note-ring-segment');
+      seg.dataset.noteIndex = absoluteIndex;
+      seg.addEventListener('click', () => showTriadsFor(absoluteIndex));
+      noteRingGroup.appendChild(seg);
+
+      const pos = polarToCartesian(centerX, centerY, (noteRingInner+noteRingOuter)/2, midAngle);
+      const t = createText(pos.x, pos.y, NOTES[absoluteIndex], 'note-ring-label');
+      noteRingGroup.appendChild(t);
+    }
+  }
+
+  // Initial
+  buildRootWheel();
+  // Note-Ring erscheint erst, wenn Root gewählt wurde
+
+})();
+</script>
+</body>
+</html>

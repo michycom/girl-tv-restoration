@@ -1,0 +1,86 @@
+/* CSS + JUNK */
+/* ...................................................... */
+
+body {
+		background-repeat: repeat-x;
+		background-image: url(../art/freemee_junkjet-bg.jpg);
+		font-family: Helvetica, Verdana, Arial, sans-serif;
+		margin: 0px;
+		padding: 0px;
+		font-size: 10px;
+		color: white;
+		}
+		
+#strech {
+		color: #bc0200;
+		font-size: 9px;
+		font-family: sans-serif;
+		width: 10000px;
+		border: thin #ff5509 none;
+		}
+		
+#bergkette {
+		position: absolute;
+		top: 300px;
+		left: 600px;
+		width: 10000px;
+		height: 300px;
+		border: 2px red none;
+		}
+ 
+ .stats{	
+		position: absolute;
+		bottom: 0px;
+		width: 2600px;
+		border: thin fuchsia none;
+		color: #fff;
+		font-size: 20px;
+		float: left;
+		}
+		
+   .berge {
+		border-left-style: none;
+		border-bottom-style: none;
+		border-right-style: dotted;
+		border-top-style: none;
+		border-left-color: #e7f8dc;
+		border-bottom-width: 0px;
+		border-left-width: 0px;
+		border-right-width: 1px;
+		border-top-width: 0px;
+		float: right;
+		height: 600px;
+		width: 350px;
+		margin-top: 120px;
+		}
+
+a {	color: white; text-decoration: none;}
+a:hover{ color: #bd46ff}
+		
+#wolko{
+		position: absolute;
+		top: 550px;
+		margin-left: 700px;
+		margin-right: auto;
+		z-index: 2;
+		}
+
+.alpha {font-size: 10px;
+		font-weight: bold;}
+		
+
+
+/* MOZILLA select border hiding*/
+:focus { -moz-outline-style: none; }
+img { border: none; }
+
+.blink { font-size: 12px;
+			font-weight: bold;
+			font-family: Courier; }
+.blink2 { background-color: #03ff64; font-size: 12px;
+			font-weight: bold;
+			font-family: Courier; }
+
+		
+		
+		

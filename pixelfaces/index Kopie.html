@@ -1,0 +1,1092 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IP → Pixelface (32×32) • 3/4 Profil + Hals + Puppig</title>
+<style>
+  :root{
+    --bg:#0b0b0b;--fg:#e6e6e6;--accent:#ffd23f;
+    --px:8px; /* wird per JS gesetzt */
+  }
+  body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,Segoe UI,Arial}
+  .wrap{max-width:1050px;margin:28px auto;padding:0 16px}
+  h1{font-size:18px;margin:0 0 12px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  input[type=text]{flex:1;min-width:240px;padding:10px 12px;border:1px solid #333;background:#111;color:var(--fg);border-radius:8px}
+  button{padding:10px 14px;border:0;border-radius:10px;background:#1a1a1a;color:var(--fg);cursor:pointer}
+  button:hover{background:#222}
+  .accent{background:var(--accent);color:#111;font-weight:700}
+  .out{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;margin-top:10px}
+  .pixelWrap{display:grid;gap:8px;justify-items:center}
+
+  table.pixel{
+    border-collapse: collapse;
+    background:#000;
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow: 0 0 0 1px #222 inset;
+  }
+  table.pixel td{
+    width:var(--px);
+    height:var(--px);
+    padding:0;
+    background:#000;
+  }
+
+  .meta{font-family:ui-monospace,Menlo,Consolas,monospace;color:#bbb;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  .chip{padding:4px 8px;border:1px solid #333;border-radius:999px}
+
+  .panel{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:6px 0 10px}
+  label.small{font-size:12px;color:#aaa}
+  input[type=number]{padding:6px 8px;background:#111;color:#eee;border:1px solid #333;border-radius:6px;min-width:72px}
+  .toggle{display:flex;align-items:center;gap:6px}
+  input[type=range]{width:150px}
+  input[type=color]{width:44px;height:32px;padding:0;border:1px solid #333;background:#111;border-radius:6px}
+
+  .hint{color:#888;font-size:12px;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>IP → Pixelface (32×32) • 3/4 Profil + Hals + Puppig</h1>
+
+  <div class="row">
+    <input id="ip" type="text" placeholder="z. B. 192.168.10.5" value="">
+    <button id="btnRandom">Random IP</button>
+    <button id="btnRender" class="accent">Render</button>
+    <button id="btnSave">Download PNG</button>
+  </div>
+
+  <div class="panel">
+    <span class="toggle"><input id="manual" type="checkbox"><label for="manual" class="small">Manuell</label></span>
+
+    <label class="small" for="puppy">Puppig</label><input id="puppy" type="range" min="0" max="100" step="1" value="75">
+
+    <label class="small" for="profile">3/4 Profil</label><input id="profile" type="range" min="0" max="100" step="1" value="70">
+
+    <label class="small" for="tilt">Tilt</label><input id="tilt" type="range" min="-2" max="2" step="1" value="1">
+
+    <label class="small" for="scale">Scale</label><input id="scale" type="range" min="2" max="16" step="1" value="8">
+    <label class="small" for="bg">BG</label><input id="bg" type="color" value="#000000">
+
+    <span class="toggle"><input id="grid" type="checkbox"><label for="grid" class="small">Grid</label></span>
+
+    <label class="small" for="skinIdx">Skin</label><input id="skinIdx" type="number" min="0" max="7" value="0">
+    <label class="small" for="hairIdx">Hair</label><input id="hairIdx" type="number" min="0" max="7" value="0">
+    <label class="small" for="eyeIdx">Eyes</label><input id="eyeIdx" type="number" min="0" max="7" value="0">
+
+    <label class="small" for="hairVar">HairVar</label><input id="hairVar" type="number" min="0" max="15" value="0">
+    <label class="small" for="accVar">Acc</label><input id="accVar" type="number" min="0" max="7" value="0">
+
+    <button id="btnFromIP">Aus IP übernehmen</button>
+  </div>
+
+  <div class="out">
+    <div class="pixelWrap">
+      <table id="av" class="pixel" aria-label="Pixelface (32x32)"></table>
+      <div class="meta">
+        <span class="chip" id="m_ip">IP: –</span>
+        <span class="chip" id="m_seed">seed: –</span>
+        <span class="chip" id="m_shape">shape: –</span>
+        <span class="chip" id="m_feats">feats: –</span>
+      </div>
+      <div class="hint">Tip: Profile/Puppig ändern → neue Proportionen (Abstände/Kompression).</div>
+    </div>
+  </div>
+</div>
+
+<!-- hidden canvas for PNG export -->
+<canvas id="export" width="32" height="32" style="display:none"></canvas>
+
+<script>
+/* ============================
+   Deterministic utilities
+============================ */
+const U32 = n => (n >>> 0);
+function validIPv4(ip){
+  const parts = ip.trim().split(".");
+  if(parts.length !== 4) return false;
+  return parts.every(p => /^\d{1,3}$/.test(p) && +p>=0 && +p<=255);
+}
+function randomIP(){
+  const a = Math.floor(Math.random()*223)+1;
+  const b = Math.floor(Math.random()*256);
+  const c = Math.floor(Math.random()*256);
+  const d = Math.floor(Math.random()*256);
+  return `${a}.${b}.${c}.${d}`;
+}
+function ipToOctets(ip){ return ip.split(".").map(n=>+n); }
+function hashOctets(o){
+  return U32(((o[0]&0xFF)<<24) ^ ((o[1]&0xFF)<<16) ^ ((o[2]&0xFF)<<8) ^ (o[3]&0xFF));
+}
+function mix32(x){
+  x = U32(x + 0x9e3779b9);
+  x ^= x >>> 16; x = U32(Math.imul(x, 0x85ebca6b));
+  x ^= x >>> 13; x = U32(Math.imul(x, 0xc2b2ae35));
+  x ^= x >>> 16;
+  return U32(x);
+}
+function mulberry32(seed){
+  let t = seed>>>0;
+  return function(){
+    t = (t + 0x6D2B79F5) >>> 0;
+    let r = Math.imul(t ^ (t >>> 15), 1 | t);
+    r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+    return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+  }
+}
+function clamp(n,min,max){ return Math.max(min, Math.min(max,n)); }
+function lerp(a,b,t){ return a+(b-a)*t; }
+function shade(rgb, d){
+  return [
+    clamp(rgb[0]+d,0,255),
+    clamp(rgb[1]+d,0,255),
+    clamp(rgb[2]+d,0,255)
+  ];
+}
+
+/* ============================
+   Palettes
+============================ */
+const SKIN = [
+  [255,220,177],[244,194,157],[224,172,105],[198,134,66],[141,85,36],
+  [235,206,188],[210,160,120],[170,110,86]
+];
+const HAIR_COLORS = [
+  [245,230,72],[110,64,40],[35,35,35],[210,105,70],
+  [180,180,180],[255,160,40],[78,54,44],[30,22,18]
+];
+const EYE_COLORS = [
+  [45,105,170],[34,139,34],[80,50,30],[120,120,120],
+  [90,150,190],[40,90,70],[110,70,45],[70,70,85]
+];
+
+/* ============================
+   DOM table + pixel buffer
+============================ */
+const W=32, H=32;
+let CELLS = [];     // td refs
+let BUF = [];       // [y][x] = [r,g,b] or null
+function initTable(){
+  const tbl = document.getElementById("av");
+  tbl.innerHTML = "";
+  CELLS = [];
+  BUF = [];
+  for(let y=0;y<H;y++){
+    const tr = document.createElement("tr");
+    const rowCells = [];
+    const rowBuf = [];
+    for(let x=0;x<W;x++){
+      const td = document.createElement("td");
+      td.style.background = "#000";
+      tr.appendChild(td);
+      rowCells.push(td);
+      rowBuf.push(null);
+    }
+    tbl.appendChild(tr);
+    CELLS.push(rowCells);
+    BUF.push(rowBuf);
+  }
+}
+function setPxSize(px){
+  document.documentElement.style.setProperty("--px", px+"px");
+}
+function clearAll(bgHex){
+  for(let y=0;y<H;y++){
+    for(let x=0;x<W;x++){
+      CELLS[y][x].style.background = bgHex;
+      BUF[y][x] = null; // null = bg
+    }
+  }
+}
+function setPixel(x,y,rgb){
+  if(x<0||y<0||x>=W||y>=H) return;
+  const col = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+  CELLS[y][x].style.background = col;
+  BUF[y][x] = rgb;
+}
+function fillRect(x,y,w,h,rgb){
+  for(let yy=0;yy<h;yy++) for(let xx=0;xx<w;xx++) setPixel(x+xx,y+yy,rgb);
+}
+function strokeRect(x,y,w,h,rgb){
+  fillRect(x,y,w,1,rgb); fillRect(x,y+h-1,w,1,rgb);
+  fillRect(x,y,1,h,rgb); fillRect(x+w-1,y,1,h,rgb);
+}
+
+/* ============================
+   Param synthesis
+   - 3/4 profile head, puppet proportions
+   - “Partien dichter zueinander”: compress/expand feature distances
+============================ */
+function featuresFromIP(ip){
+  if(!validIPv4(ip)) throw new Error("Ungültige IPv4");
+  const o = ipToOctets(ip);
+  const raw = hashOctets(o);
+  const x = mix32(raw);
+  const rnd = mulberry32(x ^ raw);
+
+  // base indexes (still deterministic but mixed)
+  const skinIdx = (x>>>0) % SKIN.length;
+  const hairIdx = (x>>>3) % HAIR_COLORS.length;
+  const eyeIdx  = (x>>>6) % EYE_COLORS.length;
+
+  const hairVar = (x>>>10) % 16;
+  const accVar  = (x>>>14) % 8;
+
+  // micro layout (these directly affect “density”)
+  const density = lerp(0.72, 1.18, rnd());   // <1 = features closer; >1 = farther apart
+  const eyeSep  = Math.floor(lerp(6, 10, rnd()));   // distance between eye centers
+  const eyeY    = Math.floor(lerp(12, 15, rnd()));  // baseline before density
+  const mouthY  = Math.floor(lerp(21, 25, rnd()));
+  const noseY   = Math.floor(lerp(16, 19, rnd()));
+
+  // head shape params
+  const headW   = lerp(9.2, 11.3, rnd());     // ellipse radii-ish
+  const headH   = lerp(10.0, 12.3, rnd());
+  const jaw     = lerp(0.75, 1.25, rnd());    // jaw widen / soften
+  const chin    = lerp(0.6, 1.3, rnd());      // chin size
+  const cheek   = lerp(0.7, 1.2, rnd());      // cheek fullness
+
+  // asym + tilt
+  const asymX   = Math.floor(lerp(-1, 2, rnd()));
+  const asymY   = Math.floor(lerp(-1, 2, rnd()));
+  const brow    = Math.floor(lerp(-1, 2, rnd()));
+
+  return {
+    raw, x, rndSeed: (x^raw)>>>0,
+    skinIdx, hairIdx, eyeIdx, hairVar, accVar,
+    shape: { headW, headH, jaw, chin, cheek },
+    layout: { density, eyeSep, eyeY, noseY, mouthY },
+    micro: { asymX, asymY, brow, blush: rnd() < 0.65 }
+  };
+}
+
+function applyManualOver(base){
+  // UI sliders (profile/puppy/tilt) apply on top, but remain deterministic-ish for same UI state
+  const puppy = +puppyInp.value / 100;    // 0..1
+  const profile = +profileInp.value / 100; // 0..1
+  const tilt = +tiltInp.value | 0;
+
+  // Puppig: bigger eyes, rounder head, shorter feature distances, smaller nose/mouth
+  const s = base.shape;
+  const l = base.layout;
+
+  const puppify = puppy;
+
+  const headW = s.headW * lerp(0.98, 1.12, puppify);
+  const headH = s.headH * lerp(0.98, 1.10, puppify);
+  const cheek = s.cheek * lerp(1.00, 1.25, puppify);
+  const jaw   = s.jaw   * lerp(1.00, 0.90, puppify);
+  const chin  = s.chin  * lerp(1.00, 0.85, puppify);
+
+  const density = l.density * lerp(1.00, 0.86, puppify); // compress distances
+  const eyeSep  = Math.round(l.eyeSep * lerp(1.00, 0.92, puppify));
+  const eyeY    = Math.round(l.eyeY   * lerp(1.00, 0.94, puppify));
+  const noseY   = Math.round(l.noseY  * lerp(1.00, 0.96, puppify));
+  const mouthY  = Math.round(l.mouthY * lerp(1.00, 0.94, puppify));
+
+  return {
+    ...base,
+    ui: { puppy, profile, tilt },
+    shape: { headW, headH, jaw, chin, cheek },
+    layout: { density, eyeSep, eyeY, noseY, mouthY },
+  };
+}
+
+/* ============================
+   3/4 profile head mask (procedural)
+   - returns insideHead(x,y)
+============================ */
+function makeHeadMask(params){
+  const { headW, headH, jaw, chin, cheek } = params.shape;
+  const profile = params.ui.profile; // 0..1
+  const tilt = params.ui.tilt|0;
+
+  // head center
+  const cx = 16 + params.micro.asymX + tilt;
+  const cy = 15 + params.micro.asymY;
+
+  // profile pushes nose-side forward: compress far side, expand near side
+  // near side is kept a bit slimmer so the nose can read more clearly in 3/4
+  const near = lerp(0.08, 0.25, profile); // how much “front” sticks
+  const far  = lerp(0.07, 0.27, profile); // how much back compresses
+
+  function ellipseSDF(x,y,rx,ry){
+    // shift lower face slightly to the right in profile so the chin follows the profile line
+    const chinShift = lerp(0.0, 1.25*profile, Math.pow(clamp((y-(cy-4))/18, 0, 1), 2.2));
+    const dx = (x-(cx+chinShift))/rx;
+    const dy = (y-cy)/ry;
+    return (dx*dx + dy*dy) - 1; // <0 inside
+  }
+
+  // approximate jaw/chin by varying rx with y
+  function rxAtY(y){
+    const t = clamp((y-(cy-8))/18, 0, 1); // 0 forehead -> 1 chin
+    const forehead = headW * lerp(1.00, 0.92, t);
+    const cheeks   = headW * lerp(1.02, 1.12*cheek, Math.sin(t*Math.PI));
+    const jawW     = headW * lerp(0.90, 1.10*jaw, Math.pow(t,1.6));
+    const chinW    = headW * lerp(0.55, 0.90*chin, Math.pow(t,3.0));
+    // blend: forehead -> cheeks -> jaw -> chin
+    let rx = forehead;
+    rx = lerp(rx, cheeks, clamp(t*1.2,0,1));
+    rx = lerp(rx, jawW, clamp((t-0.45)*2.0,0,1));
+    rx = lerp(rx, chinW, clamp((t-0.78)*4.0,0,1));
+    return rx;
+  }
+
+  // silhouette “profile skew”: shift boundary by side
+  function profileOffset(x,y){
+    // positive on near side (right), negative on far side (left)
+    const side = (x-cx);
+    const t = clamp((y-(cy-8))/20, 0, 1);
+    const faceForward = near * lerp(0.2, 1.0, t);
+    const backCompress = far * lerp(0.2, 1.0, t);
+    const rightTrim = lerp(0.0, 0.12, profile) * Math.exp(-Math.pow((y-(cy+3))/5.0, 2));
+    if(side >= 0) return -(faceForward*0.78) + rightTrim; // slimmer right side around mid-face
+    return +backCompress;                   // far side: shrink -> sdf bigger => add
+  }
+
+  // add a tiny “nose plane” bump forward around noseY
+  const noseBumpY = params.layout.noseY + params.micro.asymY;
+  function noseBump(x,y){
+    const dx = (x-(cx+6.4)) / 3.3;
+    const dy = (y-(noseBumpY)) / 2.8;
+    const g = Math.exp(-(dx*dx+dy*dy)*1.2); // 0..1
+    return -g * lerp(0.04, 0.30, profile); // negative expands boundary
+  }
+
+  return function insideHead(x,y){
+    // don't draw too high/low
+    if(y<2 || y>29) return false;
+
+    const rx = rxAtY(y);
+    const ry = headH;
+    let sdf = ellipseSDF(x,y,rx,ry);
+
+    sdf += profileOffset(x,y);
+    sdf += noseBump(x,y);
+
+    // carve neck opening slightly
+    if(y>25){
+      const dx = (x-cx)/6.0;
+      const dy = (y-28)/3.0;
+      sdf += (dx*dx + dy*dy) * 0.22;
+    }
+
+    return sdf < 0;
+  };
+}
+
+/* ============================
+   Draw: head + neck + features
+   Hair conforms by clipping against a “expanded head mask”
+============================ */
+function render(params){
+  const bgHex = bgInp.value;
+
+  setPxSize(+scaleInp.value);
+  clearAll(bgHex);
+
+  const skin = SKIN[clamp(params.skinIdx,0,SKIN.length-1)];
+  const hair = HAIR_COLORS[clamp(params.hairIdx,0,HAIR_COLORS.length-1)];
+  const iris = EYE_COLORS[clamp(params.eyeIdx,0,EYE_COLORS.length-1)];
+
+  const insideHead = makeHeadMask(params);
+  const cx = 16 + params.micro.asymX + (params.ui.tilt|0);
+  const cy = 15 + params.micro.asymY;
+
+  // expanded head mask for hair (so it “wraps”)
+  function insideHeadExpanded(x,y,expand){
+    if(insideHead(x,y)) return true;
+    // cheap dilation
+    for(let yy=-expand;yy<=expand;yy++){
+      for(let xx=-expand;xx<=expand;xx++){
+        if(insideHead(x+xx,y+yy)) return true;
+      }
+    }
+    return false;
+  }
+
+  // 1) Neck first (so head overlaps)
+  drawNeck(params, skin, insideHead, cx, cy);
+
+  // 2) Head fill + shading
+  drawHeadFill(params, skin, insideHead, cx, cy);
+
+  // 3) Ears before hair so strands can overlap naturally
+  drawEars(params, skin, insideHead, cx, cy);
+
+  // 4) Hair (clip to expanded head for top + add side strands)
+  drawHairConform(params, hair, insideHead, insideHeadExpanded, cx, cy);
+
+  // 5) Eyes/Brows (bigger for “puppig”, with profile offset)
+  drawEyesPuppy(params, iris, skin, insideHead, cx, cy);
+
+  // 6) Nose + Mouth (smaller + closer for puppig, placed by profile)
+  drawNoseMouthPuppy(params, skin, hair, insideHead, cx, cy);
+
+  // 7) Accessories (glasses etc.)
+  drawAccessories(params, iris, hair, skin, cx, cy);
+
+  // 8) Optional grid overlay
+  if(gridInp.checked){
+    for(let x=0;x<W;x++) for(let y=0;y<H;y++){
+      if((x%4===0)||(y%4===0)){
+        // subtle grid: only if pixel is not bg
+        // setPixel would overwrite; so just light border effect via darken existing
+        const cur = BUF[y][x];
+        if(cur){
+          const g = shade(cur, -18);
+          setPixel(x,y,g);
+        }
+      }
+    }
+  }
+}
+
+function drawNeck(params, skin, insideHead, cx, cy){
+  const profile = params.ui.profile;
+  const puppy = params.ui.puppy;
+
+  const neckWTop = Math.round(lerp(7, 9, 1-puppy));
+  const neckWBot = Math.round(neckWTop + lerp(0, 1.4, puppy));
+  const neckH    = Math.round(lerp(5, 7, 1-puppy));
+
+  const neckY0 = 26 + params.micro.asymY;
+  const x0 = Math.round(cx - neckWTop/2);
+  const x1 = Math.round(cx + neckWTop/2);
+  const x0b = Math.round(cx - neckWBot/2);
+  const x1b = Math.round(cx + neckWBot/2);
+
+  const shade1 = shade(skin, -10);
+  const shade2 = shade(skin, -18);
+
+  for(let y=0;y<neckH;y++){
+    const t = y / Math.max(1,(neckH-1));
+    const lx = Math.round(lerp(x0, x0b, t));
+    const rx = Math.round(lerp(x1, x1b, t));
+
+    for(let x=lx;x<=rx;x++){
+      // don't draw into head
+      if(insideHead(x, neckY0+y)) continue;
+      // little profile shadow on far side
+      const side = (x-cx);
+      let col = skin;
+      if(side < 0) col = shade1;
+      if(side < -3) col = shade2;
+      setPixel(x, neckY0+y, col);
+    }
+  }
+
+  // tiny collar shadow under chin
+  for(let x=x0-1;x<=x1+1;x++){
+    if(!insideHead(x, neckY0-1)) setPixel(x, neckY0-1, shade(skin, -22));
+  }
+}
+
+function drawHeadFill(params, skin, insideHead, cx, cy){
+  const shadowR = shade(skin, -18);
+  const hi = shade(skin, +8);
+
+  for(let y=0;y<H;y++){
+    for(let x=0;x<W;x++){
+      if(!insideHead(x,y)) continue;
+
+      // base
+      let col = skin;
+
+      // simple 3/4 shading: far side darker, near side highlight
+      const side = x - cx;
+      if(side < -2) col = shade(col, -12);
+      if(side < -5) col = shade(col, -18);
+      if(side > 3) col = shade(col, +4);
+
+      // cheek highlight for puppig
+      if(params.ui.puppy > 0.55 && y>=16 && y<=18){
+        if(x>=cx+2 && x<=cx+4) col = hi;
+      }
+
+      setPixel(x,y,col);
+    }
+  }
+
+  // chin shadow line
+  for(let x=0;x<W;x++){
+    const y = 26 + params.micro.asymY;
+    if(insideHead(x,y) && !insideHead(x,y+1)) setPixel(x,y,shadowR);
+  }
+}
+
+function drawEars(params, skin, insideHead, cx, cy){
+  const profile = params.ui.profile;
+  if(profile < 0.12) return;
+
+  const earCol = shade(skin, -8);
+  const earShadow = shade(skin, -24);
+  const earInner = shade(skin, +8);
+
+  const eyeBand = Math.round(params.layout.eyeY * params.layout.density + params.micro.asymY + 2);
+  const leftH = Math.max(4, Math.round(lerp(4, 6, profile)));  // left ear bigger
+  const rightH = Math.max(3, Math.round(leftH - 1));           // right ear smaller
+  const leftW = Math.max(2, Math.round(lerp(2, 3, profile)));
+  const rightW = 2;
+
+  const leftY0 = eyeBand - Math.floor(leftH/2);
+  const rightY0 = eyeBand - 1 - Math.floor(rightH/2); // right ear a tick higher
+
+  function edgeXAtY(y, fromLeft){
+    if(y<0 || y>=H) return null;
+    if(fromLeft){
+      for(let x=0;x<W;x++) if(insideHead(x,y)) return x;
+    }else{
+      for(let x=W-1;x>=0;x--) if(insideHead(x,y)) return x;
+    }
+    return null;
+  }
+
+  function paintLeftEar(){
+    for(let y=leftY0; y<leftY0+leftH; y++){
+      const edge = edgeXAtY(y, true);
+      if(edge===null) continue;
+      for(let i=0;i<leftW;i++){
+        const x = edge-1-i;
+        let col = (i===leftW-1) ? earShadow : earCol;
+        if(i===0 && (y===leftY0+1 || y===leftY0+leftH-2)) col = earInner;
+        setPixel(x,y,col);
+      }
+    }
+  }
+
+  function paintRightEar(){
+    for(let y=rightY0; y<rightY0+rightH; y++){
+      const edge = edgeXAtY(y, false);
+      if(edge===null) continue;
+      for(let i=0;i<rightW;i++){
+        const x = edge+1+i;
+        let col = (i===rightW-1) ? earShadow : earCol;
+        if(i===0 && y===rightY0+1) col = earInner;
+        setPixel(x,y,col);
+      }
+    }
+  }
+
+  paintLeftEar();
+  paintRightEar();
+}
+
+function drawHairConform(params, hair, insideHead, insideHeadExpanded, cx, cy){
+  const v = clamp(params.hairVar,0,15);
+  const dark = shade(hair, -22);
+  const profile = params.ui.profile;
+
+  // hairline height moves with puppig (bigger forehead vs bangs)
+  const puppy = params.ui.puppy;
+  const hairline = Math.round(lerp(6, 8, 1-puppy)); // smaller puppy -> higher hairline; puppig -> slightly lower (bang-ish)
+  const topCap = hairline + Math.round(lerp(0,2, profile)); // profile changes top silhouette slightly
+
+  // base cap: paint hair only where expanded-head is true and y is above mid-forehead
+  for(let y=0;y<16;y++){
+    for(let x=0;x<W;x++){
+      if(!insideHeadExpanded(x,y,1)) continue;
+      if(y > (cy-params.shape.headH*0.55)) continue;
+      // hair region
+      if(y <= topCap || (v===13 || v===0)){ // bangs variants keep more
+        setPixel(x,y,hair);
+      }
+    }
+  }
+
+  // variants: add bangs / sides / buns / curls etc BUT clipped to expanded head so it follows outline
+  function strand(x0,y0,x1,y1,thick=1,col=hair){
+    const dx = x1-x0, dy = y1-y0;
+    const steps = Math.max(Math.abs(dx), Math.abs(dy), 1);
+    for(let i=0;i<=steps;i++){
+      const t=i/steps;
+      const x=Math.round(x0+dx*t);
+      const y=Math.round(y0+dy*t);
+      for(let yy=-thick;yy<=thick;yy++){
+        for(let xx=-thick;xx<=thick;xx++){
+          if(insideHeadExpanded(x+xx,y+yy,1)) setPixel(x+xx,y+yy,col);
+        }
+      }
+    }
+  }
+
+  // side hair follows head contour: paint a thin outline just outside head on far side
+  for(let y=8;y<25;y++){
+    for(let x=0;x<W;x++){
+      if(insideHead(x,y)) continue;
+      // near boundary?
+      let near=false;
+      for(let yy=-1;yy<=1;yy++) for(let xx=-1;xx<=1;xx++){
+        if(insideHead(x+xx,y+yy)) near=true;
+      }
+      if(!near) continue;
+
+      // prefer far side silhouette (3/4)
+      const side = x - cx;
+      if(side < -2){
+        if(v===3 || v===2 || v===15 || v===9){
+          // longer styles add more outer hair
+          setPixel(x,y, dark);
+        }
+      }
+      if(side > 4 && (v===3 || v===9)){
+        // some near-side long
+        setPixel(x,y, dark);
+      }
+    }
+  }
+
+  if(v===0){ // short bangs
+    for(let y=8;y<=10;y++) for(let x=9;x<=23;x++){
+      if(insideHeadExpanded(x,y,1)) setPixel(x,y,hair);
+      if((x%3===0) && insideHeadExpanded(x,y+1,1)) setPixel(x,y+1,dark);
+    }
+  }
+  else if(v===1){ // side part left (far side heavier in 3/4)
+    strand(cx-6,7,cx+2,10,1,hair);
+    strand(cx-7,8,cx-2,14,1,hair);
+  }
+  else if(v===2){ // bob
+    for(let y=11;y<21;y++){
+      for(let x=6;x<26;x++){
+        if(insideHeadExpanded(x,y,1) && !insideHead(x,y) && (x<cx-4 || x>cx+5)) setPixel(x,y,hair);
+      }
+    }
+    for(let x=7;x<25;x+=3) if(insideHeadExpanded(x,10,1)) setPixel(x,10,dark);
+  }
+  else if(v===3){ // long straight
+    for(let y=14;y<28;y++){
+      for(let x=5;x<27;x++){
+        if(!insideHead(x,y) && insideHeadExpanded(x,y,2)) {
+          if(x<cx-3 || x>cx+4) setPixel(x,y, (y%2===0)?hair:dark);
+        }
+      }
+    }
+  }
+  else if(v===9){ // curls
+    for(let y=9;y<18;y++){
+      for(let x=7;x<25;x++){
+        if(insideHeadExpanded(x,y,1) && ((x+y+v)%3===0)) setPixel(x,y, dark);
+      }
+    }
+    for(let y=14;y<26;y++){
+      for(let x=5;x<27;x++){
+        if(!insideHead(x,y) && insideHeadExpanded(x,y,2) && ((x+y)%2===0)) setPixel(x,y, hair);
+      }
+    }
+  }
+  else if(v===11){ // top bun
+    // bun blob above head
+    const bx = cx + Math.round(lerp(-1,2, profile));
+    const by = 3 + params.micro.asymY;
+    for(let y=by-2;y<=by+2;y++){
+      for(let x=bx-3;x<=bx+3;x++){
+        const dx=(x-bx)/3, dy=(y-by)/2;
+        if(dx*dx+dy*dy <= 1.0) setPixel(x,y,hair);
+      }
+    }
+    for(let x=bx-2;x<=bx+2;x++) setPixel(x,by-2,dark);
+  }
+  else if(v===14){ // shaved sides + top
+    for(let y=7;y<11;y++){
+      for(let x=10;x<23;x++){
+        if(insideHeadExpanded(x,y,1)) setPixel(x,y,hair);
+      }
+    }
+    // shaved hint on sides (lighter than hair)
+    const shave = shade(hair, +40);
+    for(let y=10;y<17;y++){
+      for(let x=7;x<10;x++) if(insideHead(x,y)) setPixel(x,y,shade(shave,-10));
+      for(let x=23;x<26;x++) if(insideHead(x,y)) setPixel(x,y,shade(shave,-10));
+    }
+  }
+  else if(v===15){ // layered medium
+    for(let y=12;y<20;y++){
+      for(let x=6;x<26;x++){
+        if(insideHeadExpanded(x,y,1) && !insideHead(x,y) && (x<cx-4 || x>cx+4)) setPixel(x,y,hair);
+      }
+    }
+    strand(cx-7,9,cx-1,13,1,hair);
+    strand(cx+1,9,cx+6,12,1,hair);
+  }
+
+  // Frame the face with more mass on the left side and a tighter right contour.
+  for(let y=8;y<24;y++){
+    let leftEdge = null;
+    let rightEdge = null;
+    for(let x=0;x<W;x++){ if(insideHead(x,y)){ leftEdge=x; break; } }
+    for(let x=W-1;x>=0;x--){ if(insideHead(x,y)){ rightEdge=x; break; } }
+
+    if(leftEdge!==null){
+      const extra = (y>=13 && y<=22) ? 2 : 1;
+      for(let i=1;i<=extra;i++){
+        const x = leftEdge-i;
+        if(insideHeadExpanded(x,y,2)) setPixel(x,y, (i===extra) ? dark : hair);
+      }
+    }
+
+    if(rightEdge!==null){
+      const x = rightEdge+1;
+      if(insideHeadExpanded(x,y,1) && (y%2===0)) setPixel(x,y,dark);
+    }
+  }
+}
+
+function drawEyesPuppy(params, iris, skin, insideHead, cx, cy){
+  const puppy = params.ui.puppy;
+  const profile = params.ui.profile;
+
+  // eye placement (density compress)
+  const d = params.layout.density;
+  const baseEyeY = params.layout.eyeY + (params.micro.asymY);
+  const eyeY = Math.round(lerp(baseEyeY, baseEyeY-1, puppy)); // puppig a bit higher
+
+  // 3/4: far eye slightly smaller + closer to nose plane
+  const sep = Math.round(params.layout.eyeSep * d + lerp(1, 2, profile));
+  const nearX = Math.round(cx + lerp(2, 3, profile));   // right side is “near”
+  const farX  = Math.round(nearX - sep);
+  const nearEyeY = eyeY - 1; // right eye slightly higher
+  const farEyeY = eyeY + Math.round(lerp(0,1,profile));
+
+  const browShift = params.micro.brow;
+
+  // sizes
+  const eyeW = Math.round(lerp(4, 6, puppy));
+  const eyeH = Math.round(lerp(2, 4, puppy));
+  const farScale = lerp(1.0, 0.72, profile);
+
+  const white=[250,250,250], black=[0,0,0];
+  const brow=[60,40,20];
+
+  function eyeBlock(cxEye, cyEye, w, h, scale=1.0){
+    const ww = Math.max(3, Math.round(w*scale));
+    const hh = Math.max(2, Math.round(h*scale));
+    const x0 = Math.round(cxEye - ww/2);
+    const y0 = Math.round(cyEye - hh/2);
+
+    // draw only if inside head (avoid floating eyes)
+    for(let y=0;y<hh;y++){
+      for(let x=0;x<ww;x++){
+        const pxX = x0+x, pxY = y0+y;
+        if(!insideHead(pxX,pxY)) continue;
+        setPixel(pxX, pxY, white);
+      }
+    }
+    // upper lid
+    for(let x=0;x<ww;x++){
+      const pxX=x0+x, pxY=y0;
+      if(insideHead(pxX,pxY)) setPixel(pxX,pxY,shade(white,-40));
+    }
+
+    // iris/pupil (bigger for puppy)
+    const irisY = y0 + Math.round(hh/2);
+    const irisX = x0 + Math.round(ww/2);
+    const irisRad = Math.round(lerp(0, 1, puppy)); // 0..1
+    for(let yy=-irisRad;yy<=irisRad;yy++){
+      for(let xx=-irisRad;xx<=irisRad;xx++){
+        if(xx*xx+yy*yy > (irisRad+0.3)*(irisRad+0.3)) continue;
+        if(insideHead(irisX+xx, irisY+yy)) setPixel(irisX+xx, irisY+yy, iris);
+      }
+    }
+    if(insideHead(irisX, irisY)) setPixel(irisX, irisY, black);
+  }
+
+  // brows (near brow slightly higher)
+  const by = eyeY - 2 + browShift;
+  for(let x=-Math.floor(eyeW/2); x<=Math.floor(eyeW/2); x++){
+    const xN = nearX + x;
+    const xF = farX + x;
+    if(insideHead(xN, by-2)) setPixel(xN, by-2, brow);
+    if(insideHead(xF, by))   setPixel(xF, by, brow);
+  }
+
+  eyeBlock(nearX, nearEyeY, eyeW, eyeH, 1.0);
+  eyeBlock(farX,  farEyeY, eyeW, eyeH, farScale);
+
+  // blush (puppy)
+  if(params.micro.blush && puppy > 0.55){
+    const blush = shade(skin, +18);
+    for(let y=eyeY+2;y<=eyeY+3;y++){
+      for(let x=nearX-4;x<=nearX-2;x++) if(insideHead(x,y)) setPixel(x,y, blush);
+      for(let x=farX+2;x<=farX+4;x++) if(insideHead(x,y)) setPixel(x,y, blush);
+    }
+  }
+}
+
+function drawNoseMouthPuppy(params, skin, hair, insideHead, cx, cy){
+  const puppy = params.ui.puppy;
+  const profile = params.ui.profile;
+
+  const d = params.layout.density;
+
+  const noseY = Math.round(params.layout.noseY * d + params.micro.asymY);
+
+  // profile shifts nose/mouth towards near side
+  const noseX = Math.round(cx + lerp(3, 5, profile));
+  const mouthX = noseX - 1;
+
+  const nose = shade(skin, -26);
+  const shadow = shade(skin, -38);
+
+  // nose smaller when puppig
+  const noseH = Math.round(lerp(4, 3, puppy));
+  const noseW = Math.round(lerp(2, 1, puppy));
+  const targetMouthY = Math.round(params.layout.mouthY * d + params.micro.asymY);
+  const mouthY = Math.min(targetMouthY, noseY + noseH + 2); // keep mouth closer to nose tip
+
+  for(let i=0;i<noseH;i++){
+    const x = noseX;
+    const y = noseY + i;
+    if(insideHead(x,y)) setPixel(x,y,nose);
+  }
+  // nostril + shadow
+  if(insideHead(noseX-1, noseY+noseH-1)) setPixel(noseX-1, noseY+noseH-1, shadow);
+  if(insideHead(noseX+1, noseY+noseH-1)) setPixel(noseX+1, noseY+noseH-1, shadow);
+  if(insideHead(noseX,   noseY+noseH))   setPixel(noseX,   noseY+noseH,   shadow);
+
+  // mouth: more “pouty” / small for puppig
+  const lipA = [220,60,60];
+  const lipB = [190,40,40];
+  const darkM = [30,0,0];
+  const w = Math.round(lerp(7, 5, puppy));
+  const x0 = Math.round(mouthX - w/2);
+
+  // choose a mouth style deterministically from seed but puppified
+  const style = (params.x >>> 18) % 6; // 0..5
+  if(style===0){ // small smile
+    for(let x=0;x<w;x++) if(insideHead(x0+x, mouthY)) setPixel(x0+x, mouthY, lipA);
+    if(insideHead(x0+1, mouthY+1)) setPixel(x0+1, mouthY+1, lipB);
+    if(insideHead(x0+w-2, mouthY+1)) setPixel(x0+w-2, mouthY+1, lipB);
+  }else if(style===1){ // “o”
+    if(insideHead(mouthX, mouthY)) setPixel(mouthX, mouthY, lipA);
+    if(insideHead(mouthX+1, mouthY)) setPixel(mouthX+1, mouthY, lipA);
+    if(insideHead(mouthX, mouthY+1)) setPixel(mouthX, mouthY+1, darkM);
+    if(insideHead(mouthX+1, mouthY+1)) setPixel(mouthX+1, mouthY+1, darkM);
+  }else if(style===2){ // pout
+    for(let x=0;x<w-2;x++) if(insideHead(x0+1+x, mouthY)) setPixel(x0+1+x, mouthY, lipB);
+    if(insideHead(mouthX, mouthY+1)) setPixel(mouthX, mouthY+1, lipA);
+    if(insideHead(mouthX+1, mouthY+1)) setPixel(mouthX+1, mouthY+1, lipA);
+  }else if(style===3){ // tiny open
+    for(let x=0;x<w-2;x++) if(insideHead(x0+1+x, mouthY)) setPixel(x0+1+x, mouthY, lipA);
+    if(insideHead(mouthX, mouthY+1)) setPixel(mouthX, mouthY+1, darkM);
+  }else if(style===4){ // neutral
+    for(let x=0;x<w-3;x++) if(insideHead(x0+2+x, mouthY)) setPixel(x0+2+x, mouthY, lipB);
+  }else{ // grin w/ hint teeth
+    const teeth=[245,245,245];
+    for(let x=0;x<w;x++) if(insideHead(x0+x, mouthY)) setPixel(x0+x, mouthY, lipA);
+    for(let x=0;x<w-2;x++) if(insideHead(x0+1+x, mouthY+1)) setPixel(x0+1+x, mouthY+1, teeth);
+    for(let x=0;x<w-2;x++) if(insideHead(x0+1+x, mouthY+2)) setPixel(x0+1+x, mouthY+2, lipB);
+  }
+
+  // subtle philtrum shadow (puppy tends to have it softer)
+  if(puppy < 0.9){
+    const pcol = shade(skin, -18);
+    if(insideHead(noseX, mouthY-1)) setPixel(noseX, mouthY-1, pcol);
+  }
+}
+
+function drawAccessories(params, iris, hair, skin, cx, cy){
+  const v = clamp(+accVarInp.value,0,7);
+  const ink = [230,230,230];
+  const freck = shade(skin,-32);
+
+  // glasses / freckles / mark / earrings
+  const eyeY = Math.round(params.layout.eyeY * params.layout.density + params.micro.asymY) - Math.round(lerp(0,1, params.ui.puppy));
+  const profile = params.ui.profile;
+  const sep = Math.round(params.layout.eyeSep * params.layout.density + lerp(1,2,profile));
+  const nearX = Math.round(cx + lerp(2,3,profile));
+  const farX  = Math.round(nearX - sep);
+
+  if(v===0) return;
+
+  if(v===1 || v===7){ // glasses (and combo)
+    const y = eyeY-1;
+    strokeRect(farX-4, y, 8, 5, ink);
+    strokeRect(nearX-4, y, 8, 5, ink);
+    fillRect(Math.round((farX+nearX)/2)-1, y+2, 2, 1, ink);
+    // tint
+    fillRect(farX-3, y+1, 6, 3, [200,210,230]);
+    fillRect(nearX-3, y+1, 6, 3, [200,210,230]);
+  }
+
+  if(v===4 || v===7){ // freckles
+    setPixel(nearX-6, eyeY+3, freck);
+    setPixel(nearX-4, eyeY+4, freck);
+    setPixel(farX+4,  eyeY+3, freck);
+    setPixel(farX+2,  eyeY+4, freck);
+  }
+
+  if(v===5){ // beauty mark
+    setPixel(nearX+4, eyeY+7, shade(skin,-70));
+  }
+
+  if(v===6){ // earrings
+    setPixel(cx-10, 18, ink);
+    setPixel(cx+9,  18, ink);
+  }
+
+  if(v===2){ // moustache (tiny, puppet-friendly)
+    const y = Math.round(params.layout.mouthY * params.layout.density + params.micro.asymY) - 2;
+    const col = shade(hair, -26);
+    fillRect(cx-2, y, 5, 1, col);
+    setPixel(cx-3, y+1, col);
+    setPixel(cx+3, y+1, col);
+  }
+
+  if(v===3){ // beard (soft)
+    const y = Math.round(params.layout.mouthY * params.layout.density + params.micro.asymY) + 1;
+    const col = shade(hair, -34);
+    fillRect(cx-4, y, 8, 1, col);
+    fillRect(cx-3, y+1, 6, 2, col);
+  }
+}
+
+/* ============================
+   PNG export (buffer -> canvas)
+============================ */
+function exportPNG(){
+  const c = document.getElementById("export");
+  const ctx = c.getContext("2d");
+  const bg = bgInp.value;
+
+  // paint bg
+  ctx.fillStyle = bg;
+  ctx.fillRect(0,0,32,32);
+
+  const img = ctx.getImageData(0,0,32,32);
+  const data = img.data;
+
+  function hexToRgb(hex){
+    const h = hex.replace("#","");
+    const r = parseInt(h.slice(0,2),16);
+    const g = parseInt(h.slice(2,4),16);
+    const b = parseInt(h.slice(4,6),16);
+    return [r,g,b];
+  }
+  const bgRgb = hexToRgb(bg);
+
+  for(let y=0;y<H;y++){
+    for(let x=0;x<W;x++){
+      const i = (y*W + x)*4;
+      const rgb = BUF[y][x] || bgRgb;
+      data[i+0]=rgb[0]; data[i+1]=rgb[1]; data[i+2]=rgb[2]; data[i+3]=255;
+    }
+  }
+  ctx.putImageData(img,0,0);
+
+  const link = document.createElement("a");
+  link.download = (ipInp.value.trim()||"avatar") + ".png";
+  link.href = c.toDataURL("image/png");
+  link.click();
+}
+
+/* ============================
+   UI glue
+============================ */
+const ipInp = document.getElementById("ip");
+const manualInp = document.getElementById("manual");
+
+const puppyInp = document.getElementById("puppy");
+const profileInp = document.getElementById("profile");
+const tiltInp = document.getElementById("tilt");
+const scaleInp = document.getElementById("scale");
+const bgInp = document.getElementById("bg");
+const gridInp = document.getElementById("grid");
+
+const skinIdxInp = document.getElementById("skinIdx");
+const hairIdxInp = document.getElementById("hairIdx");
+const eyeIdxInp  = document.getElementById("eyeIdx");
+const hairVarInp = document.getElementById("hairVar");
+const accVarInp  = document.getElementById("accVar");
+
+const m_ip = document.getElementById("m_ip");
+const m_seed = document.getElementById("m_seed");
+const m_shape = document.getElementById("m_shape");
+const m_feats = document.getElementById("m_feats");
+
+let __base = null;
+
+function renderFromIP(ip){
+  const base = featuresFromIP(ip);
+  __base = base;
+
+  // fill UI from IP (but keep profile/puppy/tilt as user-controlled)
+  skinIdxInp.value = base.skinIdx;
+  hairIdxInp.value = base.hairIdx;
+  eyeIdxInp.value  = base.eyeIdx;
+  hairVarInp.value = base.hairVar;
+  accVarInp.value  = base.accVar;
+
+  m_ip.textContent = "IP: " + ip;
+  m_seed.textContent = "seed: " + base.rndSeed.toString(16);
+
+  rerender();
+}
+
+function rerender(){
+  if(!__base) return;
+
+  const p = applyManualOver({
+    ...__base,
+    skinIdx: clamp(+skinIdxInp.value,0,SKIN.length-1),
+    hairIdx: clamp(+hairIdxInp.value,0,HAIR_COLORS.length-1),
+    eyeIdx:  clamp(+eyeIdxInp.value,0,EYE_COLORS.length-1),
+    hairVar: clamp(+hairVarInp.value,0,15),
+    accVar:  clamp(+accVarInp.value,0,7),
+  });
+
+  m_shape.textContent = `shape: w${p.shape.headW.toFixed(1)} h${p.shape.headH.toFixed(1)} jaw${p.shape.jaw.toFixed(2)}`;
+  m_feats.textContent = `feats: d${p.layout.density.toFixed(2)} sep${p.layout.eyeSep} eyeY${p.layout.eyeY}`;
+
+  render(p);
+}
+
+document.getElementById("btnRandom").addEventListener("click", ()=>{
+  ipInp.value = randomIP();
+  document.getElementById("btnRender").click();
+});
+
+document.getElementById("btnRender").addEventListener("click", ()=>{
+  const ip = ipInp.value.trim();
+  try{
+    if(!validIPv4(ip)) throw new Error("Ungültige IPv4");
+    renderFromIP(ip);
+  }catch(e){
+    alert(e.message);
+  }
+});
+
+document.getElementById("btnSave").addEventListener("click", exportPNG);
+
+document.getElementById("btnFromIP").addEventListener("click", ()=>{
+  const ip = ipInp.value.trim();
+  try{
+    if(!validIPv4(ip)) throw new Error("Ungültige IPv4");
+    renderFromIP(ip);
+  }catch(e){
+    alert(e.message);
+  }
+});
+
+// rerender on controls
+[
+  puppyInp, profileInp, tiltInp, scaleInp, bgInp, gridInp,
+  skinIdxInp, hairIdxInp, eyeIdxInp, hairVarInp, accVarInp
+].forEach(el=>{
+  el.addEventListener("input", rerender);
+  el.addEventListener("change", rerender);
+});
+
+/* ============================
+   Boot
+============================ */
+initTable();
+setPxSize(+scaleInp.value);
+ipInp.value = randomIP();
+renderFromIP(ipInp.value);
+</script>
+</body>
+</html>

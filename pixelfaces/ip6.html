@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IP → Pixelface (32×32)</title>
+<style>
+  :root{--bg:#0b0b0b;--fg:#e6e6e6;--accent:#ffd23f}
+  body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,Segoe UI,Arial}
+  .wrap{max-width:980px;margin:28px auto;padding:0 16px}
+  h1{font-size:18px;margin:0 0 12px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  input[type=text]{flex:1;min-width:240px;padding:10px 12px;border:1px solid #333;background:#111;color:var(--fg);border-radius:8px}
+  button{padding:10px 14px;border:0;border-radius:10px;background:#1a1a1a;color:var(--fg);cursor:pointer}
+  button:hover{background:#222}
+  .accent{background:var(--accent);color:#111;font-weight:700}
+  .out{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;margin-top:10px}
+  .canvasWrap{display:grid;gap:6px;justify-items:center}
+  canvas{image-rendering: pixelated;image-rendering: crisp-edges;width:256px;height:256px;border-radius:12px;background:#000}
+  .meta{font-family:ui-monospace,Menlo,Consolas,monospace;color:#bbb}
+  .chip{padding:4px 8px;border:1px solid #333;border-radius:999px}
+  label.small{font-size:12px;color:#aaa}
+  textarea{width:100%;min-height:180px;background:#111;color:#eee;border:1px solid #333;border-radius:8px;padding:8px;font-family:ui-monospace,Menlo,Consolas,monospace}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>IP → Pixelface (32×32)</h1>
+  <div class="row">
+    <input id="ip" type="text" placeholder="z. B. 192.168.10.5" value="">
+    <button id="btnRandom">Random IP</button>
+    <button id="btnRender" class="accent">Render</button>
+    <button id="btnSave">Download PNG</button>
+    <button id="btnDecode">Decode IP from Image</button>
+  </div>
+  <div class="out">
+    <div class="canvasWrap">
+      <canvas id="av" width="32" height="32"></canvas>
+      <div class="meta">
+        <span class="chip" id="m_ip">IP: –</span>
+        <span class="chip" id="m_face">Face: –</span>
+        <span class="chip" id="m_hair">Hair: –</span>
+        <span class="chip" id="m_eyes">Eyes: –</span>
+        <span class="chip" id="m_nm">Nose/Mouth: –</span>
+      </div>
+    </div>
+    <div style="flex:1;min-width:280px;max-width:520px">
+      <label class="small">Face Mask ('.' = transparent, '#' = skin)</label>
+      <textarea id="maskTA"></textarea>
+      <div class="row" style="margin-top:6px"><button id="btnApplyMask">Apply Mask</button></div>
+
+      <label class="small" style="margin-top:10px;display:block">Hair Mask (uses current hair color)</label>
+      <textarea id="hairTA"></textarea>
+      <div class="row" style="margin-top:6px"><button id="btnApplyHair">Apply Hair Mask</button></div>
+
+      <label class="small" style="margin-top:10px;display:block">Eyes Mask (uses current eye color)</label>
+      <textarea id="eyesTA"></textarea>
+      <div class="row" style="margin-top:6px"><button id="btnApplyEyes">Apply Eyes Mask</button></div>
+
+      <label class="small" style="margin-top:10px;display:block">Mouth/Nose Mask (uses mouth palette)</label>
+      <textarea id="mouthTA"></textarea>
+      <div class="row" style="margin-top:6px"><button id="btnApplyMouth">Apply Mouth/Nose Mask</button></div>
+
+      <label class="small">Params</label>
+      <pre id="params" class="meta" style="white-space:pre-wrap"></pre>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- Utilities ---------- */
+function validIPv4(ip){
+  const parts = ip.trim().split(".");
+  if(parts.length!==4) return false;
+  return parts.every(p => /^\d{1,3}$/.test(p) && +p>=0 && +p<=255);
+}
+function randomIP(){
+  const a = Math.floor(Math.random()*223)+1;
+  const b = Math.floor(Math.random()*256);
+  const c = Math.floor(Math.random()*256);
+  const d = Math.floor(Math.random()*256);
+  return `${a}.${b}.${c}.${d}`;
+}
+function ipToOctets(ip){ return ip.split(".").map(n=>+n); }
+function mulberry32(seed){ return function(){ let t = seed += 0x6D2B79F5; t = Math.imul(t ^ t>>>15, t | 1); t ^= t + Math.imul(t ^ t>>>7, t | 61); return ((t ^ t>>>14) >>> 0) / 4294967296; } }
+function hashOctets(oct){ return ((oct[0]&0xFF)<<24) ^ ((oct[1]&0xFF)<<16) ^ ((oct[2]&0xFF)<<8) ^ (oct[3]&0xFF); }
+
+/* ---------- Paletten ---------- */
+const SKIN = [[255,220,177],[244,194,157],[224,172,105],[198,134,66],[141,85,36]];
+const HAIR_COLORS = [[245,230,72],[110,64,40],[35,35,35],[210,105,70],[180,180,180],[255,160,40]];
+const EYE_COLORS = [[45,105,170],[34,139,34],[80,50,30],[120,120,120]];
+
+/* ---------- Mask helpers ---------- */
+function maskToText(m){ return m.join("\n"); }
+function textToMask(t){
+  const lines = t.replace(/\r/g,"").split("\n").filter(Boolean);
+  if(!lines.length) throw new Error("Leere Maske");
+  const w = lines[0].length;
+  if(!lines.every(l=>l.length===w)) throw new Error("Alle Zeilen müssen gleich lang sein");
+  if(!lines.every(l=>/^([.#])+$/.test(l))) throw new Error("Nur '.' und '#'");
+  return lines;
+}
+function drawMask(ctx, mask, color){
+  for(let y=0;y<mask.length;y++){
+    const row = mask[y];
+    for(let x=0;x<row.length;x++){
+      if(row[x]==="#") px(ctx,x,y,color);
+    }
+  }
+}
+
+/* ---------- Reversible barcode (bottom row) ---------- */
+function drawBarcode(ctx, oct){
+  for(let i=0;i<4;i++){
+    for(let b=0;b<8;b++){
+      const bit = (oct[i]>>(7-b)) & 1;
+      const x = i*8 + b;
+      ctx.fillStyle = bit? "#fff" : "#000";
+      ctx.fillRect(x,31,1,1);
+    }
+  }
+}
+function decodeBarcode(ctx){
+  const img = ctx.getImageData(0,31,32,1).data;
+  const oct = [0,0,0,0];
+  for(let i=0;i<32;i++){
+    const o = i>>3, b = 7-(i&7);
+    const idx = i*4; const r = img[idx], g = img[idx+1], bb = img[idx+2];
+    const lum = 0.2126*r + 0.7152*g + 0.0722*bb;
+    const bit = lum>127?1:0;
+    oct[o] |= (bit<<b);
+  }
+  return oct;
+}
+
+/* ---------- Draw primitives ---------- */
+function px(ctx, x, y, rgb){ ctx.fillStyle = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`; ctx.fillRect(x, y, 1, 1); }
+function fill(ctx, x, y, w, h, rgb){ ctx.fillStyle = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`; ctx.fillRect(x, y, w, h); }
+
+/* ---------- Face mask (editable) ---------- */
+let FACE_MASK = [
+  "..............####............",
+  "............########..........",
+  "...........##########.........",
+  "..........############........",
+  ".........##############.......",
+  "........################......",
+  ".......##################.....",
+  ".......##################.....",
+  "......####################....",
+  "......####################....",
+  "......####################....",
+  "......####################....",
+  ".......##################.....",
+  ".......##################.....",
+  "........################......",
+  ".........##############.......",
+  "..........############........",
+  "...........##########.........",
+  "............########..........",
+  "..............####............"
+];
+let HAIR_MASK = [];   // optional override for hair
+let EYES_MASK = [];   // optional override for eyes
+let MOUTH_MASK = [];  // optional override for mouth+nose
+
+/* ---------- Feature drawing ---------- */
+function drawFace(ctx, variant, skin){
+  const s = skin;
+  const dx = [0,-1,1,0,0,-2][variant%6];
+  const dy = [0,1,-1,0,2,0][variant%6];
+  for(let y=0;y<FACE_MASK.length;y++){
+    const row = FACE_MASK[y];
+    let x=0; while(x<row.length){
+      if(row[x]==="#"){ let x2=x; while(x2<row.length && row[x2]==="#") x2++; fill(ctx, 2+dx+x, 6+dy+y, x2-x, 1, s); x=x2; }
+      else x++;
+    }
+  }
+}
+function drawHair(ctx, variant, rgb){
+  if(HAIR_MASK && HAIR_MASK.length){ drawMask(ctx, HAIR_MASK, rgb); return; }
+  const v = variant % 8; const c = rgb;
+  if(v===0){ fill(ctx, 6,4,20,3,c); fill(ctx, 5,7,22,2,c); fill(ctx, 7,9,18,2,c); }
+  else if(v===1){ fill(ctx, 4,5,24,4,c); fill(ctx, 3,9,6,8,c); fill(ctx, 25,9,4,8,c); }
+  else if(v===2){ fill(ctx, 4,5,24,5,c); fill(ctx, 3,10,5,8,c); fill(ctx, 24,10,5,8,c); }
+  else if(v===3){ fill(ctx, 5,4,22,4,c); fill(ctx, 4,8,24,16,c); }
+  else if(v===4){ fill(ctx, 5,5,22,4,c); fill(ctx, 4,9,6,10,c); fill(ctx, 5,20,4,4,c); }
+  else if(v===5){ fill(ctx, 5,5,22,4,c); fill(ctx, 23,9,6,10,c); fill(ctx, 23,20,4,4,c); }
+  else if(v===6){ fill(ctx, 6,4,20,3,c); fill(ctx, 6,7,12,2,c); }
+  else{ fill(ctx, 8,4,16,3,c); }
+}
+function drawEyes(ctx, variant, iris){
+  if(EYES_MASK && EYES_MASK.length){ drawMask(ctx, EYES_MASK, iris); return; }
+  const v = variant % 6; const white=[250,250,250], black=[0,0,0], brow=[60,40,20];
+  fill(ctx, 9,13,6,1,brow); fill(ctx, 17,13,6,1,brow);
+  fill(ctx, 10,14,4,2,white); fill(ctx, 18,14,4,2,white);
+  if(v===0){ px(ctx,11,15,iris); px(ctx,19,15,iris); px(ctx,12,15,black); px(ctx,20,15,black); }
+  if(v===1){ fill(ctx,11,15,2,1,iris); fill(ctx,19,15,2,1,iris); px(ctx,12,15,black); px(ctx,20,15,black); }
+  if(v===2){ px(ctx,12,15,iris); px(ctx,20,15,iris); px(ctx,12,15,black); px(ctx,20,15,black); }
+  if(v===3){ px(ctx,11,15,iris); px(ctx,19,15,iris); }
+  if(v===4){ fill(ctx,11,15,3,1,iris); fill(ctx,19,15,3,1,iris); }
+  if(v===5){ fill(ctx,10,15,4,1,black); fill(ctx,18,15,4,1,black); }
+}
+function drawNoseMouth(ctx, variant){
+  if(MOUTH_MASK && MOUTH_MASK.length){ const lip=[220,60,60]; drawMask(ctx, MOUTH_MASK, lip); return; }
+  const v = variant % 8; const nose=[180,120,90], lip=[220,60,60], lip2=[190,40,40], shadow=[120,85,70];
+  px(ctx,16,17,nose); px(ctx,16,18,nose); px(ctx,15,19,nose); px(ctx,17,19,nose); px(ctx,16,20,shadow);
+  if(v===0){ fill(ctx,13,23,6,1,lip); }
+  if(v===1){ fill(ctx,12,23,8,1,lip); px(ctx,12,22,lip2); px(ctx,20,22,lip2); }
+  if(v===2){ fill(ctx,13,23,6,1,lip2); px(ctx,15,22,lip2); px(ctx,18,22,lip2); }
+  if(v===3){ fill(ctx,14,23,4,1,lip); }
+  if(v===4){ fill(ctx,13,24,6,1,lip); }
+  if(v===5){ px(ctx,13,23,lip); px(ctx,14,24,lip); fill(ctx,15,25,2,1,lip); px(ctx,18,24,lip); px(ctx,19,23,lip); }
+  if(v===6){ fill(ctx,14,24,4,1,lip2); }
+  if(v===7){ fill(ctx,14,23,4,2,lip); fill(ctx,15,24,2,1,[30,0,0]); }
+}
+
+/* ---------- Feature mapping ---------- */
+function featuresFromIP(ip){
+  if(!validIPv4(ip)) throw new Error("Ungültige IPv4");
+  const o = ipToOctets(ip);
+  const seed = hashOctets(o)>>>0; const rand = mulberry32(seed);
+  return {
+    _oct:o,
+    faceVar: o[0]%6,
+    hairVar: o[1]%8,
+    eyeVar:  o[2]%6,
+    nmVar:   o[3]%8,
+    skinIdx: o[0]%SKIN.length,
+    hairIdx: (o[1]+Math.floor(rand()*2))%HAIR_COLORS.length,
+    eyeIdx:  o[2]%EYE_COLORS.length,
+  };
+}
+
+/* ---------- Render pipeline ---------- */
+function renderFeatures(f){
+  const c = document.getElementById("av");
+  const ctx = c.getContext("2d");
+  ctx.clearRect(0,0,32,32);
+  ctx.fillStyle = "#000"; ctx.fillRect(0,0,32,32);
+  drawFace(ctx, f.faceVar, SKIN[f.skinIdx]);
+  drawHair(ctx, f.hairVar, HAIR_COLORS[f.hairIdx]);
+  drawEyes(ctx, f.eyeVar, EYE_COLORS[f.eyeIdx]);
+  drawNoseMouth(ctx, f.nmVar);
+  drawBarcode(ctx, f._oct);
+  const p = {
+    ip: `${f._oct[0]}.${f._oct[1]}.${f._oct[2]}.${f._oct[3]}`,
+    octets: f._oct,
+    faceVar: f.faceVar, hairVar: f.hairVar, eyeVar: f.eyeVar, nmVar: f.nmVar,
+    skinIdx: f.skinIdx, hairIdx: f.hairIdx, eyeIdx: f.eyeIdx,
+    masks: {
+      face: {active: !!FACE_MASK.length, rows: FACE_MASK.length, cols: FACE_MASK[0].length},
+      hair: {active: !!HAIR_MASK.length, rows: HAIR_MASK.length||0, cols: HAIR_MASK[0]?.length||0},
+      eyes: {active: !!EYES_MASK.length, rows: EYES_MASK.length||0, cols: EYES_MASK[0]?.length||0},
+      mouth:{active: !!MOUTH_MASK.length, rows: MOUTH_MASK.length||0, cols: MOUTH_MASK[0]?.length||0}
+    }
+  };
+  document.getElementById('params').textContent = JSON.stringify(p,null,2);
+  m_face.textContent = "Face: " + f.faceVar;
+  m_hair.textContent = "Hair: " + f.hairVar + " (" + HAIR_COLORS[f.hairIdx].join(",") + ")";
+  m_eyes.textContent = "Eyes: " + f.eyeVar;
+  m_nm.textContent   = "Nose/Mouth: " + f.nmVar;
+}
+function renderFromIP(ip){
+  const f = featuresFromIP(ip);
+  m_ip.textContent = "IP: " + ip;
+  document.getElementById('maskTA').value = maskToText(FACE_MASK);
+  document.getElementById('hairTA').value  = HAIR_MASK.length? maskToText(HAIR_MASK) : '';
+  document.getElementById('eyesTA').value  = EYES_MASK.length? maskToText(EYES_MASK) : '';
+  document.getElementById('mouthTA').value = MOUTH_MASK.length? maskToText(MOUTH_MASK) : '';
+  renderFeatures(f);
+}
+
+/* ---------- UI ---------- */
+const ipInp = document.getElementById("ip");
+const m_ip = document.getElementById("m_ip");
+const m_face = document.getElementById("m_face");
+const m_hair = document.getElementById("m_hair");
+const m_eyes = document.getElementById("m_eyes");
+const m_nm = document.getElementById("m_nm");
+
+document.getElementById("btnRandom").addEventListener("click", ()=>{ ipInp.value = randomIP(); document.getElementById("btnRender").click(); });
+document.getElementById("btnRender").addEventListener("click", ()=>{ try{ renderFromIP(ipInp.value.trim()); }catch(e){ alert(e.message); } });
+document.getElementById("btnSave").addEventListener("click", ()=>{ const c=document.getElementById("av"); const a=document.createElement("a"); a.download=(ipInp.value.trim()||"avatar")+".png"; a.href=c.toDataURL("image/png"); a.click(); });
+
+document.getElementById('btnDecode').addEventListener('click', ()=>{ const c=document.getElementById('av'); const ctx=c.getContext('2d'); const o=decodeBarcode(ctx); const ip=`${o[0]}.${o[1]}.${o[2]}.${o[3]}`; ipInp.value=ip; renderFromIP(ip); });
+
+const maskTA = document.getElementById('maskTA');
+document.getElementById('btnApplyMask').addEventListener('click', ()=>{ try{ FACE_MASK = textToMask(maskTA.value); renderFromIP(ipInp.value.trim()); }catch(e){ alert(e.message); } });
+
+const hairTA = document.getElementById('hairTA');
+const eyesTA = document.getElementById('eyesTA');
+const mouthTA = document.getElementById('mouthTA');
+
+document.getElementById('btnApplyHair').addEventListener('click', ()=>{
+  try{ HAIR_MASK = hairTA.value.trim()? textToMask(hairTA.value) : []; renderFromIP(ipInp.value.trim()); }catch(e){ alert(e.message); }
+});
+
+document.getElementById('btnApplyEyes').addEventListener('click', ()=>{
+  try{ EYES_MASK = eyesTA.value.trim()? textToMask(eyesTA.value) : []; renderFromIP(ipInp.value.trim()); }catch(e){ alert(e.message); }
+});
+
+document.getElementById('btnApplyMouth').addEventListener('click', ()=>{
+  try{ MOUTH_MASK = mouthTA.value.trim()? textToMask(mouthTA.value) : []; renderFromIP(ipInp.value.trim()); }catch(e){ alert(e.message); }
+});
+
+// Initial: random render
+ipInp.value = randomIP();
+renderFromIP(ipInp.value);
+</script>
+</body>
+</html>

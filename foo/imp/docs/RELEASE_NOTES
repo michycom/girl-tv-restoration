@@ -1,0 +1,42 @@
+<?php
+/**
+ * Release focus. Possible values:
+ * 0 - N/A
+ * 1 - Initial freshmeat announcement
+ * 2 - Documentation
+ * 3 - Code cleanup
+ * 4 - Minor feature enhancements
+ * 5 - Major feature enhancements
+ * 6 - Minor bugfixes
+ * 7 - Major bugfixes
+ * 8 - Minor security fixes
+ * 9 - Major security fixes
+ */
+$this->notes['fm']['focus'] = 6;
+
+/* Mailing list release notes. */
+$this->notes['ml']['changes'] = <<<ML
+The Horde Team is pleased to announce the final release of the IMP Webmail
+Client version H3 (4.1.5).
+
+IMP, the Internet Messaging Program, is one of the most popular webmail
+applications available. It allows universal, web-based access to IMAP and POP3
+mail servers and provides a full range of features normally found only in
+desktop email clients.
+
+Major changes compared to the IMP H3 (4.1.4) version are:
+    * Many small bug fixes and improvements.
+    * Updated Czech, Estonian, German, Polish, Spanish, and Simplified Chinese
+      translations.
+ML;
+
+/* Freshmeat release notes, not more than 600 characters. */
+$this->notes['fm']['changes'] = <<<FM
+Many small bug fixes and improvements have been made.
+Czech, Estonian, German, Polish, Spanish, and Simplified Chinese translations
+have been updated.
+FM;
+
+$this->notes['name'] = 'IMP';
+$this->notes['fm']['project'] = 'imp';
+$this->notes['fm']['branch'] = 'Horde 3';

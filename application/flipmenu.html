@@ -1,0 +1,73 @@
+<style>
+  #d {
+    background-color:lightgreen;
+    position:fixed; left:26px; top:33em;
+    width:200px; height:8em;
+    border:1px solid black;
+    visibility:hidden;
+  }
+</style>
+
+<div id="d">In diesem DIV-Element stehen weitere Informationen</div>
+
+
+<a href="javascript:div_show ()" title="">DIV einblenden / anzeigen</a><br>
+<a href="javascript:div_hide ()" title="">DIV ausblenden / verstecken</a>
+<script language="javascript" type="text/javascript">
+<!-- // 
+// Funktion blendet das DIV-Element per JavaScript ein
+function div_show () {
+  document.getElementById ('d').style.visibility = 'visible';
+}
+
+// Folgende Funktion nutzt JavaScript, um das DIV auszublenden
+function div_hide () {
+  document.getElementById ('d').style.visibility = 'hidden';
+}
+// -->
+</script>
+
+
+<a href="javascript:set_DIV_position ('300px', '200px')" title="">DIV neu positionieren</a><br>
+<a href="javascript:set_DIV_position ('26px', '33em')" title="">DIV in Ausgangsposition</a>
+<script language="javascript" type="text/javascript">
+<!-- // JavaScript-Bereich f
+// JavaScript-Funktion, die ein DIV-Element an eine vorgegebene Position setzt
+function set_DIV_position (x_position, y_position) {
+  // Abstand vom linken Seitenrand
+  document.getElementById ('d').style.left = x_position;
+  // Amstand vom oberen Seitenrand
+  document.getElementById ('d').style.top = y_position;
+}
+// -->
+</script>
+â
+
+<a href="javascript:set_dimensions ('300px', '200px')" title="">Gr&ouml;&szlig;e des DIV neu setzen</a><br> <a href="javascript:set_dimensions ('200px', 
+'8em')" title="">Vorherige DIV-Ausdehnung setzen</a> <script language="javascript" type="text/javascript"> <!-- // JavaScript-Bereich f // Folgende 
+Funktion function set_dimensions (width, height) {
+  // Breite des DIV-Elements setzen
+  document.getElementById ('d').style.width = width;
+  // H
+  document.getElementById ('d').style.height = height;
+}
+// -->
+</script>
+
+
+<a href="javascript:set_DIV_text ()" title="">DIV-Text &auml;ndern</a>
+<script language="javascript" type="text/javascript">
+<!-- // JavaScript-Bereich f
+// Per JavaScript den DIV-Text 
+function set_DIV_text () {
+  // Existiert ein Kindknoten und handelt es sich dabei um einen Textknoten (nodeType = 3)?
+  if (document.getElementById ('d').firstChild && document.getElementById ('d').firstChild.nodeType == 3)
+    // Eingabedialog 
+    document.getElementById ('d').firstChild.nodeValue = window.prompt ('Neuer Inhalt:', 'hier Inhalt eingeben');
+    // Auch mit der folgenden auskommentierten Codezeile ist diese Operation m
+    // Bei dieser Variante werden sogar HTML-Tags in das Element &uuml;bernommen, w
+    // vorherige die Eingabe nicht interpretiert, sonder als reinen Text annimmt.
+    //document.getElementById ('d').innerHTML = window.prompt ('Neuer Inhalt:', 'hier Inhalt eingeben');
+}
+// -->
+--</script>

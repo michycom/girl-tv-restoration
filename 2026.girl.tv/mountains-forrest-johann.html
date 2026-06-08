@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Surreal Forest & Skyline – Fractal Edition</title>
+<style>
+  :root { color-scheme: light; }
+  html,body{height:100%;margin:0;background:#dff4ff;overflow:hidden}
+  /* Canvas unten, SVG-Overlay darüber */
+  #wrap{position:fixed;inset:0;overflow:hidden;background:linear-gradient(#e6f7ff 0%, #f7fcff 40%, #d8ecff 100%)}
+  canvas{display:block;width:100vw;height:100vh}
+  svg#overlay{
+    position:absolute;inset:0;width:100%;height:100%;
+    pointer-events:none;opacity:.5; /* gefordert: 0.5 über alles */
+    mix-blend-mode:overlay; /* schöner, kann entfernt werden falls ungewünscht */
+  }
+  /* Fallback, falls jemand Reduced Motion möchte */
+  @media (prefers-reduced-motion: reduce){
+    svg#overlay{mix-blend-mode:normal;opacity:.35}
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="scene"></canvas>
+
+  <!-- Liquid SVG Overlay mit fraktaler Turbulenz -->
+  <svg id="overlay" preserveAspectRatio="none">
+    <defs>
+      <!-- Fraktales Rauschen -->
+      <filter id="liquidFractal" x="-20%" y="-20%" width="140%" height="140%">
+        <!-- Fraktale Perlin-Noise -->
+        <feTurbulence id="turb"
+          type="fractalNoise"
+          baseFrequency="0.007 0.009"
+          numOctaves="3"
+          seed="2"
+          stitchTiles="stitch"/>
+        <!-- Weiche Kontraste, mehr "Wasser" -->
+        <feColorMatrix type="saturate" values="0.9"/>
+        <!-- Leichte Verschiebung für Flüssigkeitsgefühl -->
+        <feDisplacementMap in="SourceGraphic" in2="turb" scale="12" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+      <!-- sanfter Farbverlauf, der vom Filter "verflüssigt" wird -->
+      <linearGradient id="softGrad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%"  stop-color="#ffffff" stop-opacity="0.20"/>
+        <stop offset="50%" stop-color="#a8d8ff" stop-opacity="0.25"/>
+        <stop offset="100%" stop-color="#ffffff" stop-opacity="0.20"/>
+      </linearGradient>
+    </defs>
+    <!-- Das gefilterte Overlay -->
+    <rect width="100%" height="100%" fill="url(#softGrad)" filter="url(#liquidFractal)"></rect>
+  </svg>
+</div>
+
+<script>
+(()=>{
+  // ---------- HiDPI-Canvas Setup ----------
+  const C = document.getElementById('scene');
+  const ctx = C.getContext('2d');
+  C.style.cursor = 'crosshair';
+
+  function fit(){
+    const dpr = Math.max(1, Math.min(2, devicePixelRatio||1));
+    const w = Math.floor(innerWidth  * dpr);
+    const h = Math.floor(innerHeight * dpr);
+    if (C.width !== w || C.height !== h){
+      C.width = w; C.height = h;
+    }
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    initScene();
+    draw();
+  }
+  addEventListener('resize', fit, {passive:true});
+
+  // ---------- Deterministischer RNG (stabile Berge) ----------
+  function xmur3(str){let h=1779033703^str.length;for(let i=0;i<str.length;i++){h=Math.imul(h^str.charCodeAt(i),3432918353);h=h<<13|h>>>19}return ()=>{h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return (h^h>>>16)>>>0}}
+  function sfc32(a,b,c,d){return function(){a|=0;b|=0;c|=0;d|=0;let t=(a+b|0)+d|0;d=d+1|0;a=b^b>>>9;b=c+(c<<3)|0;c=(c<<21|0)|(c>>>11);c=c+t|0;return (t>>>0)/4294967296}}
+  const R = { rand: Math.random, seed(s){const m=xmur3(String(s));this.rand=sfc32(m(),m(),m(),m());} };
+  R.seed(20250829); // stabil
+
+  const rnd=(a=0,b=1)=>a+(b-a)*R.rand();
+  const rni=(a,b)=>Math.floor(rnd(a,b+1));
+
+  // ---------- Mouse influence (normalized, smoothed) ----------
+  const mouse = { tx:0, ty:0, nx:0, ny:0 };
+  function onPointerMove(e){
+    const x = (e.clientX ?? (e.touches && e.touches[0]?.clientX) ?? innerWidth/2);
+    const y = (e.clientY ?? (e.touches && e.touches[0]?.clientY) ?? innerHeight/2);
+    mouse.tx = Math.max(-1, Math.min(1, (x - innerWidth/2) / (innerWidth/2)));
+    mouse.ty = Math.max(-1, Math.min(1, (y - innerHeight/2) / (innerHeight/2)));
+  }
+  addEventListener('pointermove', onPointerMove, {passive:true});
+  addEventListener('touchmove', onPointerMove, {passive:true});
+
+  // ---------- Utility ----------
+  function drawEmoji(txt,x,y,size,alpha=1,blur=0,flipX=false){
+    ctx.save();
+    ctx.globalAlpha=alpha;
+    ctx.filter = blur>0 ? `blur(${blur}px)` : 'none';
+    ctx.textAlign='center';
+    ctx.textBaseline='alphabetic';
+    ctx.font = `${size}px 'Apple Color Emoji','Noto Color Emoji','Segoe UI Emoji',system-ui,sans-serif`;
+    if(flipX){
+      ctx.translate(x,0);
+      ctx.scale(-1,1);
+      ctx.fillText(txt,0,y);
+    } else {
+      ctx.fillText(txt,x,y);
+    }
+    ctx.restore();
+  }
+
+  // ---------- Julia-Set (z -> z^2 + c) ----------
+  // Wir nutzen das Julia-Set als "Maske": nur in Iterationsbändern werden Bäume gesetzt.
+  const julia = {
+    // guter klassischer Parameter, detailreich ohne zu "leer" zu sein
+    cRe: -0.8, cIm: 0.156, // vgl. Referenzen
+    maxIter: 64,
+    // iterations für Pixel (rx,ry) in komplexer Ebene
+    iter(rx, ry){
+      let zr = rx, zi = ry, i = 0;
+      for (; i < this.maxIter; i++){
+        // z^2 = (zr^2 - zi^2) + 2*zr*zi*i
+        const zr2 = zr*zr - zi*zi + this.cRe;
+        const zi2 = 2*zr*zi + this.cIm;
+        zr = zr2; zi = zi2;
+        if ((zr*zr + zi*zi) > 4) break; // Escape-Radius 2
+      }
+      return i;
+    }
+  };
+
+  // Mapping Canvas -> komplexe Ebene (unterhalb des Horizonts)
+  function mapToComplex(x, y, W, H, horizonY){
+    // Fenster so wählen, dass unten mehr "Detail" sichtbar ist
+    // Re-Bereich etwa [-1.6, +1.6], Im-Bereich [-1.0, +1.0]
+    const re = (x / W) * 3.2 - 1.6;
+    const im = ((y - horizonY) / (H - horizonY)) * 2.0 - 1.0;
+    return [re, im];
+  }
+
+  // ---------- Szene-Daten ----------
+  let horizon = 0;
+  const mountains = [];
+  const trees = [];
+  const herbs = [];
+  const shrooms = [];
+  const nests = [];
+  const cactusFG = [];
+  const crickets = { t0: 0, nodes: [], maxDepth: 4, k: 3, scale: 0.58, baseR: 120, speed: 0, prevCX: null };
+
+  function buildCricketFractal(){
+    crickets.nodes.length = 0;
+    const nodes = crickets.nodes;
+    // root placeholder (no insect drawn at root)
+    nodes.push({ parent: -1, base:[0,0], depth: 0, id: 0 });
+    let nextId = 1;
+    const queue = [0];
+    while(queue.length){
+      const pid = queue.shift();
+      const p = nodes[pid];
+      if (p.depth >= crickets.maxDepth) continue;
+      // distribute children roughly around a wedge pointing to left
+      const children = (p.depth === 0 ? crickets.k : (crickets.k + (R.rand()<0.25?1:0)));
+      const spread = Math.PI * 0.9; // angular spread of branch
+      const baseAng = Math.PI; // facing left
+      for(let i=0;i<children;i++){
+        const t = (i + 0.5) / children - 0.5; // -0.5..0.5
+        const ang = baseAng + t * spread + rnd(-0.08,0.08);
+        const r = Math.pow(crickets.scale, p.depth+1); // normalized length per level
+        const dx = Math.cos(ang) * r;
+        const dy = Math.sin(ang) * r;
+        const id = nextId++;
+        nodes.push({ parent: pid, base:[dx,dy], depth: p.depth+1, id });
+        queue.push(id);
+      }
+    }
+  }
+
+  function initScene(){
+    const W = innerWidth, H = innerHeight;
+    horizon = Math.floor(H * 0.48);
+    mountains.length = 0;
+    trees.length = 0; herbs.length = 0; shrooms.length = 0; nests.length = 0; cactusFG.length=0;
+    // init crickets
+    crickets.baseR = Math.max(80, Math.min(W,H)*0.18);
+    crickets.speed = Math.max(70, W*0.10);
+    buildCricketFractal();
+
+    // Berge Ebenen
+    const emojis=["⛰️","🗻","🏔️"];
+    const layers=[
+      {count:12,size:[520,820],alpha:[0.15,0.30],blur:[4,8]},
+      {count:10,size:[820,1200],alpha:[0.30,0.55],blur:[2,4]},
+      {count: 8,size:[1200,1700],alpha:[0.55,0.85],blur:[0,1]}
+    ];
+    layers.forEach(L=>{
+      for(let i=0;i<L.count;i++){
+        mountains.push({
+          emo: emojis[rni(0,emojis.length-1)],
+          x: -0.25*W + rnd(0,1.5*W),
+          y: horizon + rni(-8,18),
+          size: rnd(L.size[0],L.size[1]),
+          alpha: rnd(L.alpha[0],L.alpha[1]),
+          blur: rnd(L.blur[0],L.blur[1])
+        });
+      }
+    });
+
+    // Waldpunkte nach Julia-Bändern
+    const stepX = 14, stepY = 14;
+    const occ = new Set();
+    const cell = 20;
+    const mark = (x,y)=>occ.add(((x/cell)|0)+":" + ((y/cell)|0));
+    const used = (x,y)=>occ.has(((x/cell)|0)+":" + ((y/cell)|0));
+    const bandMin = 16, bandMax = 28;
+
+    for (let y = horizon + 6; y < H; y += stepY){
+      for (let x = 0; x < W; x += stepX){
+        const [re, im] = mapToComplex(x, y, W, H, horizon);
+        const it = julia.iter(re, im);
+        if (it > bandMin && it < bandMax){
+          const jx = x + rni(-6,6);
+          const jy = y + rni(-4,10);
+          if (!used(jx,jy)){
+            const t = (jy - horizon) / (H - horizon);
+            const size = Math.max(14, Math.min(112, 18 + t * 94));
+            const alpha = 0.88 + 0.12 * R.rand();
+            trees.push({ x:jx, y:jy, size, alpha, flying:false, vx:0, vy:0 });
+            // mit Chance ein Nest im Baum (oben im Kronenbereich)
+            if (R.rand() < 0.12){
+              const nx = jx + rnd(-size*0.12, size*0.12);
+              const ny = jy - size*0.42 + rnd(-size*0.04,size*0.04);
+              const nestEmoji = R.rand()<0.5 ? '🪹' : '🪺';
+              nests.push({ x:nx, y:ny, size:size*0.18, emo:nestEmoji, alpha:0.95 });
+            }
+            // Kräuter/Bodenpflanzen nahe Boden
+            if (t < 0.22 && R.rand()<0.35){
+              herbs.push({ x:jx + rni(-10,10), y: jy + size*0.06, size: Math.max(12, size*0.25), alpha:0.9, emo:'🌿' });
+              if (R.rand()<0.5){
+                shrooms.push({ x:jx + rni(-6,6), y: jy + size*0.08, size: Math.max(10, size*0.18), alpha:0.95, emo:'🍄' });
+              }
+            }
+            mark(jx,jy);
+          }
+        }
+      }
+    }
+
+    // Vordergrund Kaktus + Wüste
+    const countC = Math.max(4, Math.floor(W/360));
+    for(let i=0;i<countC;i++){
+      const x = rnd(-W*0.05, W*1.05);
+      const y = Math.max(horizon+H*0.22, H*0.76) + rnd(-8,18);
+      const size = rnd(88, 180);
+      cactusFG.push({ x, y, size, alpha:0.98, emo:'🌵' });
+    }
+  }
+
+  function drawScene(now){
+    const W = innerWidth, H = innerHeight;
+    ctx.clearRect(0,0,W,H);
+
+    // Horizont-Linie
+    ctx.strokeStyle='#c1c7cf'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(0,horizon); ctx.lineTo(W,horizon); ctx.stroke();
+
+    // Berge
+    for(const m of mountains){ drawEmoji(m.emo, m.x, m.y, m.size, m.alpha, m.blur); }
+
+    // Wüsten-Vordergrund: gelblicher Verlauf + leichte Reflexions-Streifen
+    const desertTop = Math.max(horizon+H*0.16, H*0.70);
+    const dg = ctx.createLinearGradient(0,desertTop,0,H);
+    dg.addColorStop(0,'#f6e9b1');
+    dg.addColorStop(0.6,'#eed27a');
+    dg.addColorStop(1,'#e7bf53');
+    ctx.fillStyle = dg;
+    ctx.fillRect(0, desertTop, W, H-desertTop);
+    // Reflexion/Textur
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = '#fff7cf';
+    for(let i=0;i<8;i++){
+      const y = desertTop + (i+1)*(H-desertTop)/10 + Math.sin((now*0.001)+i)*6;
+      ctx.fillRect(W*0.05, y, W*0.9, 2);
+    }
+    ctx.restore();
+
+    // Bäume (inkl. fliegende)
+    for(const t of trees){ drawEmoji('🌲', t.x, t.y, t.size, Math.max(0,t.alpha)); }
+    // Nester in den Bäumen
+    for(const n of nests){ drawEmoji(n.emo, n.x, n.y, n.size, n.alpha); }
+    // Bodenpflanzen & Pilze
+    for(const h of herbs){ drawEmoji(h.emo, h.x, h.y, h.size, h.alpha); }
+    for(const s of shrooms){ drawEmoji(s.emo, s.x, s.y, s.size, s.alpha); }
+    // Kaktus im Vordergrund
+    for(const c of cactusFG){ drawEmoji(c.emo, c.x, c.y, c.size, c.alpha); }
+
+    // Heuschrecken-Schwarm (🦗) – rekursive Fraktalstruktur, fliegt frei im Bild (x/y + Tiefe)
+    const tsec = now*0.001;
+    const baseSpeed = crickets.speed || Math.max(70, W*0.10);
+    // Lissajous-ähnliche Bahn für das Schwarmzentrum (roaming) + Maussteuerung
+    let centerX = W*0.5 + Math.cos(tsec*0.27)*W*0.35 + Math.cos(tsec*0.83)*W*0.15;
+    let centerY = H*0.35 + Math.sin(tsec*0.31)*H*0.18 + Math.sin(tsec*1.07)*H*0.06;
+    centerX += mouse.nx * W * 0.18;
+    centerY += mouse.ny * H * 0.12;
+    // globale Tiefen-Pulsation -> näher/weiter (Skalierung)
+    let zPulse = 1 + 0.35*Math.sin(tsec*0.23) + 0.15*Math.sin(tsec*0.57);
+    zPulse *= (1 + mouse.ny * 0.20); // Maus unten -> näher, oben -> weiter
+    const baseR = Math.max(80, Math.min(W,H)*0.18) * zPulse;
+    const movingRight = (crickets.prevCX===null) ? true : (centerX > crickets.prevCX);
+    crickets.prevCX = centerX;
+    const levelRot = (lvl)=> tsec * (1.2 + 0.7*lvl) + Math.sin(tsec*0.8 + lvl)*0.4;
+    const levelPulse = (lvl)=> 1 + 0.12*Math.sin(tsec*2.2 + lvl*1.7);
+    const sizeFor = (lvl)=> Math.max(10, (22 * Math.pow(0.88, lvl)) * (0.85 + 0.3*zPulse));
+    const alphaFor = (lvl)=> 0.65 * Math.pow(0.95, lvl);
+
+    // cache chain for each node to avoid repeated upward traversals? small sizes -> ok on the fly
+    for(const node of crickets.nodes){
+      if(node.parent === -1) continue; // skip root
+      // accumulate transforms along chain root->node
+      let px = centerX, py = centerY;
+      let pid = node.id;
+      let lvl = node.depth;
+      // to avoid while loop building an array, we traverse and collect then apply in reverse
+      const segs = [];
+      while(pid !== -1){
+        const n = crickets.nodes[pid];
+        if(n.parent === -1) break;
+        segs.push(n);
+        pid = n.parent;
+      }
+      // apply from depth 1..lvl
+      for(let i=segs.length-1, depth=1; i>=0; i--, depth++){
+        const seg = segs[i];
+        const ang = levelRot(depth);
+        const pulse = levelPulse(depth);
+        const s = Math.pow(crickets.scale, depth) * pulse;
+        const vx = seg.base[0] * baseR * s;
+        const vy = seg.base[1] * baseR * s;
+        const cosA = Math.cos(ang), sinA = Math.sin(ang);
+        const rx = vx*cosA - vy*sinA;
+        const ry = vx*sinA + vy*cosA;
+        px += rx; py += ry;
+      }
+      const size = sizeFor(lvl);
+      const alpha = alphaFor(lvl);
+      // Optional: leichtes y-Offset bei Nähe, um Gefühl von "in den Vordergrund kommen" zu geben
+      const py2 = py + (zPulse-1)*28;
+      // Drehrichtung der Darstellung je nach Bewegungsrichtung
+      const flip = !movingRight; // Flip, wenn nach links fliegend
+      drawEmoji('🦗', px, py2, size, alpha, 0, flip);
+    }
+  }
+
+  // ---------- Physik/Interaktion ----------
+  const ANG = 74 * Math.PI/180; // 74°
+  function update(dt){
+    const W = innerWidth, H = innerHeight;
+    // fliegende Bäume bewegen und ausblenden
+    for(const t of trees){
+      if(t.flying){
+        t.x += t.vx * dt; t.y += t.vy * dt;
+        t.alpha -= 0.35 * dt; // verblassen
+      }
+    }
+    // optional: Entfernen, wenn komplett weg
+    for(let i=trees.length-1;i>=0;i--){
+      const t=trees[i];
+      if(t.alpha<=0 || t.y < -200 || t.x > W+300){ trees.splice(i,1); }
+    }
+    // smooth mouse target -> current
+    const ease = 1 - Math.pow(0.001, dt); // ~1s time constant
+    mouse.nx += (mouse.tx - mouse.nx) * ease;
+    mouse.ny += (mouse.ty - mouse.ny) * ease;
+  }
+
+  C.addEventListener('click', (e)=>{
+    const rect = C.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    // finde den nächstliegenden Baum im Klickbereich
+    let best=null, bi=-1;
+    for(let i=0;i<trees.length;i++){
+      const t=trees[i];
+      const r = t.size*0.35;
+      const dx = x - t.x, dy = y - (t.y - t.size*0.1);
+      const d2 = dx*dx + dy*dy;
+      if(d2 < r*r && (!best || d2<best.d2)) best={i,d2};
+    }
+    if(best){
+      const t=trees[best.i];
+      if(!t.flying){
+        const speed = 300 + t.size*2; // px/s
+        t.vx = Math.cos(ANG)*speed;
+        t.vy = -Math.sin(ANG)*speed;
+        t.flying = true;
+      }
+    }
+  });
+
+  // ---------- Overlay-Animation (JS, damit es überall morpht) ----------
+  const turb = document.querySelector('#overlay #turb');
+  let t0 = performance.now();
+  let last = performance.now();
+  function animate(now){
+    const dt = Math.min(0.05, (now - last)/1000);
+    last = now;
+    // Overlay animieren
+    const t = (now - t0) * 0.001; // Sekunden
+    // langsame Atmung der Frequenz -> morphende fraktale Muster
+    const fx = 0.007 + 0.004 * Math.sin(t * 0.35);
+    const fy = 0.009 + 0.004 * Math.cos(t * 0.31);
+    turb.setAttribute('baseFrequency', fx.toFixed(4) + ' ' + fy.toFixed(4));
+
+    // Seed leicht wandern lassen (diskret, aber selten)
+    if (Math.random() < 0.01){
+      const newSeed = (2 + ((t*7)|0)) % 4096;
+      turb.setAttribute('seed', String(newSeed));
+    }
+    update(dt);
+    drawScene(now);
+    requestAnimationFrame(animate);
+  }
+
+  // ---------- Start ----------
+  function draw(){ drawScene(performance.now()); }
+  function start(){ initScene(); draw(); if(!crickets.t0) crickets.t0 = performance.now(); last = performance.now(); requestAnimationFrame(animate); }
+  fit();               // Größe setzen
+  initScene();         // Szene sammeln
+  start();             // animieren
+})();
+</script>
+</body>
+</html>

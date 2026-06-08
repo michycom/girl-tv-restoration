@@ -1,0 +1,100 @@
+<!-- font2 © 2004 
+
+
+
+	script: christian keller & girl.tv 2003
+	font: girl.tv ©2004
+	
+	
+	
+-->
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+
+
+
+<title>Test</title>
+<script type="text/javascript">
+<!--
+function MachGross() {
+	document.close();  
+ var Satz = document.Test.Eingabe.value.toUpperCase();
+ document.Test.Eingabe.value = Satz;
+ var Splitter = Satz.split("");
+ var Ausgabe="";
+ 
+	for(var i = 0; i <= Splitter.length-1; i++) 
+	if (Splitter[i] == " ") {
+	Ausgabe =   Ausgabe + "<img src=Http://www.girl.tv/font/font1/punkt.gif> "; 
+	 }
+else
+	if (Splitter[i] == ".") {
+	Ausgabe =   Ausgabe + "<img src=Http://www.girl.tv/font/font1/punkt.gif> "; 
+	 }
+else
+	if (Splitter[i] == "-") {
+	Ausgabe =   Ausgabe + "<img src=Http://www.girl.tv/font/font1/punkt.gif> "; 
+	 }
+ else
+	if (Splitter[i] == ",") {
+	Ausgabe =   Ausgabe + "<img src=Http://www.girl.tv/font/font1/punkt.gif> "; 
+	 }
+ else
+	if (Splitter[i] == ";") {
+	Ausgabe =   Ausgabe + "<img src=Http://www.girl.tv/font/font1/punkt.gif> "; 
+	 }
+ else
+	if (Splitter[i] == ":") {
+	Ausgabe =   Ausgabe + "<img src=Http://www.girl.tv/font/font1/punkt.gif> "; 
+	 }
+ else
+	if (Splitter[i] == "?") {
+	Ausgabe =   Ausgabe + "<img src=Http://www.girl.tv/font/font1/punkt.gif> "; 
+	 }
+ else
+	if (Splitter[i] == "=") {
+	Ausgabe =   Ausgabe + "<img src=Http://www.girl.tv/font/font1/punkt.gif> "; 
+	 }
+ else
+	if (Splitter[i] == "!") {
+	Ausgabe =   Ausgabe + "<img src=Http://www.girl.tv/font/font1/punkt.gif> "; 
+	 }
+ else
+
+
+
+	Ausgabe =   Ausgabe + "<img src=Http://www.girl.tv/font/font1/" + Splitter[i] + ".gif> "; 
+	
+
+	
+	document.write(Ausgabe); 
+document.close();
+	
+
+}
+//-->
+</script>
+</head>
+
+<body bgcolor="#00FFFF">
+<form action="" name="Test">
+
+<input  name="Eingabe" value="girl.tv font no. one - make my dayâ">
+<input type="button" value="->" onClick="MachGross()">
+</form>
+</body></html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

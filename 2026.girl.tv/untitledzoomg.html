@@ -1,0 +1,1205 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Suprematism Music Landscape — Play / Zoom / Build</title>
+<style>
+  :root{
+    --bg:#060812;
+    --panel:rgba(13,17,33,.78);
+    --line:rgba(255,255,255,.12);
+    --line2:rgba(255,255,255,.18);
+    --text:#e9eefc;
+    --muted:#a9b3cf;
+    --shadow:0 10px 30px rgba(0,0,0,.46);
+    --r:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 900px at 20% 15%, rgba(122,162,255,.16), transparent 55%),
+      radial-gradient(1200px 900px at 75% 80%, rgba(255,122,162,.10), transparent 60%),
+      radial-gradient(900px 700px at 55% 40%, rgba(98,230,165,.08), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font: 14px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial;
+    overflow:hidden;
+  }
+  canvas{display:block;width:100vw;height:100vh}
+
+  .hudTop{
+    position:fixed; top:14px; left:14px; right:14px;
+    display:flex; gap:12px; justify-content:space-between; align-items:flex-start;
+    pointer-events:none;
+  }
+  .hudBottom{
+    position:fixed; left:14px; right:14px; bottom:14px;
+    display:flex; gap:12px; justify-content:space-between; align-items:flex-end;
+    pointer-events:none;
+  }
+  .card{
+    pointer-events:auto;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    backdrop-filter: blur(12px);
+    padding:10px 12px;
+  }
+  .title{font-weight:800; letter-spacing:.2px; margin-bottom:4px}
+  .mini{color:var(--muted); font-size:12px}
+  .controls{
+    display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:flex-end;
+  }
+  button, select, input[type="range"]{
+    appearance:none;
+    border:1px solid var(--line2);
+    background:rgba(255,255,255,.05);
+    color:var(--text);
+    padding:8px 10px;
+    border-radius:12px;
+    cursor:pointer;
+    user-select:none;
+  }
+  button:hover, select:hover{border-color:rgba(255,255,255,.28); background:rgba(255,255,255,.07)}
+  button:active{transform:translateY(1px)}
+  button.primary{border-color:rgba(122,162,255,.45); background:rgba(122,162,255,.14)}
+  button.good{border-color:rgba(98,230,165,.45); background:rgba(98,230,165,.12)}
+  button.danger{border-color:rgba(255,122,162,.45); background:rgba(255,122,162,.11)}
+  .pill{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:8px 10px;
+    border:1px solid var(--line);
+    border-radius:999px;
+    color:var(--muted);
+    background:rgba(0,0,0,.18);
+    white-space:nowrap;
+  }
+  .kbd{
+    font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+    border:1px solid var(--line);
+    background:rgba(0,0,0,.22);
+    padding:2px 6px;
+    border-radius:8px;
+    color:#d9e6ff;
+  }
+  .log{
+    pointer-events:auto;
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    backdrop-filter: blur(12px);
+    padding:10px 12px;
+    width:min(620px, 66vw);
+    max-height:210px;
+    overflow:auto;
+    font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+    font-size:12px;
+    white-space:pre-wrap;
+    color:#cfe1ff;
+  }
+  .gridRow{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  .gridRow label{color:var(--muted); font-size:12px}
+  .tiny{font-size:12px; color:var(--muted)}
+  input[type="range"]{padding:8px}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="hudTop">
+  <div class="card" style="max-width:82ch">
+    <div class="title">⬛️ Suprematism Music Landscape</div>
+    <div class="mini">
+      2.5D-Game: Zoom/Pan/Flight durch Flächen. Klick Tiles = Töne/Stufen/Akkorde/Arp/Drums. Alles ist on/off/loopbar.
+      <span class="kbd">Wheel</span> Zoom · <span class="kbd">Right-Drag</span> oder <span class="kbd">Space</span>+Drag Pan · <span class="kbd">R</span> Reverse · <span class="kbd">M</span> Mirror-Line · <span class="kbd">1..6</span> Presets
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="controls">
+      <button class="good" id="audioBtn">Audio On</button>
+      <button class="primary" id="playBtn">Play</button>
+      <button id="pauseBtn">Pause</button>
+      <button id="revBtn">Reverse</button>
+      <button id="repeatBtn">Repeat Scene</button>
+
+      <select id="rootSel" title="Root">
+        <option>C</option><option>C#</option><option>D</option><option>D#</option><option>E</option><option>F</option>
+        <option>F#</option><option>G</option><option>G#</option><option>A</option><option>A#</option><option>B</option>
+      </select>
+      <select id="scaleSel" title="Scale">
+        <option value="ionian">Ionian</option>
+        <option value="aeolian">Aeolian</option>
+        <option value="dorian">Dorian</option>
+        <option value="phrygian">Phrygian</option>
+        <option value="lydian">Lydian</option>
+        <option value="mixo">Mixolydian</option>
+        <option value="harmmin">Harmonic Minor</option>
+        <option value="melmin">Melodic Minor</option>
+        <option value="blues">Blues</option>
+        <option value="chromatic">Chromatic</option>
+      </select>
+
+      <span class="pill" id="statePill">state: idle</span>
+      <span class="pill" id="presetPill">preset: 1</span>
+    </div>
+
+    <div class="gridRow" style="margin-top:10px">
+      <label>BPM</label><input id="bpm" type="range" min="60" max="170" value="122"/>
+      <label>Density</label><input id="density" type="range" min="0" max="100" value="55"/>
+      <label>FX</label><input id="fx" type="range" min="0" max="100" value="42"/>
+    </div>
+
+    <div class="gridRow" style="margin-top:10px">
+      <button id="toggleScale" class="primary">Scale Plane</button>
+      <button id="toggleChords">Chord Plane</button>
+      <button id="toggleArp">Arp Plane</button>
+      <button id="toggleDrums">Drum Plane</button>
+      <button id="toggleMirror">Mirror Line</button>
+      <button class="danger" id="clearBtn">Clear</button>
+    </div>
+  </div>
+</div>
+
+<div class="hudBottom">
+  <div class="log" id="log"></div>
+  <div class="card" style="max-width:52ch">
+    <div class="mini" id="info">select: —</div>
+    <div class="tiny" style="margin-top:8px">
+      Gameplay: klick ein paar Tiles → Play → flieg/zoome → klick neue Flächen an → Repeat Scene → Reverse → weiter bauen.
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   Suprematism Music Landscape — single file
+   - Planes (Scale / Chords / Arp / Drums) as geometric fields
+   - Clickable tiles spawn sounds + toggle loop steps
+   - Mirror line / reverse traversal
+   - Zoom + Pan “journey” through an abstract landscape
+   ============================================================ */
+
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
+const logEl = document.getElementById("log");
+const infoEl = document.getElementById("info");
+const statePill = document.getElementById("statePill");
+const presetPill = document.getElementById("presetPill");
+
+const audioBtn = document.getElementById("audioBtn");
+const playBtn = document.getElementById("playBtn");
+const pauseBtn = document.getElementById("pauseBtn");
+const revBtn = document.getElementById("revBtn");
+const repeatBtn = document.getElementById("repeatBtn");
+
+const rootSel = document.getElementById("rootSel");
+const scaleSel= document.getElementById("scaleSel");
+
+const bpmEl = document.getElementById("bpm");
+const densityEl = document.getElementById("density");
+const fxEl = document.getElementById("fx");
+
+const toggleScaleBtn = document.getElementById("toggleScale");
+const toggleChordsBtn= document.getElementById("toggleChords");
+const toggleArpBtn   = document.getElementById("toggleArp");
+const toggleDrumsBtn = document.getElementById("toggleDrums");
+const toggleMirrorBtn= document.getElementById("toggleMirror");
+const clearBtn       = document.getElementById("clearBtn");
+
+function log(msg){
+  const t = new Date().toLocaleTimeString();
+  logEl.textContent = `[${t}] ${msg}\n` + logEl.textContent;
+}
+
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+function rnd(a,b){ return a + Math.random()*(b-a); }
+function lerp(a,b,t){ return a+(b-a)*t; }
+function expSmooth(current, target, k, dt){ return lerp(current, target, 1 - Math.exp(-k*dt)); }
+
+// --------- Resize / DPR
+function resize(){
+  const dpr = devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.floor(innerWidth*dpr));
+  canvas.height= Math.max(1, Math.floor(innerHeight*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+addEventListener("resize", resize);
+resize();
+
+// --------- Theory
+const NOTE = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const SCALES = {
+  ionian:[0,2,4,5,7,9,11],
+  aeolian:[0,2,3,5,7,8,10],
+  dorian:[0,2,3,5,7,9,10],
+  phrygian:[0,1,3,5,7,8,10],
+  lydian:[0,2,4,6,7,9,11],
+  mixo:[0,2,4,5,7,9,10],
+  harmmin:[0,2,3,5,7,8,11],
+  melmin:[0,2,3,5,7,9,11],
+  blues:[0,3,5,6,7,10],
+  chromatic:[0,1,2,3,4,5,6,7,8,9,10,11]
+};
+function rootPC(){ return NOTE.indexOf(rootSel.value); }
+function inScale(pc){
+  const st = SCALES[scaleSel.value] || SCALES.ionian;
+  const rel = (pc - rootPC() + 12) % 12;
+  return st.includes(rel);
+}
+function quantizeToScale(pc){
+  if(inScale(pc)) return pc;
+  let best=pc, bestD=99;
+  for(let i=0;i<12;i++){
+    if(inScale(i)){
+      const d = Math.min((i-pc+12)%12, (pc-i+12)%12);
+      if(d<bestD){ bestD=d; best=i; }
+    }
+  }
+  return best;
+}
+function hueForPC(pc){ return (pc*360/12); }
+function col(pc,a=1){ return `hsla(${hueForPC(pc)}, 85%, 62%, ${a})`; }
+
+// --------- Camera (2.5D): world is 2D + z for “layers”
+const cam = {
+  x: 0, y: 0,
+  zoom: 1.0,
+  targetZoom: 1.0,
+  vx: 0, vy: 0, // flight velocity
+};
+function worldToScreen(p){
+  return {
+    x: innerWidth/2 + (p.x - cam.x)*cam.zoom,
+    y: innerHeight/2 + (p.y - cam.y)*cam.zoom,
+    s: cam.zoom,
+    z: p.z || 0
+  };
+}
+function screenToWorld(x,y){
+  return {
+    x: cam.x + (x - innerWidth/2)/cam.zoom,
+    y: cam.y + (y - innerHeight/2)/cam.zoom
+  };
+}
+
+// --------- Audio Engine (simple but rich enough)
+let audio = {
+  ctx:null,
+  master:null,
+  hp:null,
+  lp:null,
+  comp:null,
+  delay:null,
+  delayFB:null,
+  delayMix:null,
+  rv:{r1:null,r2:null,r3:null,rg:null},
+  running:false,
+  preset:1
+};
+
+function ensureAudio(){
+  if(audio.ctx) return;
+  const A = window.AudioContext || window.webkitAudioContext;
+  audio.ctx = new A();
+
+  audio.master = audio.ctx.createGain();
+  audio.master.gain.value = 0.60;
+
+  audio.comp = audio.ctx.createDynamicsCompressor();
+  audio.comp.threshold.value = -20;
+  audio.comp.ratio.value = 4;
+
+  audio.hp = audio.ctx.createBiquadFilter();
+  audio.hp.type = "highpass";
+  audio.hp.frequency.value = 35;
+
+  audio.lp = audio.ctx.createBiquadFilter();
+  audio.lp.type="lowpass";
+  audio.lp.frequency.value = 16000;
+
+  audio.delay = audio.ctx.createDelay(1.0);
+  audio.delay.delayTime.value = 0.23;
+  audio.delayFB = audio.ctx.createGain();
+  audio.delayFB.gain.value = 0.26;
+  audio.delayMix = audio.ctx.createGain();
+  audio.delayMix.gain.value = 0.18;
+
+  const r1 = audio.ctx.createDelay(0.30); r1.delayTime.value=0.080;
+  const r2 = audio.ctx.createDelay(0.30); r2.delayTime.value=0.123;
+  const r3 = audio.ctx.createDelay(0.30); r3.delayTime.value=0.164;
+  const rg = audio.ctx.createGain(); rg.gain.value=0.10;
+  audio.rv = {r1,r2,r3,rg};
+
+  // routing
+  audio.hp.connect(audio.lp);
+  audio.lp.connect(audio.comp);
+  audio.comp.connect(audio.master);
+  audio.master.connect(audio.ctx.destination);
+
+  audio.delay.connect(audio.delayFB);
+  audio.delayFB.connect(audio.delay);
+  audio.delay.connect(audio.delayMix);
+  audio.delayMix.connect(audio.hp);
+
+  audio.rv.r1.connect(audio.rv.rg);
+  audio.rv.r2.connect(audio.rv.rg);
+  audio.rv.r3.connect(audio.rv.rg);
+  audio.rv.rg.connect(audio.hp);
+
+  audioBtn.textContent = "Audio Ready";
+  log("AudioContext created");
+}
+
+async function resumeAudio(){
+  ensureAudio();
+  if(audio.ctx.state !== "running") await audio.ctx.resume();
+  audio.running = true;
+  log(`AudioContext state=${audio.ctx.state}`);
+}
+
+function mtof(m){ return 440*Math.pow(2,(m-69)/12); }
+
+function sendFX(node, amount){
+  if(!audio.running) return;
+  const fx = Number(fxEl.value)/100;
+  const g = audio.ctx.createGain();
+  g.gain.value = amount * (0.25 + fx*0.85);
+  node.connect(g);
+  g.connect(audio.delay);
+  g.connect(audio.rv.r1);
+  g.connect(audio.rv.r2);
+  g.connect(audio.rv.r3);
+}
+
+function playTonePC(pc, dur=0.16, amp=0.20, octaveBias=0){
+  if(!audio.running) return;
+  const t0 = audio.ctx.currentTime;
+
+  const rp = rootPC();
+  const base = 48 + rp + octaveBias*12; // ~C3
+  let midi = base + ((pc - rp + 12) % 12);
+  if(!inScale(pc)) midi += 12; // tension up
+
+  const osc = audio.ctx.createOscillator();
+  const g = audio.ctx.createGain();
+  const f = audio.ctx.createBiquadFilter();
+
+  const preset = audio.preset;
+  if(preset===1){ osc.type="sawtooth"; f.type="lowpass"; f.frequency.value=2200; f.Q.value=0.7; }
+  if(preset===2){ osc.type="triangle"; f.type="lowpass"; f.frequency.value=1600; f.Q.value=1.2; }
+  if(preset===3){ osc.type="square";   f.type="lowpass"; f.frequency.value=900;  f.Q.value=0.9; }
+  if(preset===4){ osc.type="sine";     f.type="lowpass"; f.frequency.value=4200; f.Q.value=0.4; }
+  if(preset===5){ osc.type="sawtooth"; f.type="bandpass";f.frequency.value=1100; f.Q.value=2.1; }
+  if(preset===6){ osc.type="triangle"; f.type="highpass";f.frequency.value=520;  f.Q.value=0.7; }
+
+  osc.frequency.value = mtof(midi);
+
+  const vol = 0.0001;
+  const a = 0.006;
+  const d = Math.max(0.04, dur*0.85);
+  g.gain.setValueAtTime(vol, t0);
+  g.gain.exponentialRampToValueAtTime(Math.max(vol, amp), t0+a);
+  g.gain.exponentialRampToValueAtTime(vol, t0+a+d);
+
+  osc.connect(f);
+  f.connect(g);
+  g.connect(audio.hp);
+
+  sendFX(g, 0.9);
+
+  osc.start(t0);
+  osc.stop(t0+dur+0.10);
+}
+
+function hitKick(amp=0.95){
+  if(!audio.running) return;
+  const t0 = audio.ctx.currentTime;
+  const osc = audio.ctx.createOscillator();
+  const g = audio.ctx.createGain();
+  osc.type="sine";
+  osc.frequency.setValueAtTime(140, t0);
+  osc.frequency.exponentialRampToValueAtTime(46, t0+0.12);
+  g.gain.setValueAtTime(amp, t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0+0.16);
+  osc.connect(g);
+  g.connect(audio.hp);
+  sendFX(g, 0.25);
+  osc.start(t0); osc.stop(t0+0.22);
+}
+
+function hitNoise(type="snare", amp=0.36){
+  if(!audio.running) return;
+  const t0 = audio.ctx.currentTime;
+  const len = audio.ctx.sampleRate * (type==="hat" ? 0.06 : 0.18);
+  const buf = audio.ctx.createBuffer(1, len, audio.ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for(let i=0;i<len;i++){
+    const env = Math.pow(1 - i/len, type==="hat"?1.8:2.2);
+    data[i] = (Math.random()*2-1) * env;
+  }
+  const src = audio.ctx.createBufferSource();
+  src.buffer = buf;
+
+  const f = audio.ctx.createBiquadFilter();
+  if(type==="hat"){ f.type="highpass"; f.frequency.value=7500; f.Q.value=0.7; }
+  else { f.type="bandpass"; f.frequency.value=1800; f.Q.value=0.9; }
+
+  const g = audio.ctx.createGain();
+  g.gain.setValueAtTime(amp, t0);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + (type==="hat"?0.06:0.14));
+
+  src.connect(f); f.connect(g); g.connect(audio.hp);
+  sendFX(g, type==="hat"?0.10:0.22);
+  src.start(t0);
+  src.stop(t0+0.22);
+}
+
+// --------- Tiles / Planes (Suprematism surfaces)
+let show = {scale:true, chords:true, arp:true, drums:true, mirror:true};
+
+const PLANES = [
+  {name:"scale",  z:-60,  origin:{x:-620,y:-260}, size:{w:520,h:380}, tile:56},
+  {name:"chords", z: 40,  origin:{x: 120,y:-300}, size:{w:560,h:420}, tile:70},
+  {name:"arp",    z:120,  origin:{x:-360,y: 220}, size:{w:520,h:380}, tile:64},
+  {name:"drums",  z:200,  origin:{x: 320,y: 260}, size:{w:520,h:320}, tile:60},
+];
+
+function planeByName(name){ return PLANES.find(p=>p.name===name); }
+
+function planeVisible(name){
+  if(name==="scale") return show.scale;
+  if(name==="chords")return show.chords;
+  if(name==="arp")   return show.arp;
+  if(name==="drums") return show.drums;
+  return true;
+}
+
+// Tile state: each plane has a step grid -> toggles
+// Stored as map: key = `${plane}:${i}:${j}` => {on, mode, pc/chord, accent, loop}
+const tileState = new Map();
+
+function tileKey(plane,i,j){ return `${plane}:${i}:${j}`; }
+
+function setTile(plane,i,j, patch){
+  const k = tileKey(plane,i,j);
+  const cur = tileState.get(k) || {on:false, accent:false, loop:true};
+  tileState.set(k, {...cur, ...patch});
+}
+
+function getTile(plane,i,j){
+  return tileState.get(tileKey(plane,i,j)) || {on:false, accent:false, loop:true};
+}
+
+// --------- Chord logic for chord plane: degrees -> triads/7ths
+// Degrees 1..7 (scale degrees). Build triads: 1-3-5 in scale.
+function scaleDegrees(){
+  const st = SCALES[scaleSel.value] || SCALES.ionian;
+  // absolute pitch classes for scale
+  const rp = rootPC();
+  return st.map(s => (rp + s) % 12);
+}
+function triadForDegree(deg){ // deg 0..6
+  const degs = scaleDegrees();
+  const a = degs[deg % degs.length];
+  const b = degs[(deg+2) % degs.length];
+  const c = degs[(deg+4) % degs.length];
+  return [a,b,c];
+}
+function seventhForDegree(deg){
+  const t = triadForDegree(deg);
+  const degs = scaleDegrees();
+  const d = degs[(deg+6) % degs.length];
+  return [...t, d];
+}
+
+// --------- Sequencer timeline / “journey line”
+let state = "idle"; // idle | playing | paused
+let reverse = false;
+let step = 0;
+let nextTickAt = 0;
+
+function setState(s){
+  state = s;
+  statePill.textContent = `state: ${s}${reverse?" (rev)":""}`;
+}
+
+function bpm(){ return Number(bpmEl.value); }
+function density(){ return Number(densityEl.value)/100; }
+
+function stepIntervalSec(){ return (60/bpm())/4; } // 16th base
+
+// mirror line (black backwards track)
+let mirror = true;
+
+// Scene snapshot for Repeat
+let sceneSnap = null;
+function snapshotScene(){
+  return {
+    show: {...show},
+    tileState: Array.from(tileState.entries()).map(([k,v])=>[k,{...v}]),
+    cam: {...cam},
+    reverse,
+    step
+  };
+}
+function restoreScene(s){
+  if(!s) return;
+  show = {...s.show};
+  tileState.clear();
+  for(const [k,v] of s.tileState) tileState.set(k, {...v});
+  cam.x=s.cam.x; cam.y=s.cam.y; cam.zoom=s.cam.zoom; cam.targetZoom=s.cam.targetZoom;
+  reverse = s.reverse;
+  step = 0;
+  nextTickAt = 0;
+  syncToggleButtons();
+  setState(state);
+  log("Repeat Scene: restored snapshot");
+}
+
+// --------- Generate tile content deterministically “makes sense”
+function tilePCForScalePlane(i,j){
+  // map tile to a pitch class: mostly scale degrees; occasional chromatic neighbors
+  const degs = scaleDegrees();
+  const idx = (i + j*2) % degs.length;
+  let pc = degs[idx];
+  if(Math.random()<0.10) pc = (pc + (Math.random()<0.5?-1:1) + 12)%12; // spice
+  return pc;
+}
+function tileDegreeForChordPlane(i,j){
+  // degrees 1..7: structured rows
+  return (i + j) % 7; // 0..6
+}
+function tileArpPattern(i,j){
+  // small patterns: up, down, updown, repeat
+  const patterns = ["up","down","updown","repeat"];
+  return patterns[(i + 2*j) % patterns.length];
+}
+function tileDrumType(i,j){
+  const types = ["kick","snare","hat","hat2"];
+  return types[(i + j*3) % types.length];
+}
+
+// --------- Draw helpers
+function roundRect(x,y,w,h,r){
+  const rr = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+rr,y);
+  ctx.arcTo(x+w,y, x+w,y+h, rr);
+  ctx.arcTo(x+w,y+h, x,y+h, rr);
+  ctx.arcTo(x,y+h, x,y, rr);
+  ctx.arcTo(x,y, x+w,y, rr);
+  ctx.closePath();
+}
+function polygon(x,y,r,n,rot){
+  ctx.beginPath();
+  for(let k=0;k<n;k++){
+    const a = rot + k*(Math.PI*2/n);
+    const px = x + Math.cos(a)*r;
+    const py = y + Math.sin(a)*r;
+    if(k===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.closePath();
+}
+
+// --------- Planes -> tiles in world coords
+function forEachTile(plane, fn){
+  const p = planeByName(plane);
+  const tile = p.tile;
+  const cols = Math.floor(p.size.w / tile);
+  const rows = Math.floor(p.size.h / tile);
+  for(let j=0;j<rows;j++){
+    for(let i=0;i<cols;i++){
+      const x = p.origin.x + i*tile;
+      const y = p.origin.y + j*tile;
+      fn({i,j,x,y,w:tile,h:tile, plane:p});
+    }
+  }
+}
+
+// --------- Click picking
+function pickTile(screenX, screenY){
+  const w = screenToWorld(screenX, screenY);
+  // pick topmost by z (drums > arp > chords > scale), so it feels layered
+  const order = ["drums","arp","chords","scale"];
+  for(const plane of order){
+    if(!planeVisible(plane)) continue;
+    const p = planeByName(plane);
+    if(w.x < p.origin.x || w.x > p.origin.x+p.size.w) continue;
+    if(w.y < p.origin.y || w.y > p.origin.y+p.size.h) continue;
+    const i = Math.floor((w.x - p.origin.x)/p.tile);
+    const j = Math.floor((w.y - p.origin.y)/p.tile);
+    return {plane, i, j};
+  }
+  return null;
+}
+
+// --------- Sound action per tile
+function previewTile(plane,i,j){
+  if(!audio.running) return;
+  if(plane==="scale"){
+    const pc = tilePCForScalePlane(i,j);
+    playTonePC(pc, 0.16, 0.22, (Math.random()<0.18?1:0));
+  }
+  if(plane==="chords"){
+    const deg = tileDegreeForChordPlane(i,j);
+    const chord = (Math.random()<0.55) ? triadForDegree(deg) : seventhForDegree(deg);
+    // quick rolled chord
+    const t0 = audio.ctx.currentTime;
+    chord.forEach((pc, idx)=>{
+      setTimeout(()=>playTonePC(pc, 0.14, 0.18, idx>1?1:0), idx*50);
+    });
+  }
+  if(plane==="arp"){
+    const pc = quantizeToScale((rootPC() + ((i + j*2) % 12)) % 12);
+    playTonePC(pc, 0.10, 0.16, 1);
+  }
+  if(plane==="drums"){
+    const t = tileDrumType(i,j);
+    if(t==="kick") hitKick(0.92);
+    else if(t==="snare") hitNoise("snare", 0.36);
+    else hitNoise("hat", t==="hat2"?0.10:0.08);
+  }
+}
+
+// --------- Toggle tile state semantics:
+// - click toggles on/off; Alt toggles loop; Shift toggles accent
+function toggleTile(plane,i,j, mods){
+  const cur = getTile(plane,i,j);
+
+  if(mods.alt){
+    setTile(plane,i,j, {loop: !cur.loop});
+    log(`${plane} tile ${i},${j}: loop=${!cur.loop}`);
+    return;
+  }
+  if(mods.shift){
+    setTile(plane,i,j, {accent: !cur.accent});
+    log(`${plane} tile ${i},${j}: accent=${!cur.accent}`);
+    return;
+  }
+  setTile(plane,i,j, {on: !cur.on});
+  previewTile(plane,i,j);
+  log(`${plane} tile ${i},${j}: ${!cur.on?"ON":"OFF"}`);
+}
+
+// --------- Play traversal: step “walks through landscape”
+function planeStepTiles(plane, stepIndex){
+  // creates a traveling diagonal/stripe across the plane
+  const p = planeByName(plane);
+  const cols = Math.floor(p.size.w/p.tile);
+  const rows = Math.floor(p.size.h/p.tile);
+  const s = stepIndex % (cols + rows);
+  // produce 2 tiles per step for “more music”
+  const a = {i: s % cols, j: Math.floor(s/cols) % rows};
+  const b = {i: (s*2) % cols, j: (rows-1 - (s % rows))};
+  return [a,b];
+}
+
+function triggerStep(t0, stepIndex){
+  const dens = density();
+  // for each visible plane, step through “path” and trigger enabled tiles
+  const planes = ["scale","chords","arp","drums"];
+  for(const plane of planes){
+    if(!planeVisible(plane)) continue;
+    const targets = planeStepTiles(plane, stepIndex);
+    for(const t of targets){
+      const st = getTile(plane, t.i, t.j);
+
+      // Also allow “ambient” triggers based on density
+      const should = st.on ? true : (Math.random() < dens*0.14);
+      if(!should) continue;
+
+      // If tile is not looping, only fire when st.on OR random ambient (so it can still be “simple off”)
+      if(st.on === false && st.loop === false) continue;
+
+      const accentAmp = st.accent ? 1.25 : 1.0;
+
+      if(plane==="scale"){
+        const pc = tilePCForScalePlane(t.i, t.j);
+        playTonePC(pc, 0.14, 0.18*accentAmp, (Math.random()<0.12?1:0));
+      }
+      if(plane==="chords"){
+        const deg = tileDegreeForChordPlane(t.i, t.j);
+        const chord = (Math.random()<0.50) ? triadForDegree(deg) : seventhForDegree(deg);
+        chord.forEach((pc, idx)=>{
+          // chord = “forms in forms”: multiple hits from one tile
+          const delayMs = idx* (st.accent ? 36 : 48);
+          setTimeout(()=>playTonePC(pc, 0.12, 0.13*accentAmp, idx>=2?1:0), delayMs);
+        });
+      }
+      if(plane==="arp"){
+        const patt = tileArpPattern(t.i, t.j);
+        // derive a chord-ish set from degree and then arpeggiate
+        const deg = (t.i + t.j) % 7;
+        const chord = triadForDegree(deg);
+        const seq = patt==="up" ? chord
+                 : patt==="down" ? chord.slice().reverse()
+                 : patt==="repeat" ? [chord[0], chord[1], chord[0], chord[2]]
+                 : [chord[0], chord[1], chord[2], chord[1]];
+        seq.forEach((pc, idx)=> setTimeout(()=>playTonePC(pc, 0.10, 0.11*accentAmp, 1), idx*42));
+      }
+      if(plane==="drums"){
+        const dt = tileDrumType(t.i, t.j);
+        if(dt==="kick") hitKick(0.92*accentAmp);
+        else if(dt==="snare") hitNoise("snare", 0.34*accentAmp);
+        else hitNoise("hat", (dt==="hat2"?0.11:0.08)*accentAmp);
+      }
+    }
+  }
+}
+
+// --------- Audio scheduler
+function tickAudio(){
+  if(!audio.running) return;
+  if(state!=="playing") return;
+  const t = audio.ctx.currentTime;
+  const ahead = 0.11;
+  const dt = (60/bpm())/4;
+
+  if(nextTickAt===0) nextTickAt = t;
+
+  while(nextTickAt < t + ahead){
+    const s = step;
+    const idx = reverse ? -s : s;
+    triggerStep(nextTickAt, (idx % 256 + 256) % 256);
+    nextTickAt += dt;
+    step++;
+  }
+}
+
+// --------- Drawing planes/tiles (suprematism aesthetic)
+function drawBackground(){
+  ctx.clearRect(0,0,innerWidth,innerHeight);
+
+  // star dust
+  ctx.save();
+  ctx.globalAlpha = 0.55;
+  for(let i=0;i<90;i++){
+    const x = (i*977.7 % 1000)/1000 * innerWidth;
+    const y = (i*733.3 % 1000)/1000 * innerHeight;
+    const r = (i%3===0)?1.4:0.9;
+    ctx.fillStyle = "rgba(255,255,255,0.06)";
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawPlaneFrame(p){
+  const s0 = worldToScreen({x:p.origin.x,y:p.origin.y});
+  const s1 = worldToScreen({x:p.origin.x+p.size.w, y:p.origin.y+p.size.h});
+  const w = s1.x - s0.x;
+  const h = s1.y - s0.y;
+
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,0.12)";
+  ctx.lineWidth = 2;
+  roundRect(s0.x, s0.y, w, h, 18);
+  ctx.stroke();
+
+  ctx.fillStyle = "rgba(233,238,252,0.72)";
+  ctx.font = "700 12px -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial";
+  ctx.textAlign="left"; ctx.textBaseline="top";
+  ctx.fillText(p.name.toUpperCase(), s0.x+10, s0.y+10);
+
+  ctx.restore();
+}
+
+function drawTile(plane,i,j, x,y,w,h){
+  const st = getTile(plane,i,j);
+  const s0 = worldToScreen({x,y});
+  const s1 = worldToScreen({x:x+w,y:y+h});
+  const sw = s1.x - s0.x;
+  const sh = s1.y - s0.y;
+
+  // skip tiny tiles on far zoom out
+  if(sw < 6 || sh < 6) return;
+
+  // derive "meaning" color
+  let pc = 0;
+  if(plane==="scale") pc = tilePCForScalePlane(i,j);
+  if(plane==="chords") pc = triadForDegree(tileDegreeForChordPlane(i,j))[0];
+  if(plane==="arp") pc = quantizeToScale((rootPC() + ((i + j*2) % 12)) % 12);
+  if(plane==="drums") pc = (rootPC() + 7) % 12;
+
+  const inSc = inScale(pc);
+
+  // suprematism: flat + inner form
+  ctx.save();
+  const baseA = st.on ? 0.22 : 0.08;
+  const scaleA = inSc ? 0.06 : 0.02;
+  const accentA = st.accent ? 0.08 : 0.00;
+
+  ctx.fillStyle = col(pc, baseA + scaleA + accentA);
+  ctx.strokeStyle = st.on ? col(pc, 0.55) : "rgba(255,255,255,0.10)";
+  ctx.lineWidth = st.on ? 2 : 1;
+
+  roundRect(s0.x, s0.y, sw-1, sh-1, 12);
+  ctx.fill();
+  ctx.stroke();
+
+  // inner form = "forms in forms"
+  const cx = s0.x + sw*0.5;
+  const cy = s0.y + sh*0.5;
+  const r = Math.min(sw,sh)*0.26;
+
+  ctx.globalAlpha = 1;
+  ctx.strokeStyle = st.on ? col(pc, 0.85) : "rgba(255,255,255,0.12)";
+  ctx.fillStyle = st.on ? col(pc, 0.10) : "rgba(0,0,0,0)";
+  ctx.lineWidth = st.accent ? 2.8 : 1.8;
+
+  if(plane==="scale"){
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  } else if(plane==="chords"){
+    polygon(cx,cy,r*1.15, 3, -Math.PI/2); ctx.fill(); ctx.stroke();
+  } else if(plane==="arp"){
+    polygon(cx,cy,r*1.10, 6, Math.PI/6); ctx.fill(); ctx.stroke();
+  } else {
+    polygon(cx,cy,r*1.20, 4, Math.PI/4); ctx.fill(); ctx.stroke();
+  }
+
+  // tiny label when zoomed in
+  if(sw > 46){
+    ctx.fillStyle = "rgba(233,238,252,0.78)";
+    ctx.font = "650 11px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+    ctx.textAlign="left"; ctx.textBaseline="bottom";
+    let text="";
+    if(plane==="scale") text = NOTE[pc];
+    if(plane==="chords"){
+      const deg = tileDegreeForChordPlane(i,j)+1;
+      text = `deg ${deg}`;
+    }
+    if(plane==="arp") text = tileArpPattern(i,j);
+    if(plane==="drums") text = tileDrumType(i,j);
+    ctx.fillText(text, s0.x+10, s0.y+sh-10);
+
+    // loop toggle indicator
+    if(st.loop===false){
+      ctx.fillStyle = "rgba(0,0,0,0.55)";
+      ctx.fillRect(s0.x+8, s0.y+8, 18, 18);
+      ctx.strokeStyle="rgba(255,255,255,0.35)";
+      ctx.strokeRect(s0.x+8, s0.y+8, 18, 18);
+      ctx.fillStyle="rgba(233,238,252,0.8)";
+      ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.font="700 11px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+      ctx.fillText("Ø", s0.x+17, s0.y+17);
+    }
+  }
+
+  ctx.restore();
+}
+
+function drawPlanes(){
+  const order = ["scale","chords","arp","drums"]; // back to front
+  for(const name of order){
+    if(!planeVisible(name)) continue;
+    const p = planeByName(name);
+
+    // frame
+    drawPlaneFrame(p);
+
+    // tiles
+    forEachTile(name, ({i,j,x,y,w,h})=>{
+      drawTile(name,i,j,x,y,w,h);
+    });
+  }
+}
+
+function drawJourneyLines(){
+  // Mirror-line: black track (forward) + mirrored backwards
+  if(!show.mirror) return;
+
+  ctx.save();
+  ctx.lineWidth = 3;
+
+  // build a polyline through “centers” of the current step targets across planes
+  const stepIndex = (reverse ? -step : step);
+  const s = (stepIndex % 256 + 256) % 256;
+
+  function centersForPlane(name){
+    if(!planeVisible(name)) return [];
+    const p = planeByName(name);
+    const targets = planeStepTiles(name, s);
+    return targets.map(t=>{
+      const cx = p.origin.x + t.i*p.tile + p.tile*0.5;
+      const cy = p.origin.y + t.j*p.tile + p.tile*0.5;
+      return {x:cx,y:cy};
+    });
+  }
+
+  const points = [
+    ...centersForPlane("scale"),
+    ...centersForPlane("chords"),
+    ...centersForPlane("arp"),
+    ...centersForPlane("drums"),
+  ];
+
+  if(points.length<2){ ctx.restore(); return; }
+
+  // forward line
+  ctx.strokeStyle = "rgba(0,0,0,0.78)";
+  ctx.beginPath();
+  let p0 = worldToScreen(points[0]);
+  ctx.moveTo(p0.x,p0.y);
+  for(let k=1;k<points.length;k++){
+    const pk = worldToScreen(points[k]);
+    ctx.lineTo(pk.x,pk.y);
+  }
+  ctx.stroke();
+
+  // mirrored line (backwards): reflect around center axis
+  ctx.strokeStyle = "rgba(255,255,255,0.14)";
+  ctx.beginPath();
+  const reflect = (pt)=>({x:-pt.x, y:pt.y}); // mirror in world x
+  p0 = worldToScreen(reflect(points[0]));
+  ctx.moveTo(p0.x,p0.y);
+  for(let k=1;k<points.length;k++){
+    const pk = worldToScreen(reflect(points[k]));
+    ctx.lineTo(pk.x,pk.y);
+  }
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawHUDHint(){
+  ctx.save();
+  ctx.fillStyle="rgba(233,238,252,0.74)";
+  ctx.font="12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+  ctx.fillText(`root=${rootSel.value} scale=${scaleSel.value} bpm=${bpm()} dens=${Math.round(density()*100)}% fx=${fxEl.value}% step=${step}`, 14, innerHeight-18);
+  ctx.restore();
+}
+
+function draw(){
+  drawBackground();
+
+  // camera flight smoothing
+  const dt = Math.min(0.05, (performance.now()-lastT)/1000);
+  cam.zoom = expSmooth(cam.zoom, cam.targetZoom, 10, dt);
+
+  // subtle drift (journey feel)
+  cam.x += cam.vx * dt;
+  cam.y += cam.vy * dt;
+  cam.vx *= Math.pow(0.05, dt);
+  cam.vy *= Math.pow(0.05, dt);
+
+  drawPlanes();
+  drawJourneyLines();
+  drawHUDHint();
+}
+
+// --------- Interaction: zoom/pan + clicking tiles
+let mouse = {x:0,y:0, down:false, button:0};
+let pan = {active:false, lx:0, ly:0};
+let spaceDown=false;
+
+canvas.addEventListener("contextmenu", e=>e.preventDefault());
+
+canvas.addEventListener("wheel", (e)=>{
+  const z = Math.exp(-e.deltaY*0.0012);
+  cam.targetZoom = clamp(cam.targetZoom*z, 0.35, 3.2);
+},{passive:true});
+
+addEventListener("keydown", (e)=>{
+  if(e.code==="Space") spaceDown=true;
+  if(e.key.toLowerCase()==="r"){ reverse=!reverse; setState(state); log(`Reverse=${reverse}`); }
+  if(e.key.toLowerCase()==="m"){ show.mirror=!show.mirror; syncToggleButtons(); log(`Mirror=${show.mirror}`); }
+  if(e.key>="1" && e.key<="6"){
+    audio.preset = Number(e.key);
+    presetPill.textContent = `preset: ${audio.preset}`;
+    log(`Preset → ${audio.preset}`);
+  }
+  // flight impulses (WASD)
+  const k = e.key.toLowerCase();
+  if(k==="w") cam.vy -= 420/cam.zoom;
+  if(k==="s") cam.vy += 420/cam.zoom;
+  if(k==="a") cam.vx -= 420/cam.zoom;
+  if(k==="d") cam.vx += 420/cam.zoom;
+});
+
+addEventListener("keyup", (e)=>{
+  if(e.code==="Space") spaceDown=false;
+});
+
+canvas.addEventListener("mousemove", (e)=>{
+  mouse.x=e.clientX; mouse.y=e.clientY;
+  if(pan.active){
+    const dx = e.clientX - pan.lx;
+    const dy = e.clientY - pan.ly;
+    cam.x -= dx / cam.zoom;
+    cam.y -= dy / cam.zoom;
+    pan.lx = e.clientX; pan.ly = e.clientY;
+  } else {
+    // hover info
+    const hit = pickTile(e.clientX, e.clientY);
+    if(hit){
+      const st = getTile(hit.plane, hit.i, hit.j);
+      let desc = `${hit.plane} ${hit.i},${hit.j} • ${st.on?"ON":"off"} • ${st.loop?"loop":"no-loop"} • ${st.accent?"accent":""}`;
+      if(hit.plane==="scale"){
+        const pc = tilePCForScalePlane(hit.i, hit.j);
+        desc += ` • note=${NOTE[pc]} ${inScale(pc)?"(in-scale)":"(tension)"}`;
+      }
+      if(hit.plane==="chords"){
+        const deg = tileDegreeForChordPlane(hit.i, hit.j)+1;
+        const tri = triadForDegree(deg-1).map(pc=>NOTE[pc]).join("-");
+        desc += ` • degree=${deg} • tri=${tri}`;
+      }
+      if(hit.plane==="arp"){
+        desc += ` • pattern=${tileArpPattern(hit.i, hit.j)}`;
+      }
+      if(hit.plane==="drums"){
+        desc += ` • drum=${tileDrumType(hit.i, hit.j)}`;
+      }
+      infoEl.textContent = `select: ${desc} • click=toggle • Shift=accent • Alt=loop toggle`;
+    } else {
+      infoEl.textContent = `select: —`;
+    }
+  }
+});
+
+canvas.addEventListener("mousedown", async (e)=>{
+  mouse.down=true; mouse.button=e.button;
+  if(e.button===2 || spaceDown){
+    pan.active=true; pan.lx=e.clientX; pan.ly=e.clientY;
+    return;
+  }
+
+  // left click: toggle tile if hit
+  const hit = pickTile(e.clientX, e.clientY);
+  if(hit){
+    await resumeAudio();
+    toggleTile(hit.plane, hit.i, hit.j, {shift:e.shiftKey, alt:e.altKey});
+    return;
+  }
+
+  // click empty = “jump” camera towards click (journey)
+  const w = screenToWorld(e.clientX, e.clientY);
+  cam.vx += (w.x - cam.x) * 1.2;
+  cam.vy += (w.y - cam.y) * 1.2;
+});
+
+canvas.addEventListener("mouseup", ()=>{
+  mouse.down=false;
+  pan.active=false;
+});
+
+// --------- Pick tile
+function pickTile(screenX, screenY){
+  const w = screenToWorld(screenX, screenY);
+  const order = ["drums","arp","chords","scale"]; // topmost first
+  for(const plane of order){
+    if(!planeVisible(plane)) continue;
+    const p = planeByName(plane);
+    if(w.x < p.origin.x || w.x > p.origin.x+p.size.w) continue;
+    if(w.y < p.origin.y || w.y > p.origin.y+p.size.h) continue;
+    const i = Math.floor((w.x - p.origin.x)/p.tile);
+    const j = Math.floor((w.y - p.origin.y)/p.tile);
+    return {plane, i, j};
+  }
+  return null;
+}
+
+// --------- Scheduler
+function tickAudio(){
+  if(!audio.running) return;
+  if(state!=="playing") return;
+
+  const t = audio.ctx.currentTime;
+  const ahead = 0.12;
+  const dt = stepIntervalSec();
+  if(nextTickAt===0) nextTickAt = t;
+
+  while(nextTickAt < t + ahead){
+    const idx = reverse ? -step : step;
+    triggerStep(nextTickAt, (idx % 256 + 256) % 256);
+    nextTickAt += dt;
+    step++;
+  }
+}
+
+// --------- UI buttons / toggles
+audioBtn.addEventListener("click", resumeAudio);
+
+playBtn.addEventListener("click", async ()=>{
+  await resumeAudio();
+  sceneSnap = snapshotScene();
+  setState("playing");
+  step = 0;
+  nextTickAt = 0;
+  log(`Play: root=${rootSel.value} scale=${scaleSel.value} bpm=${bpm()} dens=${densityEl.value}%`);
+});
+
+pauseBtn.addEventListener("click", ()=>{
+  if(state==="playing"){ setState("paused"); log("Paused"); }
+  else { setState("playing"); nextTickAt=0; log("Continue"); }
+});
+
+revBtn.addEventListener("click", ()=>{
+  reverse = !reverse;
+  setState(state);
+  log(`Reverse=${reverse}`);
+});
+
+repeatBtn.addEventListener("click", ()=>{
+  if(!sceneSnap) sceneSnap = snapshotScene();
+  restoreScene(sceneSnap);
+});
+
+toggleScaleBtn.addEventListener("click", ()=>{ show.scale=!show.scale; syncToggleButtons(); });
+toggleChordsBtn.addEventListener("click", ()=>{ show.chords=!show.chords; syncToggleButtons(); });
+toggleArpBtn.addEventListener("click", ()=>{ show.arp=!show.arp; syncToggleButtons(); });
+toggleDrumsBtn.addEventListener("click", ()=>{ show.drums=!show.drums; syncToggleButtons(); });
+toggleMirrorBtn.addEventListener("click", ()=>{ show.mirror=!show.mirror; syncToggleButtons(); });
+
+clearBtn.addEventListener("click", ()=>{
+  tileState.clear();
+  step=0; nextTickAt=0;
+  cam.x=0; cam.y=0; cam.zoom=1; cam.targetZoom=1;
+  log("Cleared tile states");
+});
+
+function syncToggleButtons(){
+  toggleScaleBtn.classList.toggle("primary", show.scale);
+  toggleChordsBtn.classList.toggle("primary", show.chords);
+  toggleArpBtn.classList.toggle("primary", show.arp);
+  toggleDrumsBtn.classList.toggle("primary", show.drums);
+  toggleMirrorBtn.classList.toggle("primary", show.mirror);
+}
+
+// theory changes reset snapshot optionally
+rootSel.addEventListener("change", ()=>{ log(`Root=${rootSel.value}`); });
+scaleSel.addEventListener("change", ()=>{ log(`Scale=${scaleSel.value}`); });
+
+syncToggleButtons();
+presetPill.textContent = `preset: ${audio.preset}`;
+
+// --------- Main loop
+let lastT = performance.now();
+function frame(){
+  const t = performance.now();
+  const dt = Math.min(0.05, (t-lastT)/1000);
+  lastT = t;
+
+  // mild auto-flight while playing (journey)
+  if(state==="playing"){
+    const drift = 14 * (0.3 + density());
+    cam.vx += Math.cos(t*0.00035) * drift / cam.zoom * dt;
+    cam.vy += Math.sin(t*0.00028) * drift / cam.zoom * dt;
+  }
+
+  tickAudio();
+  draw();
+
+  requestAnimationFrame(frame);
+}
+setState("idle");
+log("Ready. Klick Tiles (Shift=accent, Alt=loop toggle). Play → journey. R reverse. M mirror. WASD flight impulses.");
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

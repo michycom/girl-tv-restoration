@@ -1,0 +1,112 @@
+<html>
+<head>
+<title>hi aliens.</title>
+<meta name="DC.publisher" content="girl.tv">
+<meta name="DC.creator" content="me">
+<meta name="DC.contributor" content="F. Permadi">
+<meta name="DC.contributor" content="me">
+
+<style type="text/css">
+body
+{
+background:white;
+margin: 200px;
+}
+
+a
+{
+color:#black;}
+
+</style>
+
+<script language="javascript">
+
+       setTimeout("window.location.href='http://girl.tv/fly/'",25000);
+
+</script>
+
+<SCRIPT LANGUAGE="JavaScript">
+<!--
+////////////////////////////////////////
+// original script by: F. Permadi 2002
+// hacked by me... 2007
+////////////////////////////////////////
+var text="Dear Aliens, <br><br>\
+This is a present <br>\
+from a small, <br>\
+distant world, <br>\
+a token of <br>\
+our sounds, <br>\
+our science, <br>\
+our images, <br>\
+our music, <br>\
+our thoughts <br>\
+and our feelings. <br><br>\
+We are attempting <br>\
+to survive our time <br>\
+so we may live <br>\
+into yours... <br><br>\
+<span style=text-decoration:underline>your.girl.tv</span> 2007</a>";
+
+
+        
+var delay=50;
+var currentChar=1;
+var destination="[none]";
+function type()
+{
+	//if (document.all)
+	{
+		var dest=document.getElementById(destination);
+		if (dest)// && dest.innerHTML)
+		{
+			dest.innerHTML=text.substr(0, currentChar)+"_";
+			currentChar++;
+			if (currentChar>text.length)
+			{
+				currentChar=1;
+				setTimeout("type()", 25000);
+			}	
+			else
+			{
+				setTimeout("type()", delay);
+			}
+		}
+	}
+}
+
+function startTyping(textParam, delayParam, destinationParam)
+{
+	text=textParam;
+	delay=delayParam;
+	currentChar=1;
+	destination=destinationParam;
+	type();
+}
+//-->  
+</SCRIPT>
+
+</head>
+
+</body>
+
+
+</html>
+
+
+
+</script>
+</head>
+<body>
+<pre>
+
+<a style="text-decoration:none;" href="http://girl.tv/fly/">
+<DIV ID="textDestination" class="news">...</DIV></a></pre>
+<SCRIPT LANGUAGE="JavaScript">
+<!--
+javascript:startTyping(text, 50, "textDestination");
+//-->
+</SCRIPT>
+
+</body>
+</html>

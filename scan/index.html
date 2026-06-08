@@ -1,0 +1,114 @@
+<html>
+<script>
+#!/usr/bin/env node
+"use strict";
+
+const os = require("os");
+const { execFile } = require("child_process");
+
+function run(cmd, args) {
+  return new Promise((resolve, reject) => {
+    execFile(cmd, args, { encoding: "utf8" }, (err, stdout, stderr) => {
+      if (err) return reject(new Error(`${cmd} ${args.join(" ")}\n${stderr || err.message}`));
+      resolve(stdout.trim());
+    });
+  });
+}
+
+function getLocalIPv4s() {
+  const nets = os.networkInterfaces();
+  const res = [];
+  for (const [name, addrs] of Object.entries(nets)) {
+    for (const a of addrs || []) {
+      if (a.family === "IPv4" && !a.internal) {
+        res.push({ iface: name, address: a.address, netmask: a.netmask, mac: a.mac });
+      }
+    }
+  }
+  return res;
+}
+
+// Parse outputs into { ip, mac, iface?, state?, hostname? }
+function parseArpA(output) {
+  // macOS: "? (192.168.1.1) at aa:bb:cc:dd:ee:ff on en0 ifscope [ethernet]"
+  // Linux: "192.168.1.1 dev eth0 lladdr aa:bb:cc:dd:ee:ff REACHABLE"
+  // Windows: "  192.168.1.1          aa-bb-cc-dd-ee-ff     dynamic"
+  const lines = output.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const devices = [];
+
+  for (const line of lines) {
+    // macOS / BSD
+    let m = line.match(/\((\d+\.\d+\.\d+\.\d+)\)\s+at\s+([0-9a-f:]+)\s+on\s+(\S+)/i);
+    if (m) {
+      devices.push({ ip: m[1], mac: m[2].toLowerCase(), iface: m[3] });
+      continue;
+    }
+
+    // Linux ip neigh / arp -n variants
+    m = line.match(/^(\d+\.\d+\.\d+\.\d+)\s+dev\s+(\S+)\s+lladdr\s+([0-9a-f:]+)\s+(\S+)/i);
+    if (m) {
+      devices.push({ ip: m[1], iface: m[2], mac: m[3].toLowerCase(), state: m[4] });
+      continue;
+    }
+
+    // Windows arp -a
+    m = line.match(/^(\d+\.\d+\.\d+\.\d+)\s+([0-9a-f-]{17})\s+(\S+)/i);
+    if (m) {
+      devices.push({ ip: m[1], mac: m[2].replace(/-/g, ":").toLowerCase(), state: m[3] });
+      continue;
+    }
+  }
+
+  // de-dup by ip
+  const byIp = new Map();
+  for (const d of devices) byIp.set(d.ip, { ...(byIp.get(d.ip) || {}), ...d });
+  return [...byIp.values()].sort((a, b) => a.ip.localeCompare(b.ip, undefined, { numeric: true }));
+}
+
+async function main() {
+  const locals = getLocalIPv4s();
+  console.log("Local IPv4 interfaces:");
+  for (const l of locals) console.log(`- ${l.iface}: ${l.address}  netmask=${l.netmask}  mac=${l.mac}`);
+  console.log("");
+
+  let out = "";
+  const platform = process.platform;
+
+  try {
+    if (platform === "darwin") {
+      out = await run("arp", ["-a"]);
+    } else if (platform === "linux") {
+      // prefer ip neigh (more modern)
+      try {
+        out = await run("ip", ["neigh", "show"]);
+      } catch {
+        out = await run("arp", ["-an"]);
+      }
+    } else if (platform === "win32") {
+      out = await run("arp", ["-a"]);
+    } else {
+      throw new Error(`Unsupported platform: ${platform}`);
+    }
+  } catch (e) {
+    console.error(String(e.message || e));
+    process.exit(1);
+  }
+
+  const devices = parseArpA(out);
+
+  if (!devices.length) {
+    console.log("No entries in ARP/neighbor cache yet.");
+    console.log("Tip: open your router admin page, or ping a known device you own, then re-run.");
+    return;
+  }
+
+  console.log("Devices seen in ARP/neighbor cache (passive):");
+  for (const d of devices) {
+    const extra = [d.iface && `iface=${d.iface}`, d.state && `state=${d.state}`].filter(Boolean).join(" ");
+    console.log(`- ${d.ip}  ${d.mac}${extra ? "  " + extra : ""}`);
+  }
+}
+
+main();
+</script>
+</html>

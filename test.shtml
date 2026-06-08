@@ -1,0 +1,2 @@
+<!--#config errmsg="Bei der SSI-Verarbeitung ist ein Fehler aufgetreten." 
+--><!--#echo var="DATE_LOCAL" -->

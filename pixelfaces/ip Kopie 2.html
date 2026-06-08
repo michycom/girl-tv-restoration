@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IP → Pixelface (32×32)</title>
+<style>
+  :root{--bg:#0b0b0b;--fg:#e6e6e6;--accent:#ffd23f}
+  body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,Segoe UI,Arial}
+  .wrap{max-width:900px;margin:28px auto;padding:0 16px}
+  h1{font-size:18px;margin:0 0 12px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  input[type=text]{flex:1;min-width:240px;padding:10px 12px;border:1px solid #333;background:#111;color:var(--fg);border-radius:8px}
+  button{padding:10px 14px;border:0;border-radius:10px;background:#1a1a1a;color:var(--fg);cursor:pointer}
+  button:hover{background:#222}
+  .accent{background:var(--accent);color:#111;font-weight:700}
+  .out{display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;margin-top:10px}
+  .canvasWrap{display:grid;gap:6px;justify-items:center}
+  canvas{image-rendering: pixelated;image-rendering: crisp-edges;
+         width:256px;height:256px;border-radius:12px;background:#000}
+  .meta{font-family:ui-monospace,Menlo,Consolas,monospace;color:#bbb}
+  .chip{padding:4px 8px;border:1px solid #333;border-radius:999px}
+  .panel{display:grid;grid-auto-flow:column;grid-auto-columns:max-content;gap:8px;align-items:center;margin:6px 0 10px}
+  label.small{font-size:12px;color:#aaa}
+  select, input[type=number]{padding:6px 8px;background:#111;color:#eee;border:1px solid #333;border-radius:6px;min-width:70px}
+  .toggle{display:flex;align-items:center;gap:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>IP → Pixelface (32×32)</h1>
+  <div class="row">
+    <input id="ip" type="text" placeholder="z. B. 192.168.10.5" value="">
+    <button id="btnRandom">Random IP</button>
+    <button id="btnRender" class="accent">Render</button>
+    <button id="btnSave">Download PNG</button>
+  </div>
+  <div class="panel" id="panel">
+    <span class="toggle"><input id="manual" type="checkbox"><label for="manual" class="small">Manuelle Steuerung</label></span>
+    <label for="faceVar" class="small">Face</label><input id="faceVar" type="number" min="0" max="5" value="0">
+    <label for="hairVar" class="small">Hair</label><input id="hairVar" type="number" min="0" max="7" value="0">
+    <label for="eyeVar" class="small">Eyes</label><input id="eyeVar" type="number" min="0" max="5" value="0">
+    <label for="nmVar" class="small">Nose/Mouth</label><input id="nmVar" type="number" min="0" max="7" value="0">
+    <label for="skinIdx" class="small">Skin</label><input id="skinIdx" type="number" min="0" max="4" value="0">
+    <label for="hairIdx" class="small">Hair Color</label><input id="hairIdx" type="number" min="0" max="5" value="0">
+    <label for="eyeIdx" class="small">Eye Color</label><input id="eyeIdx" type="number" min="0" max="3" value="0">
+    <button id="btnFromIP">Aus IP übernehmen</button>
+  </div>
+  <div class="out">
+    <div class="canvasWrap">
+      <canvas id="av" width="32" height="32"></canvas>
+      <div class="meta">
+        <span class="chip" id="m_ip">IP: –</span>
+        <span class="chip" id="m_face">Face: –</span>
+        <span class="chip" id="m_hair">Hair: –</span>
+        <span class="chip" id="m_eyes">Eyes: –</span>
+        <span class="chip" id="m_nm">Nose/Mouth: –</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- Utilities ---------- */
+function validIPv4(ip){
+  const parts = ip.trim().split(".");
+  if(parts.length!==4) return false;
+  return parts.every(p => /^\d{1,3}$/.test(p) && +p>=0 && +p<=255);
+}
+function randomIP(){
+  // Öffentlich wirkend, aber simpel – 1..223 vermeiden 0/255 an erster Stelle
+  const a = Math.floor(Math.random()*223)+1;
+  const b = Math.floor(Math.random()*256);
+  const c = Math.floor(Math.random()*256);
+  const d = Math.floor(Math.random()*256);
+  return `${a}.${b}.${c}.${d}`;
+}
+function ipToOctets(ip){ return ip.split(".").map(n=>+n); }
+
+// sehr kompakter PRNG aus 32-bit Seed (für Farbstreuung etc.)
+function mulberry32(seed){
+  return function(){
+    let t = seed += 0x6D2B79F5;
+    t = Math.imul(t ^ t>>>15, t | 1);
+    t ^= t + Math.imul(t ^ t>>>7, t | 61);
+    return ((t ^ t>>>14) >>> 0) / 4294967296;
+  }
+}
+function hashOctets(oct){ // 4 Oktette -> 32-bit int
+  return ((oct[0]&0xFF)<<24) ^ ((oct[1]&0xFF)<<16) ^ ((oct[2]&0xFF)<<8) ^ (oct[3]&0xFF);
+}
+
+/* ---------- Paletten ---------- */
+const SKIN = [
+  [255,220,177],[244,194,157],[224,172,105],[198,134,66],[141,85,36]
+];
+const HAIR_COLORS = [
+  [245,230,72],  // blond
+  [110,64,40],   // braun
+  [35,35,35],    // schwarz
+  [210,105,70],  // rotbraun
+  [180,180,180], // grau
+  [255,160,40],  // orange
+];
+const EYE_COLORS = [
+  [45, 105, 170], // blau
+  [34,139,34],    // grün
+  [80,50,30],     // braun
+  [120,120,120],  // grau
+];
+function clamp(n,min,max){return Math.max(min, Math.min(max, n));}
+function featuresFromIP(ip){
+  if(!validIPv4(ip)) throw new Error("Ungültige IPv4");
+  const o = ipToOctets(ip);
+  const seed = hashOctets(o)>>>0;
+  const rand = mulberry32(seed);
+  return {
+    faceVar: o[0]%6,
+    hairVar: o[1]%8,
+    eyeVar:  o[2]%6,
+    nmVar:   o[3]%8,
+    skinIdx: o[0]%SKIN.length,
+    hairIdx: (o[1]+Math.floor(rand()*2))%HAIR_COLORS.length,
+    eyeIdx:  o[2]%EYE_COLORS.length,
+  };
+}
+function renderFeatures(f){
+  const c = document.getElementById("av");
+  const ctx = c.getContext("2d");
+  ctx.clearRect(0,0,32,32);
+  drawFace(ctx, f.faceVar, SKIN[f.skinIdx]);
+  drawHair(ctx, f.hairVar, HAIR_COLORS[f.hairIdx]);
+  drawEyes(ctx, f.eyeVar, EYE_COLORS[f.eyeIdx]);
+  drawNoseMouth(ctx, f.nmVar);
+  m_face.textContent = "Face: " + f.faceVar;
+  m_hair.textContent = "Hair: " + f.hairVar + " (" + HAIR_COLORS[f.hairIdx].join(",") + ")";
+  m_eyes.textContent = "Eyes: " + f.eyeVar;
+  m_nm.textContent   = "Nose/Mouth: " + f.nmVar;
+}
+
+/* ---------- Zeichnen: alles 32×32 Pixelrects ---------- */
+function px(ctx, x, y, rgb){
+  ctx.fillStyle = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+  ctx.fillRect(x, y, 1, 1);
+}
+function fill(ctx, x, y, w, h, rgb){
+  ctx.fillStyle = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+  ctx.fillRect(x, y, w, h);
+}
+
+/* Gesichtsformen: 0..5 (Oktett 0) */
+function drawFace(ctx, variant, skin){
+  // Hintergrund: schwarz (bereits Canvas)
+  const s = skin;
+  // Grundfläche (abgerundetes Oval per Rechteck-Blöcken)
+  // Wir legen eine simple Maske Zeile für Zeile an (symmetrisch)
+  const mask = [
+    "..............####............",
+    "............########..........",
+    "...........##########.........",
+    "..........############........",
+    ".........##############.......",
+    "........################......",
+    ".......##################.....",
+    ".......##################.....",
+    "......####################....",
+    "......####################....",
+    "......####################....",
+    "......####################....",
+    ".......##################.....",
+    ".......##################.....",
+    "........################......",
+    ".........##############.......",
+    "..........############........",
+    "...........##########.........",
+    "............########..........",
+    "..............####............"
+  ];
+  // Variante beeinflusst Breite/Höhe leicht
+  let dx = [0,-1,1,0,0,-2][variant%6];
+  let dy = [0,1,-1,0,2,0][variant%6];
+
+  for(let y=0;y<mask.length;y++){
+    const row = mask[y];
+    let x=0;
+    while(x<row.length){
+      // zusammenhängende # Blöcke zeichnen
+      if(row[x]==="#"){
+        let x2=x;
+        while(x2<row.length && row[x2]==="#") x2++;
+        fill(ctx, 2+dx+x, 6+dy+y, x2-x, 1, s);
+        x=x2;
+      }else x++;
+    }
+  }
+}
+
+/* Haare: 0..7 (Oktett 1) */
+function drawHair(ctx, variant, rgb){
+  // verschiedene simple Silhouetten
+  const v = variant % 8;
+  const c = rgb;
+  if(v===0){ // kurzer Pony
+    fill(ctx, 6,4,20,3,c); fill(ctx, 5,7,22,2,c); fill(ctx, 7,9,18,2,c);
+  }else if(v===1){ // Seitenscheitel links
+    fill(ctx, 4,5,24,4,c); fill(ctx, 3,9,6,8,c); fill(ctx, 25,9,4,8,c);
+  }else if(v===2){ // Bob
+    fill(ctx, 4,5,24,5,c); fill(ctx, 3,10,5,8,c); fill(ctx, 24,10,5,8,c);
+  }else if(v===3){ // lang glatt
+    fill(ctx, 5,4,22,4,c); fill(ctx, 4,8,24,16,c);
+  }else if(v===4){ // Zopf links
+    fill(ctx, 5,5,22,4,c); fill(ctx, 4,9,6,10,c); fill(ctx, 5,20,4,4,c);
+  }else if(v===5){ // Zopf rechts
+    fill(ctx, 5,5,22,4,c); fill(ctx, 23,9,6,10,c); fill(ctx, 23,20,4,4,c);
+  }else if(v===6){ // Undercut
+    fill(ctx, 6,4,20,3,c); fill(ctx, 6,7,12,2,c);
+  }else{ // Kurz
+    fill(ctx, 8,4,16,3,c);
+  }
+}
+
+/* Augen: 0..5 (Oktett 2) */
+function drawEyes(ctx, variant, iris){
+  const v = variant % 6;
+  const white = [250,250,250], black=[0,0,0], brow=[60,40,20];
+  // Brauen
+  fill(ctx, 9,13,6,1,brow);
+  fill(ctx, 17,13,6,1,brow);
+  // Weiß
+  fill(ctx, 10,14,4,2,white);
+  fill(ctx, 18,14,4,2,white);
+  // Iris/Pupille variiert
+  if(v===0){ px(ctx,11,15,iris); px(ctx,19,15,iris); px(ctx,12,15,black); px(ctx,20,15,black); }
+  if(v===1){ fill(ctx,11,15,2,1,iris); fill(ctx,19,15,2,1,iris); px(ctx,12,15,black); px(ctx,20,15,black); }
+  if(v===2){ px(ctx,12,15,iris); px(ctx,20,15,iris); px(ctx,12,15,black); px(ctx,20,15,black); }
+  if(v===3){ px(ctx,11,15,iris); px(ctx,19,15,iris); }
+  if(v===4){ fill(ctx,11,15,3,1,iris); fill(ctx,19,15,3,1,iris); }
+  if(v===5){ /* halb geschlossen */ fill(ctx,10,15,4,1,black); fill(ctx,18,15,4,1,black); }
+}
+
+/* Nase + Mund: 0..7 (Oktett 3) */
+function drawNoseMouth(ctx, variant){
+  const v = variant % 8;
+  const nose=[180,120,90], lip=[220,60,60], lip2=[190,40,40], shadow=[120,85,70];
+  // Nase (einfach)
+  px(ctx,16,17,nose); px(ctx,16,18,nose); px(ctx,15,19,nose); px(ctx,17,19,nose); px(ctx,16,20,shadow);
+  // Mundvarianten
+  if(v===0){ fill(ctx,13,23,6,1,lip); }
+  if(v===1){ fill(ctx,12,23,8,1,lip); px(ctx,12,22,lip2); px(ctx,20,22,lip2); }
+  if(v===2){ fill(ctx,13,23,6,1,lip2); px(ctx,15,22,lip2); px(ctx,18,22,lip2); }
+  if(v===3){ fill(ctx,14,23,4,1,lip); }
+  if(v===4){ fill(ctx,13,24,6,1,lip); }
+  if(v===5){ /* lächeln */ px(ctx,13,23,lip); px(ctx,14,24,lip); fill(ctx,15,25,2,1,lip); px(ctx,18,24,lip); px(ctx,19,23,lip); }
+  if(v===6){ /* neutral */ fill(ctx,14,24,4,1,lip2); }
+  if(v===7){ /* offen */ fill(ctx,14,23,4,2,lip); fill(ctx,15,24,2,1,[30,0,0]); }
+}
+
+/* ---------- Hauptfunktion ---------- */
+function renderFromIP(ip){
+  const f = featuresFromIP(ip);
+  m_ip.textContent = "IP: " + ip;
+  // Panel mit Werten aus IP befüllen
+  faceVarInp.value = f.faceVar; hairVarInp.value = f.hairVar; eyeVarInp.value = f.eyeVar; nmVarInp.value = f.nmVar;
+  skinIdxInp.value = f.skinIdx; hairIdxInp.value = f.hairIdx; eyeIdxInp.value = f.eyeIdx;
+  renderFeatures(f);
+}
+
+/* ---------- UI ---------- */
+const ipInp = document.getElementById("ip");
+const m_ip = document.getElementById("m_ip");
+const m_face = document.getElementById("m_face");
+const m_hair = document.getElementById("m_hair");
+const m_eyes = document.getElementById("m_eyes");
+const m_nm = document.getElementById("m_nm");
+const manual = document.getElementById("manual");
+const faceVarInp = document.getElementById("faceVar");
+const hairVarInp = document.getElementById("hairVar");
+const eyeVarInp  = document.getElementById("eyeVar");
+const nmVarInp   = document.getElementById("nmVar");
+const skinIdxInp = document.getElementById("skinIdx");
+const hairIdxInp = document.getElementById("hairIdx");
+const eyeIdxInp  = document.getElementById("eyeIdx");
+
+document.getElementById("btnRandom").addEventListener("click", ()=>{
+  ipInp.value = randomIP();
+  document.getElementById("btnRender").click();
+});
+document.getElementById("btnRender").addEventListener("click", ()=>{
+  try{ renderFromIP(ipInp.value.trim()); }catch(e){ alert(e.message); }
+});
+document.getElementById("btnSave").addEventListener("click", ()=>{
+  const c = document.getElementById("av");
+  const link = document.createElement("a");
+  link.download = (ipInp.value.trim()||"avatar") + ".png";
+  link.href = c.toDataURL("image/png");
+  link.click();
+});
+
+function renderManual(){
+  const f = {
+    faceVar: clamp(+faceVarInp.value,0,5),
+    hairVar: clamp(+hairVarInp.value,0,7),
+    eyeVar:  clamp(+eyeVarInp.value,0,5),
+    nmVar:   clamp(+nmVarInp.value,0,7),
+    skinIdx: clamp(+skinIdxInp.value,0,SKIN.length-1),
+    hairIdx: clamp(+hairIdxInp.value,0,HAIR_COLORS.length-1),
+    eyeIdx:  clamp(+eyeIdxInp.value,0,EYE_COLORS.length-1),
+  };
+  renderFeatures(f);
+}
+
+[faceVarInp,hairVarInp,eyeVarInp,nmVarInp,skinIdxInp,hairIdxInp,eyeIdxInp].forEach(el=>{
+  el.addEventListener("input",()=>{ if(manual.checked){ renderManual(); }});
+});
+
+document.getElementById("btnFromIP").addEventListener("click", ()=>{
+  renderFromIP(ipInp.value.trim());
+});
+
+manual.addEventListener("change", ()=>{
+  if(manual.checked){ renderManual(); }
+  else{ renderFromIP(ipInp.value.trim()); }
+});
+
+// Initial: random render
+ipInp.value = randomIP();
+renderFromIP(ipInp.value);
+</script>
+</body>
+</html>

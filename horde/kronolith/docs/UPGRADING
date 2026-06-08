@@ -1,0 +1,35 @@
+============================
+ Upgrading to Kronolith 2.0
+============================
+
+:Last update:   $Date: 2004/11/16 22:58:42 $
+:Revision:      $Revision: 1.1 $
+:Contact:       kronolith@lists.horde.org
+
+
+These are instructions to upgrade from Kronolith 1.1.x to Kronolith 2.0.
+Please backup your existing data before running any of the steps described
+below.  You can't use the updated data with your old Kronolith version
+anymore.
+
+
+SQL Backends
+============
+
+Three new fields and a new table have been added to the default SQL table
+layout to provide the scheduling features to Kronolith.
+
+Execute the provided SQL script to update your data to the new Kronolith
+version::
+
+   mysql --user=root --password=<MySQL-root-password> <db name> < scripts/upgrades/1.1_to_2.0.mysql.sql
+
+
+Categories
+==========
+
+Categories are now being maintained centrally for all Horde applications that
+support them.  To convert the old event categories execute the provided PHP
+script::
+
+   php scripts/upgrades/2004-05-19_convert_categories_to_strings.php

@@ -1,0 +1,27 @@
+html{
+    background-image: url(../art/bikelane_bg-freemee-radpropaganda.jpg);
+    background-repeat: no-repeat;
+    }
+
+#headline{
+    position: absolute;
+    top: 263px;
+    left: 0px;
+    width: 800px;
+    height: 110px;
+    background-color: white;
+    padding: 10px ;
+    font-family: Georgia, sans-serif;
+    font-size: 88px;
+    text-align: right;
+
+}
+
+#feed{
+    position: absolute;
+    top: 395px;
+    left: 420px;
+    width: 400px;
+    height: 400px;
+    color: white;
+}

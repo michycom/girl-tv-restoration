@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <title>Magic Chords – SVG Chord Wheel</title>
+  <link rel="stylesheet" href="magicchordswheel.css">
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="title-block">
+      <h1>Magic Chords – Wheel</h1>
+      <div class="subtitle">Root · Akkord · Solmisation · Quintenzirkel · I–IV–V</div>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div>
+      <div class="status-label">Akkord</div>
+      <div id="statusChord" class="status-value">–</div>
+    </div>
+    <div>
+      <div class="status-label">Noten (eine Oktave)</div>
+      <div id="statusNotes" class="status-value">–</div>
+    </div>
+    <div>
+      <div class="status-label">Intervalle (HT)</div>
+      <div id="statusIntervals" class="status-value">–</div>
+    </div>
+    <div>
+      <div class="status-label">Tonart / Stufen</div>
+      <div id="statusKey" class="status-value">C / Am · I–IV–V: C–F–G</div>
+    </div>
+  </div>
+
+  <div class="game-shell">
+    <svg id="chordWheelSvg" viewBox="0 0 520 520" width="420" height="420"></svg>
+
+    <div class="legend">
+      <p><b>How to play:</b></p>
+      <p>
+        · Klick im <b>Quintenzirkel</b> (außen): Tonart wählen (C / Am, G / Em, …).<br>
+        · Klick auf einen <b>Root-Kreis</b>: Grundton für den Akkord wählen.<br>
+        · Obere Dots: <b>me / mi / se / si / re / fa / sol</b> = Triaden + 5.<br>
+        · Untere Dots: <b>la / te / ti / re / fa / la</b> = 6,7,maj7,9,11,13.<br>
+        · Stern: 12 Strahlen = do, di, re, …, ti (chromatisch).<br>
+        &nbsp;&nbsp;→ Intervalle des Akkords leuchten im Stern.
+      </p>
+      <p>
+        I–IV–V für die aktuelle Tonart siehst du rechts in der Statuszeile.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<script src="magicchordswheel.js"></script>
+</body>
+</html>

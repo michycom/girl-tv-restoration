@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Langsame Hintergrundanimation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            overflow: hidden;
+            background: black;
+        }
+        .background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: url('landscape.png') no-repeat center center;
+            background-size: cover;
+            animation: none;
+            opacity: 0;
+            transition: opacity 30s ease-in-out, z-index 0s linear 30s;
+            z-index: 0;
+        }
+        @keyframes zoom {
+            0% {
+                transform: scale(1) translate(0, 0);
+            }
+            100% {
+                transform: scale(3) translate(0, 25%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="background" class="background"></div>
+    <div id="background_two" class="background"></div>
+
+    <script>
+        // Elemente initialisieren
+        const background = document.getElementById('background');
+        const backgroundTwo = document.getElementById('background_two');
+
+        // Funktion: Animation starten
+        function startAnimation(element) {
+            element.style.animation = 'zoom 180s linear'; // Animation auf 180 Sekunden verlängert
+            element.style.opacity = '1'; // Einblenden
+            element.style.zIndex = '2'; // In den Vordergrund setzen
+        }
+
+        // Funktion: Animation sanft zurücksetzen
+        function stopAnimation(element) {
+            element.style.opacity = '0'; // Ausblenden
+            element.style.zIndex = '1'; // In den Hintergrund setzen, nach Übergang
+            setTimeout(() => {
+                element.style.animation = 'none'; // Animation zurücksetzen
+                void element.offsetWidth; // Reflow erzwingen
+            }, 30000); // Nach Überblendung (30 Sekunden)
+        }
+
+        // Hauptlogik: Animationen koordinieren
+        function alternateBackgrounds() {
+            let active = background;
+            let inactive = backgroundTwo;
+
+            function loop() {
+                // Hintergrundbild startet Animation nach 120 Sekunden
+                setTimeout(() => {
+                    startAnimation(inactive); // Neues Bild animieren
+                }, 120000);
+
+                // Vordergrundbild blendet aus bei Sekunde 120-150
+                setTimeout(() => {
+                    stopAnimation(active); // Aktives Bild ausblenden
+                }, 120000);
+
+                // Nach 180 Sekunden wechseln
+                setTimeout(() => {
+                    [active, inactive] = [inactive, active]; // Bilder tauschen
+                    loop(); // Nächster Zyklus
+                }, 180000); // Nächster Zyklus nach 3 Minuten
+            }
+
+            // Erste Animation starten
+            startAnimation(active); // Start mit dem ersten Bild
+            loop();
+        }
+
+        // Animation starten
+        alternateBackgrounds();
+    </script>
+</body>
+</html>

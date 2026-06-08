@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Download 440 Hz Tone</title>
+</head>
+<body>
+    <button id="generateTone">Generate and Download 440 Hz Tone</button>
+
+    <script>
+        document.getElementById('generateTone').addEventListener('click', function() {
+            // Use OfflineAudioContext with the same settings as the default audio context
+            const offlineContext = new OfflineAudioContext(1, 44100 * 2, 44100); // 1 channel, 2 seconds, 44100 sample rate
+
+            const oscillator = offlineContext.createOscillator();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440, offlineContext.currentTime);
+
+            const gainNode = offlineContext.createGain();
+            gainNode.gain.setValueAtTime(1, offlineContext.currentTime); // Full volume
+
+            oscillator.connect(gainNode);
+            gainNode.connect(offlineContext.destination);
+
+            oscillator.start(0); // Start immediately
+            oscillator.stop(2); // Stop after 2 seconds
+
+            // Render the audio data
+            offlineContext.startRendering().then(function(renderedBuffer) {
+                let audioData = {
+                    buffer: renderedBuffer,
+                    length: renderedBuffer.length
+                };
+                let wavData = bufferToWave(audioData.buffer, audioData.length);
+                let blob = new Blob([wavData], {type: "audio/wav"});
+
+                // Create a download link
+                let url = URL.createObjectURL(blob);
+                let anchor = document.createElement("a");
+                anchor.href = url;
+                anchor.download = "440hz-tone.wav";
+                document.body.appendChild(anchor);
+                anchor.click();
+                document.body.removeChild(anchor);
+                URL.revokeObjectURL(url);
+            });
+        });
+
+        function bufferToWave(abuffer, len) {
+            let numOfChan = abuffer.numberOfChannels,
+                length = len * numOfChan * 2 + 44,
+                buffer = new ArrayBuffer(length),
+                view = new DataView(buffer),
+                offset = 0,
+                pos = 0;
+
+            setUint32(0x46464952); // "RIFF"
+            setUint32(length - 8); // file length - 8
+            setUint32(0x45564157); // "WAVE"
+            setUint32(0x20746d66); // "fmt " chunk
+            setUint32(16); // length = 16
+            setUint16(1); // PCM (uncompressed)
+            setUint16(numOfChan);
+            setUint32(abuffer.sampleRate);
+            setUint32(abuffer.sampleRate * 2 * numOfChan); // byte rate
+            setUint16(numOfChan * 2); // block align
+            setUint16(16); // bits per sample
+            setUint32(0x61746164); // "data" - chunk
+            setUint32(length - pos - 4); // chunk length
+
+            for (let i = 0; i < abuffer.length; i++) {
+                for (let channel = 0; channel < numOfChan; channel++) {
+                    let sample = Math.max(-1, Math.min(1, abuffer.getChannelData(channel)[i]));
+                    sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767)|0;
+                    view.setInt16(pos, sample, true);
+                    pos += 2;
+                }
+            }
+
+            function setUint16(data) {
+                view.setUint16(pos, data, true);
+                pos += 2;
+            }
+
+            function setUint32(data) {
+                view.setUint32(pos, data, true);
+                pos += 4;
+            }
+
+            return buffer;
+        }
+    </script>
+</body>
+</html>

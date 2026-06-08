@@ -1,0 +1,75 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+    "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en"><head>
+<title>WebCam History</title>
+<!--  WebCam History CamSpinner Javascript Copyright 2003-2004, Optima System. All rights reserved. -->
+<meta http-equiv="Content-type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" href="cam.css" type="text/css">
+</head>
+
+<body bgcolor="#FFFFFF">
+<div align="center">
+
+<script language="JavaScript1.1" type="text/javascript">
+<!-- 
+window.csLastImage = 0;
+window.csMaxImage = 2;
+window.csLastImageDate = '' ;
+window.csLastImageTime = '' ;
+window.csCamOnline = true;
+window.csShowHistory = false;
+-->
+</script>
+
+<script language="JavaScript1.1" type="text/javascript" src="cam.js">
+</script>
+
+<script language="JavaScript1.1" type="text/javascript">
+<!--
+
+var imageInRow=0;
+//window.alert( "a" + (Math.round(Math.random()*5)));
+
+if(window.csShowHistory==true)
+{
+	if(window.csLastImage==0)
+	{
+		window.csLastImage = 1;
+		window.location.reload( true );
+	}
+	
+	for(i=window.csLastImage;i>=1; i--)
+	{
+		imageInRow++;
+		document.write('<img src="webcam' + i + '.jpg" name="cam" hspace="4" vspace="4">');
+		if(imageInRow==2)
+		{
+			document.write('<br clear="all">');
+			imageInRow=0;
+		}
+	}
+	
+	
+	for(i=window.csMaxImage;i>window.csLastImage; i--)
+	{
+		imageInRow++;
+		document.write('<img src="webcam' + i + '.jpg" name="cam" hspace="4" vspace="4">');
+		if(imageInRow==2)
+		{
+			document.write('<br clear="all">');
+			imageInRow=0;
+		}
+	}
+}
+else
+{
+	document.write('<p>WebCam history is not available.</p>');
+}
+// -->
+</script>
+
+
+</div>
+
+</body>
+</html>

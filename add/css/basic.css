@@ -1,0 +1,28 @@
+/* hiding the main scrollbars */
+
+html {background-color: black;}
+
+
+#you {
+    overflow: hidden;
+	background: url(http://girl.tv/add/IMG_0818.jpg) no-repeat center center fixed;
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;
+	height: 1000px;
+	width:1000px;
+
+}
+
+
+#you {
+	background: url(http://girl.tv/add/IMG_0819.jpg) no-repeat center center fixed;
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;
+}
+
+a {text-decoration:none;color:white;font-family: 'Lekton', sans-serif;}
+

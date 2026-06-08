@@ -1,0 +1,43 @@
+<?php
+/**
+ * Release focus. Possible values:
+ * 0 - N/A
+ * 1 - Initial freshmeat announcement
+ * 2 - Documentation
+ * 3 - Code cleanup
+ * 4 - Minor feature enhancements
+ * 5 - Major feature enhancements
+ * 6 - Minor bugfixes
+ * 7 - Major bugfixes
+ * 8 - Minor security fixes
+ * 9 - Major security fixes
+ */
+$this->notes['fm']['focus'] = 6;
+
+/* Mailing list release notes. */
+$this->notes['ml']['changes'] = <<<ML
+The Horde Team is pleased to announce the final release of the Mnemo Note
+Manager version H3 (2.1.1).
+
+The Mnemo Note Manager is the Horde notes/memos application.  It provides
+web-based notes and freeform text, similar to the PalmOS Note application and
+shared notepads.  It requires the Horde Application Framework and an SQL
+database for backend storage.
+
+The major changes compared to the Mnemo H3 (2.1) version are:
+    * Small bug fixes and improvements.
+    * Added Slovenian translation and updated Brazilian Portuguese, Dutch,
+      French, German, Greek, Italian, and Traditional Chinese translations.
+ML;
+
+/* Freshmeat release notes, not more than 600 characters. */
+$this->notes['fm']['changes'] = <<<FM
+Small bug fixes and improvements have been made.
+A Slovenian translation has been added and Brazilian Portuguese, Dutch,
+French, German, Greek, Italian, and Traditional Chinese translations have been
+updated.
+FM;
+
+$this->notes['name'] = 'Mnemo';
+$this->notes['fm']['project'] = 'mnemo';
+$this->notes['fm']['branch'] = 'Horde 3';

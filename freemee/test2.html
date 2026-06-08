@@ -1,0 +1,42 @@
+<SCRIPT language=JavaScript1.2>
+//change 1 to another integer to alter the scroll speed. Greater is faster
+var speed=500
+var currentpos=220,alt=1,curpos1=0,curpos2=-1
+function initialize(){
+startit()
+}
+function scrollwindow(){
+if (document.all)
+temp=meinIframe.body.scrollLeft
+else
+temp=meinIframe.pageXOffset
+if (alt==0)
+alt=1
+else
+alt=0
+if (alt==0)
+curpos1=temp
+else
+curpos2=temp
+if (curpos1!=curpos2){
+if (document.all)
+currentpos=meinIframe.document.body.scrollLeft+speed
+else
+currentpos=meinIframe.pageXOffset+speed
+meinIframe.scroll(currentpos,0)
+}
+else{
+currentpos=0
+meinIframe.scroll(currentpos,0)
+}
+}
+function startit(){
+setInterval("scrollwindow()",10)
+}
+window.onload=initialize
+</SCRIPT>
+
+<body onload="initialize()">
+
+<iframe width="600" height="400" src="http://girl.tv/~renato/freemee/junkjet" name="meinIframe"
+frameborder="0" scrolling="no"></iframe>

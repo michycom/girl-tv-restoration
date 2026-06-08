@@ -1,0 +1,1825 @@
+# Webalizer V2.01-10 Incremental Data - 12/07/2005 00:00:10
+2005 12 7 0 0 10
+161603 160832 146 474 124 29 791793687 44381 128 5
+1 13 1547 1 7
+18345 18128 76387359 29 8445 31
+32665 32602 163236608 27 8189 22
+32190 32147 161670757 24 8029 17
+31856 31824 159460042 28 7934 15
+32228 32130 160645983 25 8025 20
+14306 13990 70180096 39 3759 28
+13 11 212842 1 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+0 0 0 0 0 0
+8051 8040 40366085 2008
+8167 8155 40753508 2025
+8075 8071 40539563 2015
+8063 8063 40429260 2017
+8067 8066 41427145 2017
+8083 8079 40578730 2020
+8070 8070 40462822 2018
+8057 8057 40406235 2014
+7804 7794 38657708 2032
+6315 6309 30628220 1850
+5754 5748 27732000 1695
+5747 5739 27596785 1688
+5755 5728 27588406 1680
+5770 5759 27645555 1683
+5802 5782 27799026 1708
+5776 5764 27793530 1712
+6791 6635 33051735 1947
+6291 6113 30146757 1855
+5999 5970 28941019 1750
+5901 5830 27905383 1781
+5734 5674 27196149 1681
+5753 5704 27932283 1687
+5857 5814 27806293 1730
+5921 5868 28409490 1768
+0
+0
+0
+160832
+0
+0
+0
+0
+0
+0
+0
+6
+59
+0
+332
+0
+0
+1
+45
+0
+1
+326
+0
+0
+0
+1
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+0
+# -urls- 
+/horde2/imp/redirect.php
+0 2 1818321509 14020 0 0
+/~wasat/former_ath_cx/content/roonie02/art/zeichnung/04.gif
+1 1 0 4597 0 0
+/horde2/imp/graphics/addressbook-red.gif
+1 3 0 939 0 0
+/~wasat/rokka/frameset_index/right.html
+0 14 0 4914 0 0
+/awstatsicons/other/page.png
+0 8 0 2016 0 0
+/IlohaMail/themes/default/images/reply.gif
+1 2 0 250 0 0
+/awstatsicons/flags/la.png
+0 1 0 239 0 0
+/
+0 84 0 108000 57 12
+/amavis-stats/img/virus-year.png
+0 11 0 81687 0 0
+/horde2/mnemo/graphics/mnemo.gif
+1 4 0 1004 0 0
+/~wasat/former_ath_cx/htdocs/recless_driving/reckless_driving_net.mov
+0 2 0 1069083 0 0
+/~wasat/former_ath_cx/site/goult/thumbnails/Unbenannt 5.jpg
+1 1 32 3229 0 0
+/horde2/graphics/keyboard.gif
+1 3 134774712 486 0 0
+/IlohaMail/folders.php
+0 3 0 9945 0 0
+/~wasat/former_ath_cx/site/goult/thumbnails/Unbenannt 12.jpg
+1 2 0 7508 0 0
+/phpsysinfo/templates/aq/images/space15_15.gif
+1 14 0 648 0 0
+/horde2/imp/graphics/last-grey.gif
+1 4 0 1052 0 0
+/cgi-bin/queuegraph.cgi/queuegraph_1.png
+0 12 0 87267 0 0
+/doc/mrtg/examples/monitor/images/spacer.gif
+1 1 0 43 0 0
+/awstatsicons/flags/fi.png
+0 6 0 1434 0 0
+/phpsysinfo/
+0 25 0 625752 1 2
+/IlohaMail/pref_identities.php
+0 2 0 5349 0 0
+/awstatsicons/browser/notavailable.png
+0 2 0 482 0 0
+/awstatsicons/flags/si.png
+0 2 0 498 0 0
+/doc/mrtg/examples/monitor/monitor.html
+0 1 0 5004 0 0
+/IlohaMail/css.php
+0 7 0 14602 0 0
+/~wasat/former_ath_cx/content/roonie02/art/zeichnung/03.gif
+1 1 0 7875 0 0
+/IlohaMail/radar.php
+0 5 0 2692 0 0
+/~wasat/former_ath_cx/css/mac_styles_ie.css
+0 7 0 16044 0 0
+/awstatsicons/browser/phoenix.png
+0 1 0 514 0 0
+/horde2/nag/graphics/note.gif
+1 2 0 346 0 0
+/awstatsicons/flags/sy.png
+0 1 0 238 0 0
+/status/style.css
+0 66 0 63444 0 0
+/webalizer/
+0 2 0 20106 0 0
+/doc/mrtg/examples/adm-mrtg/adm-mrtg.README
+0 1 0 2440 0 0
+/awstatsicons/flags/a2.png
+0 1 0 381 0 0
+/horde2/menu.php
+0 4 0 11572 0 0
+/horde2/imp/graphics/next-grey.gif
+1 6 0 786 0 0
+/awstatsicons/flags/hk.png
+0 1 0 248 0 0
+/horde2/graphics/prefs.gif
+1 13 0 1950 0 0
+/horde2/imp/graphics/attachment.gif
+1 11 0 726 0 0
+/~wasat/former_ath_cx/site/goult/thumbnails/Unbenannt 4.jpg
+1 1 0 4572 0 0
+/awstatsicons/flags/ma.png
+0 1 0 242 0 0
+/status/main_frame.htm
+0 61 0 34235 0 0
+/awstatsicons/flags/eg.png
+0 1 0 236 0 0
+/~wasat/rokka/art/bg.gif
+1 4 0 138 0 0
+/awstatsicons/flags/il.png
+0 4 0 1000 0 0
+/~wasat/former_ath_cx/site/goult/thumbnails/Unbenannt 11.jpg
+1 1 0 3022 0 0
+/awstatsicons/flags/za.png
+0 1 0 251 0 0
+/~wasat/former_ath_cx/site/collages/thumbnails/kollage5_web.jpg
+1 1 0 7296 0 0
+/~wasat/ics/admin/editICS/girlTV.ics
+0 20 0 102860 0 0
+/~wasat/haw/admin/_vortrag/einfuegen_anzeigen.php
+0 1 0 8272 0 0
+/awstatsicons/flags/ar.png
+0 1 0 231 0 0
+/cgi-bin/queuegraph.cgi/queuegraph_0.png
+0 12 0 77568 0 0
+/cgi-bin/mailgraph.cgi
+0 250 0 1393370 1 1
+/awstatsicons/other/extra.jpg
+1 1 0 5247 0 0
+/awstatsicons/clock/hr12.png
+0 8 1279672878 2560 0 0
+/~renato/webalizer/isolee/
+0 1 0 8392 0 0
+/~wasat/former_ath_cx/content/franzi/art/zeichnung/10.gif
+1 1 0 2611 0 0
+/phpsysinfo/templates/aq/images/fond.gif
+1 14 268376 528 0 0
+/awstatsicons/other/awstats_logo6.png
+0 6 602 16290 0 0
+/~wasat/rokka/css/mac_styles_ie.css
+0 4 268376 4624 0 0
+/~wasat/former_ath_cx/content/roonie02/art/zeichnung/02.gif
+1 1 0 5029 0 0
+/horde2/imp/graphics/changepw.gif
+1 13 0 3887 0 0
+/~wasat/rokka/art/_klubs.gif
+1 5 0 40160 0 0
+/horde2/imp/graphics/checkbox.gif
+1 11 0 9559 0 0
+/doc/mrtg-contrib/
+0 1 0 1403 0 0
+/~wasat/former_ath_cx/randomtext/random.php
+0 2 0 765 0 0
+/awstatsicons/flags/de.png
+0 7 0 1344 0 0
+/horde2/graphics/mime/text.gif
+1 1 0 123 0 0
+/awstatsicons/flags/pt.png
+0 1 0 249 0 0
+/horde2/imp/graphics/up.gif
+1 7 0 763 0 0
+/horde2/nag/graphics/nag.gif
+1 3 0 3117 0 0
+http://66.56.42.185/
+0 1 0 1480 1 0
+/~wasat/former_ath_cx/site/goult/thumbnails/Unbenannt 3.jpg
+1 2 0 4818 0 0
+/doc/mrtg/README.Debian
+0 1 0 1925 0 0
+/~wasat/rokka/content/frameset/content_left.php
+0 35 0 83681 0 0
+/horde2/imp/graphics/draft.gif
+1 11 0 3641 0 0
+/awstatsicons/browser/pdaphone.png
+0 6 0 2106 0 0
+/~wasat/former_ath_cx/site/goult/thumbnails/Unbenannt 10.jpg
+1 2 0 5702 0 0
+/amavis-stats/img/passed-week.png
+0 11 0 108876 0 0
+/horde2/imp/graphics/prev-grey.gif
+1 4 0 528 0 0
+/doc/mrtg/
+0 1 0 4759 0 0
+/awstatsicons/clock/hr11.png
+0 8 0 2544 0 0
+/~wasat/rokka/rokka_SHOP/shop/USER_ARTIKEL_HANDLING_AUFRUF.php
+0 6 0 21734 0 0
+/doc/mrtg/examples/cpuinfo/README
+0 1 0 684 0 0
+/awstatsicons/mime/notavailable.png
+0 7 0 1687 0 0
+/awstatsicons/flags/br.png
+0 1 0 279 0 0
+/horde2/help.php
+0 3 0 4624 0 0
+/awstatsicons/flags/sg.png
+0 1 0 233 0 0
+/horde2/imp/graphics/deleted.gif
+1 11 0 9977 0 0
+/~wasat/former_ath_cx/content/roonie02/art/zeichnung/01.gif
+1 1 0 5565 0 0
+/doc/mrtg-contrib/changelog.Debian.gz
+0 1 0 4414 0 0
+/awstatsicons/other/hp.png
+0 7 0 1883 0 0
+/~wasat/former_ath_cx/site/links/art/us_bunnys_psst.gif
+1 1 0 2757 0 0
+/~wasat/former_ath_cx/content/heimat/
+0 3 0 4338 0 0
+/awstatsicons/flags/cs.png
+0 1 0 239 0 0
+/~wasat/haw/admin/css.css
+0 18 0 27198 0 0
+/awstatsicons/mime/audio.png
+0 4 0 1344 0 0
+/awstatsicons/flags/th.png
+0 1 0 229 0 0
+/~wasat/former_ath_cx/art/huihui.gif
+1 2 0 424 0 0
+/doc/mrtg/examples/monitor/images/
+0 1 0 1910 0 0
+/~wasat/former_ath_cx/site/huihui.html
+0 4 0 2308 0 0
+/awstatsicons/flags/ps.png
+0 1 0 222 0 0
+/horde2/imp/graphics/reload.gif
+1 11 0 16874 0 0
+/amavis-stats/img/virus-day.png
+0 11 0 75728 0 0
+/~wasat/former_ath_cx/site/goult/thumbnails/Unbenannt 2.jpg
+1 2 0 4732 0 0
+/awstatsicons/flags/ee.png
+0 1 0 206 0 0
+/awstatsicons/mime/text.png
+0 5 0 1975 0 0
+/~wasat/former_ath_cx/site/collages/thumbnails/kollage4_web.jpg
+1 1 0 6585 0 0
+/awstatsicons/flags/eu.png
+0 1 0 269 0 0
+/~wasat/rokka/art/tool_top.png
+0 14 0 13426 0 0
+/~wasat/former_ath_cx/site/links/art/bottom.gif
+1 1 0 168 0 0
+/awstatsicons/flags/ba.png
+0 1 0 234 0 0
+/~wasat/former_ath_cx/content/roonie02/bottom.html
+0 3 0 5424 0 0
+/horde2/imp/graphics/last.gif
+1 4 0 1052 0 0
+/~renato/webalizer/isolee/hourly_usage_200512.png
+0 1 0 2209 0 0
+/awstatsicons/clock/hr10.png
+0 8 0 2448 0 0
+/awstatsicons/flags/np.png
+0 1 0 288 0 0
+/awstatsicons/flags/ru.png
+0 1 0 220 0 0
+/~wasat/haw/art/clock.gif
+1 12 0 187 0 0
+/awstatsicons/os/freebsd.png
+0 2 0 658 0 0
+/doc/mrtg/html/mrtg-reference.html
+0 1 0 69289 1 0
+/~wasat/haw/
+0 43379 0 99152830 1 0
+/awstatsicons/flags/sv.png
+0 1 0 219 0 0
+/~wasat/rokka/frameset_index/left.html
+0 14 0 5292 13 0
+/~wasat/haw/css/untitled.css
+0 38037 0 74246272 0 0
+/icons/compressed.gif
+1 4 0 4152 0 0
+/~wasat/rokka/admin/getdata.php
+0 100 0 436417 0 0
+/awstatsicons/flags/cr.png
+0 1 0 241 0 0
+/phpsysinfo/templates/aq/images/g.gif
+1 14 0 804 0 0
+/awstatsicons/flags/tw.png
+0 1 0 226 0 0
+/horde2/
+0 4 0 2312 2 0
+/horde2/graphics/home.gif
+1 4 0 1828 0 0
+/~wasat/former_ath_cx/site/goult/thumbnails/Unbenannt 1.jpg
+1 2 0 5708 0 0
+/awstatsicons/other/vp.png
+0 7 0 1736 0 0
+/awstatsicons/other/postix_logo.png
+0 3 0 7908 0 0
+/~wasat/rokka/admin/art/blank_pix
+0 8 0 344 0 0
+/amavis-stats/img/virus-month.png
+0 11 0 119157 0 0
+/~wasat/rokka/art/black_pix.gif
+1 14 0 602 0 0
+/~wasat/rokka/art/_street.gif
+1 2 0 11818 0 0
+/doc/mrtg/examples/adm-mrtg/
+0 1 0 1245 0 0
+/IlohaMail/tool.php
+0 3 0 11074 0 0
+/~wasat/haw/bg.gif
+1 1 0 46 0 0
+/awstatsicons/flags/no.png
+0 1 0 243 0 0
+/awstatsicons/flags/se.png
+0 5 0 1145 0 0
+/icons/folder.gif
+1 4 0 900 0 0
+/awstatsicons/flags/ca.png
+0 3 0 774 0 0
+/~wasat/haw/admin/editor/edit_index.php
+0 11 0 6328 0 0
+/horde2/imp/graphics/alternative.gif
+1 11 0 1914 0 0
+/doc/
+0 6 0 513798 1 0
+/doc/mrtg/examples/
+0 2 0 20318 0 0
+/~wasat/rokka/art/_home.gif
+1 14 0 82726 0 0
+/~wasat/former_ath_cx/site/goult/thumbnails/Unbenannt 0.jpg
+1 2 0 7682 0 0
+/doc/mrtg/html/mrtg-r.png
+0 1 0 1759 0 0
+/horde2/imp/graphics/important.gif
+1 11 0 2112 0 0
+/IlohaMail/themes/default/images/att.gif
+1 2 0 118 0 0
+/~wasat/rokka/rokka_SHOP/shop/shopstyles.css
+0 1 0 13536 0 0
+/~wasat/former_ath_cx/site/plastikmann/
+0 2 0 1818 0 0
+/~wasat/former_ath_cx/site/collages/thumbnails/kollage3_web.jpg
+1 1 0 10971 0 0
+/horde2/imp/graphics/first.gif
+1 4 0 1052 0 0
+/awstatsicons/flags/es.png
+0 3 0 693 0 0
+/amavis-stats/img/passed-day.png
+0 11 0 106323 0 0
+/horde2/graphics/logout.gif
+1 13 0 1574 0 0
+/horde2/imp/graphics/folders/inbox.gif
+1 13 0 1807 0 0
+/~wasat/rokka/art/tool_bg.png
+0 14 0 5474 0 0
+/horde2/imp/graphics/first-grey.gif
+1 4 0 1052 0 0
+/horde2/turba/graphics/turba.gif
+1 13 0 4836 0 0
+/awstatsicons/other/isolee.gif
+1 2 0 4570 0 0
+/doc/mpack/
+0 2 0 2782 0 1
+/horde2/imp/search.php
+0 3 0 11445 0 0
+/horde2/imp/graphics/prev.gif
+1 7 0 1295 0 0
+/~wasat/rokka/rokka_SHOP/shop/language/de/Buttons/bt_zur_kasse_hauptnav.gif
+1 1 0 226 0 0
+/doc/mrtg/html/
+0 1 0 21592 0 0
+/~wasat/rokka/function/head.php
+0 23 0 19274 0 0
+/awstatsicons/mime/unknown.png
+0 6 0 1308 0 0
+/~wasat/former_ath_cx/site/goult/
+0 3 0 3678 1 0
+/~renato/
+0 1 0 1655 0 0
+/~wasat/rokka/rokka_SHOP/shop/language/de/Buttons/bt_hilfe.gif
+1 1 0 151 0 0
+/~wasat/former_ath_cx/art/trans.gif
+1 20 0 817 0 0
+/horde2/problem.php
+0 2 0 10096 0 0
+/horde2/imp/graphics/unseen.gif
+1 11 0 5027 0 0
+/IlohaMail/prefs.php
+0 3 0 36049 0 0
+/~wasat/rokka/art/bg.png
+0 14 0 2968 0 0
+/horde2/kronolith/graphics/kronolith.gif
+1 3 0 606 0 0
+/~wasat/former_ath_cx/IBC/ibc468g_5.gif
+1 19 0 11736 0 0
+/phpsysinfo/templates/aq/images/redbar_right.gif
+1 14 0 2328 0 0
+/amavis-stats/img/passed-month.png
+0 11 0 104376 0 0
+/awstatsicons/browser/opera.png
+0 6 0 1704 0 0
+/phpsysinfo/templates/aq/images/sup.gif
+1 14 0 1128 0 0
+/~wasat/rokka/art/blank_pix
+0 2 0 86 0 0
+/phpsysinfo/templates/aq/images/redbar_middle.gif
+1 14 0 1776 0 0
+/horde2/imp/graphics/download.gif
+1 1 0 186 0 0
+/icons/blank.gif
+1 5 0 740 0 0
+/phpsysinfo/templates/aq/images/inf.gif
+1 14 0 804 0 0
+/status/
+0 86 0 26631 2 0
+/IlohaMail/login.php
+0 1 0 207 0 0
+/awstatsicons/mime/script.png
+0 6 0 2058 0 0
+/~wasat/rokka/rokka_SHOP/shop/language/de/Buttons/bt_warenkorb_hauptnav.gif
+1 1 0 226 0 0
+/~wasat/rokka/content/frameset/content_top.php
+0 35 0 128719 0 0
+/~wasat/former_ath_cx/site/links/art/hcadr.gif
+1 1 0 5184 0 0
+/js/awstats_misc_tracker.js
+0 6 0 34218 0 0
+/~wasat/haw/art/mini_logo.gif
+1 12 0 596 0 0
+/awstatsicons/mime/archive.png
+0 4 0 1584 0 0
+/horde2/css.php
+0 22 0 66520 0 0
+/awstatsicons/clock/hr9.png
+0 8 0 2432 0 0
+/awstatsicons/flags/gt.png
+0 1 0 278 0 0
+/horde2/graphics/help.gif
+1 18 0 1630 0 0
+/~wasat/rokka/content/contact.php
+0 1 0 3454 0 0
+/~wasat/former_ath_cx/site/goult/pages/Unbenannt 3.html
+0 3 0 2148 0 0
+/horde2/graphics/problem.gif
+1 14 0 1460 0 0
+/phpsysinfo/templates/aq/images/coinsupg.gif
+1 14 0 7032 0 0
+/~wasat/rokka/rokka_SHOP/shop/Frameset/top.php
+0 2 0 4726 0 0
+/phpsysinfo/templates/aq/images/d.gif
+1 14 0 1116 0 0
+/~wasat/former_ath_cx/site/goult/images/Unbenannt 3.jpg
+1 2 0 69400 0 0
+/robots.txt
+0 11 0 693 0 0
+/~wasat/former_ath_cx/IBC/ibc468g_4.gif
+1 18 0 21964 0 0
+/awstatsicons/flags/hu.png
+0 1 0 196 0 0
+/~wasat/former_ath_cx/htdocs/recless_driving/
+0 4 0 3628 3 0
+/doc/mrtg/examples/monitor/
+0 1 0 2261 0 0
+/horde2/imp/graphics/next.gif
+1 4 0 732 0 0
+/icons/image2.gif
+1 1 0 309 0 0
+/horde2/imp/message.php
+0 7 0 34851 0 0
+/cgi-bin/couriergraph.cgi
+0 80 0 348774 1 0
+/~wasat/former_ath_cx/site/collages/thumbnails/kollage2_web.jpg
+1 1 0 13423 0 0
+/~wasat/former_ath_cx/content/franzi/art/zeichnung/09.gif
+1 1 0 3587 0 0
+/awstats/awstatstotals.php
+0 70 0 372905 0 0
+/awstatsicons/flags/nl.png
+0 2 0 428 0 0
+/awstatsicons/flags/fr.png
+0 3 0 573 0 0
+/~wasat/rokka/content/frameset/content_right.php
+0 35 0 170302 0 0
+/awstatsicons/other/hk.png
+0 7 0 1834 0 0
+/awstatsicons/flags/kh.png
+0 1 0 239 0 0
+/awstatsicons/clock/hr8.png
+0 8 0 2496 0 0
+/awstatsicons/flags/cn.png
+0 5 0 1265 0 0
+/doc/couriergraph/
+0 2 0 2750 0 0
+/favicon.ico
+0 31 0 9842 0 0
+/awstatsicons/flags/li.png
+0 1 0 231 0 0
+/~wasat/rokka/rokka_SHOP/
+0 2 0 9056 0 0
+/horde2/imp/graphics/empty_trash.gif
+1 13 0 11791 0 0
+/horde2/imp/graphics/imp.gif
+1 3 0 1371 0 0
+/~wasat/former_ath_cx/IBC/ibc468g_3.gif
+1 18 0 18037 0 0
+/awstatsicons/flags/do.png
+0 1 0 226 0 0
+/button-mini.png
+0 31 0 17270 0 0
+/awstatsicons/flags/ly.png
+0 1 0 181 0 0
+/IlohaMail/
+0 9 0 12879 0 1
+/~wasat/rokka/rokka_SHOP/shop/language/de/Buttons/bt_suchen.gif
+1 1 0 158 0 0
+/doc/amavis-stats/
+0 2 0 2800 0 0
+/awstatsicons/other/8grad.gif
+1 1 0 467 0 0
+/awstatsicons/flags/ie.png
+0 1 0 229 0 0
+/~wasat/haw/admin/editor/edit_nav.htm
+0 15 0 47880 2 1
+/awstats/
+0 3 0 1287 0 0
+/icons/unknown.gif
+1 1 0 245 0 0
+/~wasat/rokka/rokka_SHOP/shop/Frameset/shopstyles.css
+0 1 0 13539 0 0
+/awstatsicons/flags/ve.png
+0 1 0 237 0 0
+/~wasat/former_ath_cx/content/franzi/art/zeichnung/08.gif
+1 1 0 4139 0 0
+/horde2/imp/graphics/filters.gif
+1 11 0 1177 0 0
+/amavis-stats/img/virus-week.png
+0 11 0 92870 0 0
+/awstatsicons/browser/msie.png
+0 7 0 2198 0 0
+/~wasat/rokka/art/_art.gif
+1 3 0 20544 0 0
+/horde2/login.php
+0 2 0 12148 0 0
+/~wasat/rokka/rokka_SHOP/shop/language/de/content.html
+0 1 0 1262 0 0
+/awstatsicons/flags/sa.png
+0 1 0 245 0 0
+/awstatsicons/browser/konqueror.png
+0 6 0 1710 0 0
+/awstatsicons/os/unknown.png
+0 7 0 1526 0 0
+/awstatsicons/flags/gb.png
+0 4 0 1120 0 0
+/awstatsicons/clock/hr7.png
+0 8 0 2528 0 0
+/awstatsicons/flags/gr.png
+0 1 0 256 0 0
+/awstatsicons/flags/kw.png
+0 1 0 234 0 0
+/~wasat/former_ath_cx/site/book/Unbenannt-5.gif
+1 1 0 11369 0 0
+/awstatsicons/mime/image.png
+0 7 0 2590 0 0
+/awstatsicons/flags/tr.png
+0 4 0 976 0 0
+/~wasat/former_ath_cx/IBC/ibc468g_2.gif
+1 21 0 66912 0 0
+/~wasat/rokka/art/_musik.gif
+1 2 0 16064 0 0
+/awstatsicons/other/vk.png
+0 8 0 1888 0 0
+/icons/text.gif
+1 4 0 916 0 0
+/doc/logwatch/README
+0 1 0 2600 0 0
+/awstatsicons/flags/id.png
+0 1 0 217 0 0
+/awstatsicons/flags/us.png
+0 7 0 1764 0 0
+/horde2/imp/graphics/favicon.ico
+0 1 0 1406 0 0
+/webalizer/usage.png
+0 2 0 5636 0 0
+/~wasat/former_ath_cx/site/collages/thumbnails/kollage1_web.jpg
+1 1 0 7888 0 0
+/postboy.html
+0 7 0 2896 0 0
+/awstatsicons/flags/it.png
+0 3 0 573 0 0
+/awstatsicons/browser/firefox.png
+0 7 0 2576 0 0
+/awstatsicons/flags/my.png
+0 1 0 272 0 0
+/~wasat/former_ath_cx/content/franzi/art/zeichnung/07.gif
+1 2 0 9232 0 0
+/awstatsicons/flags/az.png
+0 1 0 260 0 0
+/awstatsicons/flags/ro.png
+0 1 0 232 0 0
+/~wasat/haw/jscripts/js.js
+0 38037 0 102811308 0 0
+/awstatsicons/flags/nz.png
+0 1 0 254 0 0
+/awstatsicons/os/mac.png
+0 7 0 1974 0 0
+/awstatsicons/clock/hr6.png
+0 8 0 2512 0 0
+/~wasat/former_ath_cx/site/endloswalk.html
+0 3 0 2232 2 0
+/awstatsicons/os/win.png
+0 7 0 2338 0 0
+/awstatsicons/flags/cl.png
+0 1 0 237 0 0
+/horde2/imp/graphics/personal.gif
+1 11 0 1353 0 0
+/~wasat/former_ath_cx/site/book/Unbenannt-4.gif
+1 1 0 9806 0 0
+/amavis-stats/img/passed-year.png
+0 11 0 63149 0 0
+/phpsysinfo/templates/aq/images/coinsupd.gif
+1 14 0 7080 0 0
+/~wasat/rokka/rokka_SHOP/shop/Bilder/bg_top.gif
+1 1 0 5309 0 0
+/awstatsicons/flags/pl.png
+0 3 0 723 0 0
+/awstatsicons/os/linux.png
+0 6 0 1920 0 0
+/cgi-bin/queuegraph.cgi
+0 12 0 16243 3 0
+/horde2/imp/graphics/folders.gif
+1 13 0 1625 0 0
+/~wasat/former_ath_cx/IBC/ibc468g_1.gif
+1 19 0 81288 0 0
+/horde2/imp/graphics/answered.gif
+1 11 0 5027 0 0
+/awstatsicons/flags/hr.png
+0 1 0 246 0 0
+/awstatsicons/os/unix.png
+0 1 0 302 0 0
+/doc/mrtg/html/mrtg-webserver.html
+0 1 0 2753 0 0
+/~renato/webalizer/isolee/usage.png
+0 1 0 2731 0 0
+/doc/mrtg/html/mrtg-m.png
+0 1 0 414 0 0
+/~wasat/former_ath_cx/site/links/art/world_small.gif
+1 1 0 719 0 0
+/phpsysinfo/templates/aq/images/redbar_left.gif
+1 14 0 3660 0 0
+/awstatsicons/mime/html.png
+0 7 0 2751 0 0
+/awstatsicons/other/button.gif
+1 5 0 735 0 0
+/awstatsicons/flags/is.png
+0 4 0 968 0 0
+/awstatsicons/flags/mx.png
+0 1 0 231 0 0
+/~wasat/former_ath_cx/content/franzi/art/zeichnung/06.gif
+1 2 0 9064 0 0
+/amavis-stats/
+0 18 0 63928 2 0
+/~wasat/former_ath_cx/site/goult/UntitledFrame-1.html
+0 3 0 1545 0 0
+/awstatsicons/browser/chimera.png
+0 4 0 1152 0 0
+/~wasat/rokka/function/design.php
+0 23 0 14122 0 0
+/doc/mrtg/examples/monitor/readme.txt
+0 1 0 8632 0 0
+/~wasat/haw/admin/editor/edit_blank.htm
+0 2 0 814 0 0
+/~wasat/former_ath_cx/IBC/ibc468g.js
+0 20 0 87696 0 0
+/awstatsicons/other/hh.png
+0 7 0 1862 0 0
+/~wasat/rokka/admin/guestbook/start.html
+0 3 0 10428 0 0
+/doc/mrtg/examples/monitor/images/mrtg-ti.gif
+1 1 0 4696 0 0
+/awstatsicons/clock/hr5.png
+0 8 0 2488 0 0
+/awstatsicons/other/hx.png
+0 7 0 1883 0 0
+/~wasat/former_ath_cx/site/goult/ThumbnailFrame.html
+0 3 0 15882 0 0
+/doc/logwatch/
+0 2 0 3312 0 0
+/~wasat/former_ath_cx/site/book/Unbenannt-3.gif
+1 1 0 13215 0 0
+/~wasat/former_ath_cx/site/moya/
+0 3 0 9018 0 0
+/awstatsicons/flags/pk.png
+0 1 0 269 0 0
+/horde2/imp/graphics/signed.gif
+1 6 0 1290 0 0
+/awstatsicons/other/ek-logo.gif
+1 1 775173425 1302 0 0
+/awstatsicons/os/symbian.png
+0 3 0 894 0 0
+/awstatsicons/flags/lv.png
+0 1 0 229 0 0
+/awstatsicons/flags/ua.png
+0 5 0 1195 0 0
+/doc/mrtg/examples/monitor/images/msprod.gif
+1 1 0 15856 0 0
+/doc/mrtg/html/mrtg-l.png
+0 1 0 538 0 0
+/doc/mrtg/examples/monitor/images/msie.gif
+1 1 0 9132 0 0
+/status/top_frame.htm
+0 78 0 54453 0 0
+/awstatsicons/browser/unknown.png
+0 7 0 1526 0 0
+/awstatsicons/flags/ir.png
+0 1 0 244 0 0
+/~wasat/former_ath_cx/content/franzi/art/zeichnung/05.gif
+1 2 0 9338 0 0
+/~wasat/former_ath_cx/site/art/swf/endloswalk.swf
+0 3 0 1196024 0 0
+/phpsysinfo/templates/aq/images/bar_left.gif
+1 14 0 3432 0 0
+/phpsysinfo/templates/aq/images/coininfg.gif
+1 14 0 4260 0 0
+/horde2/imp/graphics/spellcheck.gif
+1 3 0 456 0 0
+/horde2/imp/graphics/down.gif
+1 4 0 328 0 0
+/horde2/imp/mailbox.php
+0 27 0 200247 0 0
+/~wasat/rokka/rokka_SHOP/shop/USER_BESTELLUNG_AUFRUF.php
+0 1 0 884 0 0
+/IlohaMail/main.php
+0 2 0 42806 0 0
+/awstatsicons/flags/by.png
+0 1 0 198 0 0
+/~wasat/haw/admin/_vortrag/aendern.php
+0 9 0 75572 0 0
+/awstatsicons/clock/hr4.png
+0 8 0 2416 0 0
+/~wasat/former_ath_cx/site/book/Unbenannt-2.gif
+1 1 0 19316 0 0
+/horde2/imp/graphics/folders/folder_open.gif
+1 13 0 19942 0 0
+/~wasat/former_ath_cx/content/heimat/die heimat ist nicht das la.swf
+0 1 0 71363 0 0
+/~wasat/former_ath_cx/css/styles_nn.css
+0 4 0 10672 0 0
+/awstatsicons/flags/cz.png
+0 2 0 478 0 0
+/awstatsicons/browser/safari.png
+0 7 0 2268 0 0
+/~wasat/rokka/jscripts/js2.js
+0 13 0 10985 0 0
+/doc/logwatch/README.Debian
+0 1 0 2326 0 0
+/horde2/imp/graphics/expand.gif
+1 3 0 507 0 0
+/awstatsicons/flags/dk.png
+0 2 0 446 0 0
+/awstatsicons/other/vh.png
+0 8 0 1912 0 0
+/horde2/kronolith/graphics/new.gif
+1 2 0 334 0 0
+/horde2/imp/graphics/search.gif
+1 13 0 12649 0 0
+/phpsysinfo/images/Debian.gif
+1 14 0 3780 0 0
+/doc/mrtg/examples/14all/
+0 1 0 1105 0 0
+/~wasat/former_ath_cx/site/goult/thumbnails/Unbenannt 9.jpg
+1 2 0 6406 0 0
+/~wasat/former_ath_cx/site/collages/
+0 2 0 7632 0 0
+/doc/mrtg/examples/cpuinfo/
+0 1 0 1363 0 0
+/~wasat/rokka/content/pop_abfragen.php
+0 4 0 11424 0 0
+/awstatsicons/flags/iq.png
+0 1 0 238 0 0
+/~wasat/former_ath_cx/content/franzi/art/zeichnung/04.gif
+1 1 0 4792 0 0
+/~wasat/haw/art/haw_logo_big.png
+0 38036 0 498638850 0 0
+/doc/amavis-stats/README.gz
+0 1 0 3103 0 0
+/~wasat/rokka/rokka_SHOP/shop/
+0 1 0 1092 0 0
+/awstatsicons/flags/ng.png
+0 1 0 220 0 0
+/awstatsicons/flags/bh.png
+0 1 0 229 0 0
+/~wasat/former_ath_cx/site/plastikmann/plastikamann.swf
+0 2 0 1223379 0 0
+/horde2/imp/graphics/compose.gif
+1 13 0 2418 0 0
+/cgi-bin/*
+2 585 0 6451658 0 0
+/~wasat/former_ath_cx/content/roonie02/art/zeichnung/07.gif
+1 1 0 4171 0 0
+/awstatsicons/clock/hr3.png
+0 8 0 2416 0 0
+/~wasat/former_ath_cx/contact/contact.php
+0 1 0 3473 0 0
+/awstatsicons/flags/ci.png
+0 1 0 200 0 0
+/~wasat/former_ath_cx/site/book/Unbenannt-1.gif
+1 1 0 7873 0 0
+/horde2/maintenance.php
+0 10 0 11012 0 0
+/~wasat/rokka/jscripts/js.js
+0 18 0 45304 0 0
+/~wasat/rokka/art/_news.gif
+1 2 0 10490 0 0
+/~wasat/rokka/art/blank_pix.gif
+1 4 0 129 0 0
+/~wasat/rokka/art/open_close.png
+0 14 0 10738 0 0
+/awstatsicons/flags/lt.png
+0 1 0 192 0 0
+/~wasat/former_ath_cx/site/links/
+0 10 0 53850 3 0
+/phpsysinfo/templates/aq/images/bar_middle.gif
+1 14 0 1740 0 0
+/~wasat/haw/admin/editor/logout.php
+0 6 0 1974 0 0
+/~wasat/former_ath_cx/site/goult/thumbnails/Unbenannt 8.jpg
+1 1 0 2567 0 0
+/awstatsicons/flags/dz.png
+0 1 0 253 0 0
+/~wasat/former_ath_cx/ibc.html
+0 22 0 7581 17 0
+/~wasat/rokka/art/tool_bottom.png
+0 14 0 23086 0 0
+/~wasat/former_ath_cx/content/franzi/art/zeichnung/03.gif
+1 1 0 4148 0 0
+/cgi-bin/mrtg.cgi
+0 49 0 206953 1 2
+/doc/mrtg/examples/cpuinfo/sample.cfg
+0 1 0 410 0 0
+/horde2/imp/graphics/manage_attachments.gif
+1 3 0 1056 0 0
+/horde2/imp/login.php
+0 5 0 35750 0 0
+/awstatsicons/flags/bg.png
+0 1 0 226 0 0
+/~wasat/rokka/art/eintragen.png
+0 3 0 2298 0 0
+/awstatsicons/browser/netscape.png
+0 6 0 1248 0 0
+/awstatsicons/other/he.png
+0 7 0 1883 0 0
+/~renato/webalizer/isolee/ctry_usage_200512.png
+0 1 0 5206 0 0
+/awstatsicons/os/os2.png
+0 1 0 321 0 0
+/~wasat/haw/admin/editor/ziel.php
+0 1 0 407 0 0
+/~wasat/rokka/frameset_index/bottom.php
+0 17 0 31404 0 0
+/~wasat/former_ath_cx/content/roonie02/art/zeichnung/06.gif
+1 1 0 5770 0 0
+/phpsysinfo/templates/aq/aq.css
+0 14 0 9816 0 0
+/awstatsicons/clock/hr2.png
+0 8 0 2560 0 0
+/awstatsicons/flags/ch.png
+0 6 0 1536 0 0
+/awstatsicons/flags/kr.png
+0 1 0 270 0 0
+/~wasat/former_ath_cx/site/book/Unbenannt-0.gif
+1 1 0 27259 0 0
+/horde2/imp/
+0 6 0 42180 6 0
+/~wasat/former_ath_cx/css/mac_styles_nn.css
+0 8 0 23096 0 0
+/phpsysinfo/templates/aq/images/bar_right.gif
+1 14 0 3432 0 0
+/~wasat/former_ath_cx/jscripts/js.js
+0 83 0 207808 0 0
+/~wasat/former_ath_cx/site/goult/thumbnails/Unbenannt 7.jpg
+1 2 0 7830 0 0
+/cgi-bin/awstats/awstats.pl
+0 102 0 4152017 0 0
+/~wasat/haw/admin/_vortrag/loeschen.php
+0 1 0 2202 0 0
+/awstatsicons/other/vv.png
+0 7 0 1673 0 0
+/awstatsicons/flags/md.png
+0 1 0 268 0 0
+/awstatsicons/flags/ae.png
+0 3 0 672 0 0
+/~wasat/former_ath_cx/site/goult/thumbnails/Unbenannt 14.jpg
+1 2 0 5274 0 0
+/~wasat/former_ath_cx/content/franzi/art/zeichnung/02.gif
+1 1 0 5244 0 0
+/~wasat/former_ath_cx/content/franzi/bottom.html
+0 3 0 5532 0 0
+/awstatsicons/flags/au.png
+0 3 0 780 0 0
+/cgi-bin/queuegraph.cgi/queuegraph_3.png
+0 12 0 62852 0 0
+/awstatsicons/os/sunos.png
+0 1 0 210 0 0
+/horde2/graphics/favicon.ico
+0 3 0 4218 0 0
+/doc/mrtg/examples/14all/README
+0 1 0 190 0 0
+/awstatsicons/browser/mozilla.png
+0 7 0 2023 0 0
+/phpsysinfo/templates/aq/images/coininfd.gif
+1 14 0 4296 0 0
+/awstatsicons/flags/jp.png
+0 6 0 1488 0 0
+/~wasat/former_ath_cx/css/styles_ie.css
+0 38 0 40110 0 0
+/~renato/webalizer/isolee/usage_200512.html
+0 1 0 107926 0 0
+/~wasat/rokka/content/content.php
+0 17 0 33580 0 0
+/icons/back.gif
+1 5 0 1080 0 0
+/awstatsicons/flags/sk.png
+0 1 0 251 0 0
+/~wasat/former_ath_cx/content/roonie02/art/zeichnung/05.gif
+1 1 0 5559 0 0
+/~renato/webalizer/
+0 1 0 2247 0 0
+/awstatsicons/clock/hr1.png
+0 8 0 2544 0 0
+/doc/mpack/README.unix.gz
+0 1 0 3713 0 0
+/~wasat/rokka/css/mac_styles_nn.css
+0 2 0 2856 0 0
+/~wasat/rokka/art/_newcomer.gif
+1 2 0 9050 0 0
+/~wasat/former_ath_cx/site/goult/thumbnails/Unbenannt 6.jpg
+1 2 0 8864 0 0
+/awstatsicons/other/freemee.jpg
+1 1 875573805 4438 0 0
+/awstatsicons/other/vu.png
+0 7 0 1673 0 0
+/awstatsicons/mime/video.png
+0 7 0 2590 0 0
+/awstatsicons/flags/in.png
+0 1 0 239 0 0
+/~renato/webalizer/isolee/daily_usage_200512.png
+0 1 0 2987 0 0
+/~wasat/former_ath_cx/site/goult/thumbnails/Unbenannt 13.jpg
+1 2 0 8292 0 0
+/~wasat/former_ath_cx/content/franzi/art/zeichnung/01.gif
+1 1 0 4654 0 0
+/awstatsicons/mime/other.png
+0 7 0 2177 0 0
+/horde2/imp/compose.php
+0 8 0 19263 0 0
+/~wasat/former_ath_cx/site/collages/thumbnails/kollage6_web.jpg
+1 1 0 10214 0 0
+/~wasat/former_ath_cx/site/moya/tovavohu.gif
+1 34 0 21216 0 0
+/awstatsicons/flags/at.png
+0 5 0 1125 0 0
+/cgi-bin/queuegraph.cgi/queuegraph_2.png
+0 12 0 86074 0 0
+/phpsysinfo/templates/aq/images/aq_background.gif
+1 14 0 3492 0 0
+/awstatsicons/flags/vn.png
+0 1 0 237 0 0
+/doc/couriergraph/README.Debian
+0 1 0 787 0 0
+/awstatsicons/flags/be.png
+0 5 0 1230 0 0
+/awstatsicons/flags/jo.png
+0 1 0 246 0 0
+# End Of Table - urls
+# -sites- (monthly)
+lj2484.inktomisearch.com
+0 1 0 0 1 1133528698
+/
+c199093.ppp.asahi-net.or.jp
+0 1 0 327 0 0
+-
+proxy2.msh.de
+0 9 8 18587 0 0
+-
+e176076057.adsl.alicedsl.de
+0 10 8 25669 0 0
+-
+swwwfilter1.syd.ops.aspac.uu.net
+0 1 1 984688 0 0
+-
+85.103.161.218
+0 21 19 40409 1 1133887598
+/~wasat/rokka/frameset_index/right.html
+66-194-6-72.gen.twtelecom.net
+0 4 4 5920 4 1133806872
+/
+c212122.adsl.hansenet.de
+0 335 260 1150789 2 1133804945
+/amavis-stats/
+foyer.design.haw-hamburg.de
+0 119552 119550 700797437 1 1133861120
+/~wasat/haw/
+p549069ad.dip.t-dialin.net
+0 12 12 31949 1 1133897379
+/~wasat/former_ath_cx/site/links/
+msnbot.msn.com
+0 2 2 126 0 0
+-
+a796c.a.pppool.de
+0 20 7 15468 1 1133621642
+/~wasat/former_ath_cx/ibc.html
+as2-42.dialup.kw.ua
+0 2 2 2960 1 1133427925
+/
+cache13-4.ruh.isu.net.sa
+0 1 1 785 0 0
+-
+wbcc4s08.ezweb.ne.jp
+0 2 2 2265 1 1133440717
+/
+d228121.adsl.hansenet.de
+0 2 2 10286 0 0
+-
+vtbuddha.teradyne.com
+0 1 1 1480 1 1133795195
+/
+cache-frr-ad06.proxy.aol.com
+0 1 1 43 0 0
+-
+d033022.adsl.hansenet.de
+0 353 284 1700491 2 1133913118
+/status/main_frame.htm
+cache-frr-aa07.proxy.aol.com
+0 1 1 663 0 0
+-
+wbcc3s09.ezweb.ne.jp
+0 2 2 2265 1 1133449108
+/
+217-162-162-226.dclient.hispeed.ch
+0 36 34 31963 1 1133462545
+/horde2/imp/
+d188038.adsl.hansenet.de
+0 1 1 5143 0 0
+-
+wbcc5s06.ezweb.ne.jp
+0 2 2 2265 1 1133647104
+/
+c144131.adsl.hansenet.de
+0 3 3 9825 0 0
+-
+mail.mkk-hamburg.net
+0 81 65 246544 1 1133524886
+/~wasat/rokka/admin/art/blank_pix
+141.91.240.162
+0 90 67 174060 2 1133453551
+/~wasat/haw/admin/editor/edit_nav.htm
+xdsl-81-173-235-138.netcologne.de
+0 31 26 508844 1 1133716304
+/~wasat/former_ath_cx/site/goult/ThumbnailFrame.html
+dialer-160-189.kielnet.net
+0 8 3 9831 0 0
+-
+195.198.29.71
+0 1 1 0 1 1133808355
+/
+p54907c06.dip.t-dialin.net
+0 15 11 26564 1 1133473850
+/~wasat/former_ath_cx/ibc.html
+66-194-6-73.gen.twtelecom.net
+0 1 1 1480 1 1133541186
+/
+e176086075.adsl.alicedsl.de
+0 24 22 45807 1 1133604845
+/~wasat/rokka/admin/guestbook/start.html
+d201186.adsl.hansenet.de
+0 30 26 76785 1 1133467039
+/~wasat/rokka/admin/art/blank_pix
+66-194-6-84.gen.twtelecom.net
+0 1 1 1542 1 1133906309
+/
+cache-frr-ac13.proxy.aol.com
+0 1 1 4872 0 0
+-
+p50872909.dip0.t-ipconnect.de
+0 12 11 27106 1 1133811062
+/~wasat/former_ath_cx/ibc.html
+84-74-1-68.dclient.hispeed.ch
+0 34 33 29561 1 1133635392
+/horde2/imp/
+p54ac461f.dip.t-dialin.net
+0 30 11 26564 1 1133552157
+/~wasat/former_ath_cx/ibc.html
+12.41.68.150
+0 1 1 1480 1 1133895551
+/
+p54ad6162.dip.t-dialin.net
+0 15 11 26564 1 1133632618
+/~wasat/former_ath_cx/ibc.html
+p54905433.dip.t-dialin.net
+0 114 109 1263971 1 1133463780
+/~wasat/rokka/frameset_index/right.html
+211.71.200.125
+0 9 5 95133 1 1133847439
+/~wasat/former_ath_cx/htdocs/recless_driving/
+c211-28-209-23.frank2.vic.optusnet.com.au
+0 1 1 1480 1 1133534244
+/
+p548f5a50.dip.t-dialin.net
+0 3 3 10044 0 0
+-
+cwtl7sgts51.jp-t.ne.jp
+0 2 2 2265 1 1133449613
+/
+d010040.adsl.hansenet.de
+0 14 13 130620 1 1133809479
+/doc/mrtg/examples/monitor/monitor.html
+66-194-6-67.gen.twtelecom.net
+0 2 2 3022 2 1133901268
+/
+chello084113211027.5.14.vie.surfer.at
+0 21 19 40409 1 1133551987
+/~wasat/rokka/frameset_index/right.html
+p54ab9a0a.dip0.t-ipconnect.de
+0 5 3 9831 0 0
+-
+69.249.122.27
+0 1 0 0 1 1133526371
+-
+wbcc6s09.ezweb.ne.jp
+0 2 2 2265 1 1133474359
+/
+c-67-191-231-135.hsd1.ga.comcast.net
+0 1 1 1480 1 1133747630
+http://66.56.42.185/
+d057071.adsl.hansenet.de
+0 3 3 15429 0 0
+-
+66-194-6-80.gen.twtelecom.net
+0 1 1 1480 1 1133624413
+/
+wbcc1s11.ezweb.ne.jp
+0 2 2 2265 1 1133725213
+/
+c188201.adsl.hansenet.de
+0 828 637 3134654 2 1133900242
+/
+proxy1.msh.de
+0 12 11 21687 1 1133868702
+/~wasat/rokka/frameset_index/right.html
+p54906585.dip.t-dialin.net
+0 15 15 43080 1 1133734654
+/~wasat/former_ath_cx/site/links/
+p5488b504.dip0.t-ipconnect.de
+0 1 1 1480 1 1133840398
+/
+vpn186a.rzuser.uni-heidelberg.de
+0 17 11 26564 1 1133651306
+/~wasat/former_ath_cx/ibc.html
+d165122.adsl.hansenet.de
+0 7 3 9831 0 0
+-
+dyndsl-085-016-021-111.ewe-ip-backbone.de
+0 1 1 1480 1 1133567899
+/
+cache-frr-ad11.proxy.aol.com
+0 4 1 6494 0 0
+-
+adsl-157-30-41.msy.bellsouth.net
+0 1 1 1480 1 1133530348
+/
+proxy254.docomo.ne.jp
+0 2 2 2265 1 1133674310
+/
+d149056.adsl.hansenet.de
+0 33 29 82183 1 1133875365
+/~wasat/rokka/admin/art/blank_pix
+exit.hbv.de
+0 3 3 10044 0 0
+-
+ed14.bfl24.vectant.ne.jp
+0 2 2 2265 1 1133879147
+/
+218.152.56.118
+0 2 2 2265 1 1133484975
+/
+202.6.107.250
+0 1 1 1480 1 1133777905
+/
+d057108.adsl.hansenet.de
+0 2 0 648 0 0
+-
+d041203.adsl.hansenet.de
+0 3 2 2594 1 1133575025
+/
+d172125.adsl.hansenet.de
+0 4 4 20572 0 0
+-
+lj2238.inktomisearch.com
+0 1 0 323 0 0
+-
+proxy105.docomo.ne.jp
+0 2 2 2265 1 1133645398
+/
+p54a9d3dc.dip.t-dialin.net
+0 7 3 9831 0 0
+-
+210.109.57.23
+0 2 2 2265 1 1133486366
+/
+d010050.adsl.hansenet.de
+0 108 99 450219 1 1133834630
+-
+216.239.38.136
+0 1 1 5385 1 1133807976
+/~wasat/former_ath_cx/site/links/
+ds201-83.ipowerweb.com
+0 1 0 330 1 1133822632
+-
+p5484f220.dip.t-dialin.net
+0 15 13 29695 1 1133710291
+/~wasat/former_ath_cx/ibc.html
+h-66-134-87-154.lsanca54.covad.net
+0 1 1 1542 1 1133900108
+/
+web19.internetx.de
+0 2 2 2960 1 1133889923
+/
+lj2538.inktomisearch.com
+0 1 1 63 0 0
+-
+d54c30b1d.access.telenet.be
+0 15 13 912387 1 1133628831
+/~wasat/former_ath_cx/site/plastikmann/
+66-194-6-70.gen.twtelecom.net
+0 1 1 1480 1 1133615423
+/
+d116172.adsl.hansenet.de
+0 1 1 5143 0 0
+-
+66-194-6-81.gen.twtelecom.net
+0 2 2 2960 2 1133455359
+/
+d119084.adsl.hansenet.de
+0 110 71 151220 1 1133470936
+/horde2/
+d128206.adsl.hansenet.de
+0 57 35 1178815 1 1133456174
+-
+p54907c22.dip.t-dialin.net
+0 2 2 10770 1 1133808001
+/~wasat/former_ath_cx/site/links/
+cache2.syd.ops.aspac.uu.net
+0 2 1 1236 1 1133841778
+/~wasat/former_ath_cx/htdocs/recless_driving/
+64.114.199.1
+0 3 3 4440 3 1133851422
+/
+p548f4f89.dip.t-dialin.net
+0 43 36 107665 1 1133559344
+/~wasat/rokka/art/blank_pix
+pool-70-107-72-135.ny325.east.verizon.net
+0 1 0 0 1 1133571714
+-
+d178213.adsl.hansenet.de
+0 31 5 15237 1 1133467596
+/horde2/imp/
+212.138.113.13
+0 1 1 1480 1 1133566950
+/
+cache-frr-ad08.proxy.aol.com
+0 4 4 7521 0 0
+-
+d039216.adsl.hansenet.de
+0 46 44 54580 1 1133708137
+/horde2/imp/
+yahoobb219034034116.bbtec.net
+0 17 12 31949 1 1133818295
+/~wasat/former_ath_cx/site/links/
+cache-frr-ae09.proxy.aol.com
+0 1 1 2674 0 0
+-
+e182065253.adsl.alicedsl.de
+0 2 2 10286 0 0
+-
+cache-frr-ad12.proxy.aol.com
+0 1 1 3936 0 0
+-
+dslb-084-059-095-224.pools.arcor-ip.net
+0 83 80 81156 1 1133887525
+/horde2/
+e176100251.adsl.alicedsl.de
+0 14 11 26564 1 1133828620
+/~wasat/former_ath_cx/ibc.html
+p54af8f0a.dip0.t-ipconnect.de
+0 5 5 413915 1 1133472139
+/~wasat/former_ath_cx/site/endloswalk.html
+d018084.adsl.hansenet.de
+0 1 1 5143 0 0
+-
+e176071199.adsl.alicedsl.de
+0 10 8 25669 0 0
+-
+dslb-084-062-146-220.pools.arcor-ip.net
+0 94 77 255186 1 1133908022
+/~wasat/rokka/admin/guestbook/start.html
+217-140-204-185.adsl-net.finnetcom.net
+0 21 19 40409 1 1133459106
+/~wasat/rokka/frameset_index/right.html
+proxy352.docomo.ne.jp
+0 2 2 2265 1 1133441887
+/
+uc3.ypc.bbt.yahoo.co.jp
+0 1 1 1480 1 1133517821
+/
+p54904b8b.dip.t-dialin.net
+0 11 6 8025 1 1133654708
+/~wasat/former_ath_cx/content/heimat/
+d063030.adsl.hansenet.de
+0 12 11 27106 1 1133483484
+/~wasat/former_ath_cx/ibc.html
+84-74-10-157.dclient.hispeed.ch
+0 33 32 28156 1 1133824420
+/horde2/imp/
+v10-222-076.lhi.is
+0 12 11 27106 1 1133451815
+/~wasat/former_ath_cx/ibc.html
+server4.eu.com
+0 6 6 8880 3 1133809224
+/
+wolf.netbeat.de
+0 46 46 33396 0 0
+-
+p54905774.dip.t-dialin.net
+0 21 19 40409 1 1133709927
+/~wasat/rokka/frameset_index/right.html
+d008058.adsl.hansenet.de
+0 292 254 642677 3 1133464573
+/postboy.html
+194.120.84.9
+0 15 11 26564 1 1133780112
+/~wasat/former_ath_cx/ibc.html
+36.120.dialup.westcall.net
+0 2 1 1827 1 1133892678
+/
+chello213047006099.west1.11.vie.surfer.at
+0 4 0 0 1 1133892571
+/
+www.whois.sc
+0 5 5 315 0 0
+-
+c213031.adsl.hansenet.de
+0 2 0 648 0 0
+-
+c229046.adsl.hansenet.de
+0 66 63 139712 0 0
+-
+ll-216.ukrsat.mk.ua
+0 4 4 5920 4 1133795030
+/
+vikna.kiev.ua
+0 3 2 2595 1 1133683770
+/
+dslb-082-083-109-091.pools.arcor-ip.net
+0 3 3 9825 0 0
+-
+dyn07-160.cable.spy.dnainternet.fi
+0 17 17 35615 1 1133893578
+/~wasat/rokka/frameset_index/right.html
+proxy129.docomo.ne.jp
+0 2 2 2265 1 1133452078
+/
+c225230.adsl.hansenet.de
+0 213 172 675116 1 1133456129
+/awstats/
+proxy.haw-hamburg.de
+0 37938 37937 74054711 0 0
+-
+xdsl-213-196-204-24.netcologne.de
+0 3 3 9825 0 0
+-
+l0393p26.dipool.highway.telekom.at
+0 31 25 56838 1 1133737050
+/~wasat/rokka/frameset_index/right.html
+ariston.netcraft.com
+0 3 3 0 1 1133525897
+/
+p549f0a28.dip0.t-ipconnect.de
+0 1 1 1480 1 1133401744
+/
+c224022.adsl.hansenet.de
+0 179 167 938366 4 1133560389
+/cgi-bin/mrtg.cgi
+cache3.syd.ops.aspac.uu.net
+0 1 1 907 1 1133913524
+/~wasat/former_ath_cx/htdocs/recless_driving/
+cache-frr-ac01.proxy.aol.com
+0 1 1 361 1 1133740221
+/~wasat/former_ath_cx/ibc.html
+p54906b03.dip.t-dialin.net
+0 21 19 48881 1 1133630782
+/~wasat/former_ath_cx/site/moya/
+d085100.adsl.hansenet.de
+0 18 7 29898 1 1133610806
+/
+62-2-105-50.webcom.cablecom.ch
+0 33 32 28157 1 1133780646
+/horde2/imp/
+crawl-66-249-72-37.googlebot.com
+0 19 13 21780 1 1133430736
+-
+p548f05a5.dip0.t-ipconnect.de
+0 5 5 25715 0 0
+-
+# End Of Table - sites (monthly)
+# -sites- (daily)
+d033022.adsl.hansenet.de
+0 13 11 212842 0 0
+-
+# End Of Table - sites (daily)
+# -referrers- 
+http://www.c.girl.tv/
+0 1
+https://8grad.de/status/top_frame.htm
+0 3
+- (Direct Request)
+1 82112
+http://ewe.girl.tv/
+1 1
+http://www.nies.girl.tv/
+0 1
+http://www.miss.girl.tv/
+0 2
+https://we.girl.tv/horde2/imp/message.php
+1 16
+https://we.girl.tv/status/
+1 126
+http://www.rokka.de/index2.php
+0 68
+http://195.177.250.118/~wasat/former_ath_cx/content/franzi/bottom.html
+0 13
+https://we.girl.tv/
+1 13
+http://195.177.250.118/~wasat/former_ath_cx/site/goult/pages/Unbenannt 3.html
+0 2
+https://we.girl.tv/webalizer/
+1 2
+http://girl.tv/~wasat/rokka/content/frameset/content_top.php
+0 1
+http://www.google.com.au/search
+0 1
+http://girl.tv/~wasat/rokka/content/frameset/content_right.php
+0 2
+http://195.177.250.118/~wasat/former_ath_cx/site/goult/
+0 3
+https://we.girl.tv/IlohaMail/index.php
+1 12
+https://isolee.de/status/top_frame.htm
+0 33
+https://we.girl.tv/doc/mrtg/examples/monitor/images/
+1 2
+https://deck7.de/status/
+0 6
+http://www.dogpile.com/info.dogpl/clickit/search
+0 1
+https://we.girl.tv/IlohaMail/radar.php
+1 1
+http://195.177.250.118/~wasat/former_ath_cx/site/plastikmann/index.html
+0 2
+https://we.girl.tv/IlohaMail/main.php
+1 7
+https://we.girl.tv/IlohaMail/pref_identities.php
+1 4
+http://www.your.girl.tv
+0 2
+http://girl.tv/~wasat/former_ath_cx/
+0 61
+http://we.girl.tv/
+1 14
+https://we.girl.tv/doc/couriergraph/
+1 3
+http://195.177.250.118/~wasat/haw/admin/editor/edit_index.php
+0 34
+https://we.girl.tv/doc/amavis-stats/
+1 5
+https://we.girl.tv/doc/mrtg/
+1 4
+https://we.girl.tv/cgi-bin/queuegraph.cgi
+1 48
+https://we.girl.tv/doc/mrtg/examples/monitor/
+1 4
+http://195.177.250.118/
+0 1
+http://195.177.250.118/~wasat/former_ath_cx/site/collages/
+0 6
+http://www.google.de/search
+0 1
+https://deck7.de/status/top_frame.htm
+0 4
+http://195.177.250.118/~wasat/haw/admin/editor/logout.php
+0 4
+http://195.177.250.118/~wasat/rokka/content/frameset/content_top.php
+0 136
+https://we.girl.tv/horde2/imp/mailbox.php
+1 328
+https://we.girl.tv/horde2/imp/
+1 18
+https://we.girl.tv/horde2/menu.php
+1 23
+https://we.girl.tv/~renato/webalizer/
+1 4
+https://we.girl.tv/horde2/login.php
+1 13
+https://we.girl.tv/doc/mrtg/examples/monitor/monitor.html
+1 4
+https://we.girl.tv/doc/mpack/
+1 5
+http://translate.google.com/translate_n
+0 1
+http://graz.ath.cx/awstats/
+0 3
+https://we.girl.tv/~renato/webalizer/isolee/
+1 2
+https://we.girl.tv/horde2/maintenance.php
+1 23
+http://195.177.250.118/~wasat/former_ath_cx/site/goult/ThumbnailFrame.html
+0 26
+http://girl.tv/mail+/hello.htm
+0 37
+https://we.girl.tv/horde2/help.php
+1 2
+https://we.girl.tv/~renato/webalizer/isolee/usage_200512.html
+1 3
+http://195.177.250.118/~wasat/former_ath_cx/randomtext/random.php
+0 6
+http://195.177.250.118/~wasat/former_ath_cx/ibc.html
+0 130
+https://we.girl.tv/IlohaMail/prefs.php
+1 5
+https://we.girl.tv/IlohaMail/login.php
+1 1
+http://girl.tv/~wasat/rokka/index2.php
+0 1
+http://195.177.250.118/~wasat/haw/admin/_vortrag/aendern.php
+0 5
+http://195.177.250.118/~wasat/former_ath_cx/site/links/index.html
+0 4
+https://we.girl.tv/phpsysinfo/
+1 134
+https://8grad.de/status/
+0 6
+https://we.girl.tv/amavis-stats/
+1 90
+http://195.177.250.118/~wasat/rokka/content/pop_abfragen.php
+0 16
+https://we.girl.tv/~wasat/rokka/rokka_SHOP/shop/language/de/content.html
+1 2
+http://girl.tv/~wasat/rokka/content/frameset/content_left.php
+0 1
+https://we.girl.tv/IlohaMail/
+1 2
+https://we.girl.tv/doc/logwatch/
+1 2
+http://girl.tv/~wasat/former_ath_cx/site/oben.php
+0 34
+https://we.girl.tv/doc/mrtg/examples/cpuinfo/
+1 3
+http://195.177.250.118/~wasat/haw/admin/editor/edit_blank.htm
+0 1
+https://we.girl.tv/horde2/imp/compose.php
+1 19
+https://we.girl.tv/doc/
+1 16
+https://we.girl.tv/~wasat/rokka/rokka_SHOP/index.php
+1 6
+http://girl.tv/~wasat/former_ath_cx/frameset_index/left2.html
+0 107
+http://195.177.250.118/~wasat/former_ath_cx/site/goult/UntitledFrame-1.html
+0 1
+https://we.girl.tv/doc/mrtg/html/
+1 9
+https://we.girl.tv/cgi-bin/mailgraph.cgi
+1 231
+https://isolee.de/status/
+0 13
+http://195.177.250.118/~wasat/rokka/content/frameset/content_right.php
+0 137
+https://we.girl.tv/cgi-bin/couriergraph.cgi
+1 78
+http://195.177.250.118/~wasat/rokka/content/content.php
+0 63
+https://we.girl.tv/cgi-bin/mrtg.cgi
+1 50
+http://195.177.250.118/~wasat/former_ath_cx/content/roonie02/bottom.html
+0 7
+https://we.girl.tv/cgi-bin/awstats/awstats.pl
+1 593
+https://we.girl.tv/IlohaMail/tool.php
+1 2
+https://girl.tv/status/top_frame.htm
+0 1
+http://195.177.250.118/~wasat/haw/admin/editor/edit_nav.htm
+0 40
+http://195.177.250.118/~wasat/former_ath_cx/content/heimat/index.html
+0 1
+https://we.girl.tv/status/top_frame.htm
+1 90
+http://195.177.250.118/~wasat/rokka/admin/guestbook/start.html
+0 6
+https://we.girl.tv/doc/mrtg/examples/
+1 4
+http://www.whois.sc/
+0 5
+https://we.girl.tv/awstats/awstatstotals.php
+1 54
+https://we.girl.tv/~wasat/rokka/rokka_SHOP/shop/USER_ARTIKEL_HANDLING_AUFRUF.php
+1 2
+https://we.girl.tv/horde2/problem.php
+1 2
+http://m-pe.tv/u/page.php
+0 6
+https://we.girl.tv/phpsysinfo/index.php
+1 136
+https://we.girl.tv/doc/mrtg-contrib/
+1 1
+https://we.girl.tv/~wasat/rokka/rokka_SHOP/shop/Frameset/top.php
+1 7
+http://girl.tv/~wasat/rokka/
+0 1
+http://girl.tv/~wasat/former_ath_cx/site/enter.html
+0 4
+http://www.netcraft.com/survey/
+0 3
+https://we.girl.tv/horde2/imp/search.php
+1 29
+https://we.girl.tv/horde2/imp/login.php
+1 13
+http://freemee.de/freemee.htm
+0 1
+https://we.girl.tv/horde2/imp/redirect.php
+1 5
+http://www.uptown.girl.tv/
+0 2
+http://www.www.girl.tv/
+0 1
+https://195.177.250.118/~wasat/haw/index.php
+0 76072
+https://we.girl.tv/~wasat/rokka/rokka_SHOP/shop/
+1 2
+https://we.girl.tv/horde2/
+1 9
+http://195.177.250.118/~wasat/rokka/content/frameset/content_left.php
+0 36
+http://hyper.girl.tv/
+0 1
+http://195.177.250.118/~wasat/former_ath_cx/site/endloswalk.html
+0 2
+http://195.177.250.118/~wasat/former_ath_cx/site/huihui.html
+0 2
+https://we.girl.tv/doc/mrtg/examples/14all/
+1 1
+https://we.girl.tv/awstats/
+1 5
+https://girl.tv/status/
+0 2
+https://we.girl.tv/doc/mrtg/examples/adm-mrtg/
+1 1
+http://195.177.250.118/~wasat/rokka/frameset_index/left.html
+0 27
+# End Of Table - referrers
+# -agents- 
+SafariBookmarkChecker/1.27 (+http://www.coriolis.ch/)
+0 2
+DAVKit/2.0 (10.4.3; wrbt) iCal 2.0.3
+0 18
+Netcraft Web Server Survey)"
+0 3
+KDDI-TS32 UP.Browser/6.2.0.9.1 (GUI) MMP/2.0
+0 2
+Googlebot/2.1
+0 19
+DoCoMo/2.0 P900iV(c100;TB;W24H11)
+0 2
+MSIE 5.0
+0 176
+MSIE 5.2
+0 1
+MSIE 5.5
+0 6
+DoCoMo/2.0 SH901iC(c100;TB;W24H12)
+0 2
+DoCoMo/2.0 SH901iS(c100;TB;W24H12)
+0 2
+msnbot/1.0 (+http://search.msn.com/msnbot.htm)
+0 2
+CFNetwork/1.1
+0 4
+Mozilla/5.0
+0 160697
+Konqueror/3.0
+0 4
+Konqueror/3.1
+0 1
+DoCoMo/2.0 N901iS(c100;TB;W24H12)
+0 2
+SurveyBot/2.3 (Whois Source)
+0 5
+MSIE 6.0
+0 562
+Vodafone/1.0/V903SH/SHJ001 Browser/UP.Browser/7.0.2.1 Profile/MIDP-2.0 Configuration/CLDC-1.1 Ext-J-Profile/JSCL-1.2.2 Ext-V-
+0 2
+QuickTime/7.0.3 (qtver=7.0.3;cpu=PPC;os=Mac 10.3.9)
+0 1
+ICS)"
+0 1
+Opera 8.5
+0 8
+KDDI-CA32 UP.Browser/6.2.0.7.3.129 (GUI) MMP/2.0
+0 2
+DAVKit/2.0 (10.4.2; wrbt) iCal 2.0.2
+0 2
+KDDI-SA34 UP.Browser/6.2.0.9.1 (GUI) MMP/2.0
+0 2
+Mozilla/4.7
+0 1
+Yahoo! Slurp
+0 3
+KDDI-SA32 UP.Browser/6.2.0.8 (GUI) MMP/2.0
+0 4
+# End Of Table - agents
+# -search strings- 
+recless driving
+1
+annika unterburg
+1
+# End Of Table - search strings
+# -usernames- 
+tim
+0 111 111 674324 2 1133910476
+wasat
+0 7 7 234035 1 0
+me
+0 20 20 778483 2 1133911972
+turbo
+0 41 41 105387 2 1133910491
+admini
+0 707 669 6098325 14 1133907262
+# End Of Table - usernames

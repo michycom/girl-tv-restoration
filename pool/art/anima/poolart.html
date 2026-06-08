@@ -1,0 +1,45 @@
+<HTML>
+<HEAD>
+<TITLE>poolart</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ImageReady Preload Script (poolart.psd) -->
+<SCRIPT TYPE="text/javascript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		poolart_01_over = newImage("Bilder/poolart_01-over.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</SCRIPT>
+<!-- End Preload Script -->
+</HEAD>
+<BODY BGCOLOR=#FFFFFF LEFTMARGIN=0 TOPMARGIN=0 MARGINWIDTH=0 MARGINHEIGHT=0 ONLOAD="preloadImages();">
+<!-- ImageReady Slices (poolart.psd) -->
+<A HREF="#"
+	ONMOUSEOVER="changeImages('poolart_01', 'Bilder/poolart_01-over.gif'); return true;"
+	ONMOUSEOUT="changeImages('poolart_01', 'Bilder/poolart_01.gif'); return true;">
+	<IMG NAME="poolart_01" SRC="Bilder/poolart_01.gif" WIDTH=500 HEIGHT=500 BORDER=0 ALT=""></A>
+<!-- End ImageReady Slices -->
+</BODY>
+</HTML>

@@ -1,0 +1,209 @@
+window.AudioContext = window.AudioContext || window.webkitAudioContext;
+    
+var audioContext = new AudioContext();
+var analyser = audioContext.createAnalyser();
+
+var biquadFilter = audioContext.createBiquadFilter();
+biquadFilter.type = "bandpass";
+biquadFilter.frequency.value = 1000; // Startfrequenz, initial setzen
+biquadFilter.Q.value = 1; // Q-Wert steuert die Bandbreite
+
+var isAnalyzing = false;
+var mediaStreamSource = null;
+
+var noteElem = document.getElementById("note");
+var canvasElem = document.getElementById("sineWave");
+var canvasContext = canvasElem.getContext("2d");
+canvasElem.width = document.body.clientWidth;
+canvasElem.height = window.innerHeight / 2;
+
+var buflen = 2048;
+var buf = new Float32Array(buflen);
+var WIDTH = canvasElem.width;
+var HEIGHT = canvasElem.height;
+
+var noteStrings = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+
+function noteFromPitch(frequency) {
+var noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
+return Math.round(noteNum) + 69;
+}
+
+function frequencyFromNoteNumber(note) {
+return 440 * Math.pow(2, (note - 69) / 12);
+}
+
+function autoCorrelate(buf, sampleRate) {
+var SIZE = buf.length;
+var rms = 0;
+
+for (var i = 0; i < SIZE; i++) {
+    var val = buf[i];
+    rms += val * val;
+}
+rms = Math.sqrt(rms / SIZE);
+if (rms < 0.01) return -1;
+
+var r1 = 0,
+    r2 = SIZE - 1,
+    thres = 0.2;
+for (var i = 0; i < SIZE / 2; i++)
+    if (Math.abs(buf[i]) < thres) {
+        r1 = i;
+        break;
+    }
+for (var i = 1; i < SIZE / 2; i++)
+    if (Math.abs(buf[SIZE - i]) < thres) {
+        r2 = SIZE - i;
+        break;
+    }
+
+buf = buf.slice(r1, r2);
+SIZE = buf.length;
+
+var c = new Array(SIZE).fill(0);
+for (var i = 0; i < SIZE; i++)
+    for (var j = 0; j < SIZE - i; j++)
+        c[i] = c[i] + buf[j] * buf[j + i];
+
+var d = 0;
+while (c[d] > c[d + 1]) d++;
+var maxval = -1,
+    maxpos = -1;
+for (var i = d; i < SIZE; i++) {
+    if (c[i] > maxval) {
+        maxval = c[i];
+        maxpos = i;
+    }
+}
+var T0 = maxpos;
+
+var x1 = c[T0 - 1],
+    x2 = c[T0],
+    x3 = c[T0 + 1];
+var a = (x1 + x3 - 2 * x2) / 2;
+var b = (x3 - x1) / 2;
+if (a) T0 = T0 - b / (2 * a);
+
+return sampleRate / T0;
+}
+
+
+let lastUpdateTime = 0;
+const updateInterval =120; // Millisekunden zwischen Updates
+
+function updatePitch(time) {
+if (!isAnalyzing) return;
+
+if (time - lastUpdateTime > updateInterval) {
+    lastUpdateTime = time;
+
+analyser.getFloatTimeDomainData(buf);
+var ac = autoCorrelate(buf, audioContext.sampleRate);
+
+// Schwellenwert für das Erkennen von Stille oder sehr leisem Rauschen
+var rmsThreshold = 0.02; // Diesen Wert nach Bedarf anpassen
+var rms = buf.reduce((acc, val) => acc + val * val, 0) / buf.length;
+rms = Math.sqrt(rms);
+
+if (ac != -1 && rms > rmsThreshold) {
+    var pitch = ac;
+    var note = noteFromPitch(pitch);
+    var detune = centsOffFromPitch(pitch, note);
+    var tolerance = 10; // Toleranz in Cents
+
+    if (Math.abs(detune) <= tolerance) {
+        // Der Ton liegt innerhalb der Toleranz, keine Richtungsanzeige erforderlich
+        noteElem.innerHTML = noteStrings[note % 12] + " ✔";
+    } else {
+        // Ton liegt außerhalb der Toleranz, zeige Richtung der erforderlichen Korrektur
+        var direction = detune > 0 ? "↑" : "↓";
+        noteElem.innerHTML = noteStrings[note % 12] + " " + direction;
+    }
+} else {
+    // Keine Anzeige oder eine neutrale Anzeige, da das Signal zu schwach ist
+    noteElem.innerHTML = "─";
+}
+}
+drawSineWave(); // Verschiebe den Aufruf von drawSineWave außerhalb der Zeitüberprüfung
+requestAnimationFrame(updatePitch);
+}
+
+
+
+function centsOffFromPitch(frequency, note) {
+return (1200 * Math.log(frequency / frequencyFromNoteNumber(note))) / Math.log(2);
+}
+
+requestAnimationFrame(updatePitch); // Initialer Aufruf von updatePitch
+
+
+function applyMovingAverage(buffer, windowSize) {
+let smoothedBuffer = new Float32Array(buffer.length);
+for (let i = 0; i < buffer.length; i++) {
+    let sum = 0;
+    for (let j = -Math.floor(windowSize / 2); j <= Math.floor(windowSize / 2); j++) {
+        let index = Math.min(Math.max(i + j, 0), buffer.length - 1);
+        sum += buffer[index];
+    }
+    smoothedBuffer[i] = sum / windowSize;
+}
+return smoothedBuffer;
+}
+
+
+
+canvasElem.width = document.body.clientWidth;
+canvasElem.height = window.innerHeight / 2;
+var WIDTH = canvasElem.width; // Aktualisiere WIDTH nach Setzen der Größe
+var HEIGHT = canvasElem.height; // Aktualisiere HEIGHT nach Setzen der Größe
+
+function drawSineWave() {
+if (!isAnalyzing) return;
+
+// Anwendung der Glättung
+var smoothedBuf = applyMovingAverage(buf, 5);
+//var smoothedBuf = buf;
+var rms = smoothedBuf.reduce((acc, val) => acc + val * val, 0) / smoothedBuf.length;
+rms = Math.sqrt(rms);
+var rmsThreshold = 0.02;
+
+canvasContext.clearRect(0, 0, WIDTH, HEIGHT);
+canvasContext.lineWidth = 3; // Setzt die Linienstärke. Standardwert ist 1
+
+if (rms > rmsThreshold) {
+    canvasContext.beginPath();
+    var maxAmplitude = Math.max(...smoothedBuf.map(item => Math.abs(item)));
+    var scalingFactor = 0.7;
+    var samplesPerPixel = smoothedBuf.length * scalingFactor / WIDTH;
+    for (var i = 0; i < WIDTH; i++) {
+        var t = i * samplesPerPixel;
+        if (t >= smoothedBuf.length) break;
+        var normalizedAmplitude = smoothedBuf[Math.floor(t)] / maxAmplitude;
+        var y = (HEIGHT / 2) + normalizedAmplitude * (HEIGHT / 2);
+        if (i === 0) canvasContext.moveTo(i, y);
+        else canvasContext.lineTo(i, y);
+    }
+    canvasContext.stroke();
+} else {
+    canvasContext.beginPath();
+    canvasContext.moveTo(0, HEIGHT / 2);
+    canvasContext.lineTo(WIDTH, HEIGHT / 2);
+    canvasContext.strokeStyle = '#999';
+    canvasContext.stroke();
+}
+}
+
+
+navigator.mediaDevices.getUserMedia({audio: true}).then(function(stream) {
+    mediaStreamSource = audioContext.createMediaStreamSource(stream);
+    mediaStreamSource.connect(biquadFilter); // Verbinde die Quelle mit dem Filter
+    biquadFilter.connect(analyser); // Verbinde den Filter mit dem Analyser
+    isAnalyzing = true;
+    updatePitch();
+}).catch(function(err) {
+    alert('Error accessing microphone');
+});
+
+

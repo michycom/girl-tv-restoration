@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guitar Tab Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            margin: 20px 0;
+        }
+        .color-picker {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .color-picker div {
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+        }
+        svg {
+            cursor: pointer;
+        }
+        .note {
+            stroke: black;
+            stroke-width: 1px;
+        }
+        #chordName {
+
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Guitar Tab Viewer</h1>
+    <div id="noteName" class="note-name"></div>
+    
+    <div class="color-picker">
+        <div style="background-color: red;" data-interval="1"></div>
+        <div style="background-color: orange;" data-interval="2"></div>
+        <div style="background-color: yellow;" data-interval="3">3</div>
+        <div style="background-color: green;" data-interval="4">4</div>
+        <div style="background-color: cyan;" data-interval="5">5</div>
+        <div style="background-color: blue;" data-interval="6"></div>
+        <div style="background-color: purple;" data-interval="7">7</div>
+        <div style="background-color: pink;" data-interval="8"></div>
+        <div style="background-color: brown;" data-interval="9"></div>
+        <div style="background-color: rgb(128, 128, 128);" data-interval="10">10</div>
+        <div style="background-color: rgb(136, 223, 180);" data-interval="11">11</div>
+    </div>
+    <!-- div id="chordName">Selected Chord: None</div -->
+    <script type="module">
+        import { initGuitarTab } from './ui.js';
+
+        initGuitarTab();
+    </script>
+</body>
+</html>

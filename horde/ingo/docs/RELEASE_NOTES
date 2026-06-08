@@ -1,0 +1,41 @@
+<?php
+/**
+ * Release focus. Possible values:
+ * 0 - N/A
+ * 1 - Initial freshmeat announcement
+ * 2 - Documentation
+ * 3 - Code cleanup
+ * 4 - Minor feature enhancements
+ * 5 - Major feature enhancements
+ * 6 - Minor bugfixes
+ * 7 - Major bugfixes
+ * 8 - Minor security fixes
+ * 9 - Major security fixes
+ */
+$this->notes['fm']['focus'] = 4;
+
+/* Mailing list release notes. */
+$this->notes['ml']['changes'] = <<<ML
+The Horde Team is pleased to announce the final release of the Ingo Email
+Filter Rules Manager version H3 (1.1.5).
+
+Ingo is an email-filter management application. It is fully internationalized,
+integrated with Horde and the IMP Webmail client, and supports both
+server-side (Sieve, procmail, maildrop) and client-side (IMAP) rule creation.
+
+Major changes compared to the Ingo H3 (1.1.4) version are:
+    * Added Japanse translation.
+    * Improved sieve forward rules.
+ML;
+
+/* Freshmeat release notes, not more than 600 characters. */
+$this->notes['fm']['changes'] = <<<FM
+A Japanese translation has been added.
+Sieve forward rules have been improved.
+FM;
+
+$this->notes['name'] = 'Ingo';
+$this->notes['fm']['project'] = 'ingo';
+$this->notes['fm']['branch'] = 'Default';
+
+/* $Horde: ingo/docs/RELEASE_NOTES,v 1.12.2.22.2.2 2008/01/09 09:53:28 jan Exp $ */

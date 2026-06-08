@@ -1,0 +1,85 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html lang="en">
+	<head>
+$META
+		<title>Report A Bug</title>
+		<meta http-equiv="content-style-type" content="text/css" />
+		<meta http-equiv="window-target" content="_top" />
+		<meta name="Author" content="Steve Kemp" />
+		<meta name="Description" content="GNUMP3d on $HOSTNAME" />
+		<style type="text/css" media="all">@import url(/layout.css);
+		</style>
+	</head>
+
+	<body>
+	<div class="boxTop">
+		<h1>Report A Bug</h1>
+			<div class="menu">
+<p>
+
+
+
+<a title="Browse by artist, year, etc" href="/tagbrowse">Browse by Catagory</a>
+| <a title="Create a custom playlist" href="/playlist">Custom Playlist</a>
+| <a title="See What Is Currently Being Served" href="/now">Currently Playing</a>
+| <a title="Change your preferences" href="/prefs">Preferences</a>
+| <a title="Display some random tracks" href="/random">Random Selection</a>
+| <a title="Visit a random directory" href="/random/directory">Random Directory</a>
+| <a title="Search the archive" href="/search">Search</a>
+</p>
+</div>
+	</div>
+
+	<div class="boxLeft">
+	<!-- include="menu.tmpl" -->
+	</div>
+
+	
+	<div id="main">  
+
+<p>&nbsp;This form allows you to easily report a bug with the <a href="http://www.gnump3d.org/">GNUMP3d</a> server.</P>
+<p>&nbsp;To try to make this a simple a process as possible some information has already been gleaned from your system, and entered here.</p>
+<P>&nbsp;Please try to describe your problem as accurately as you can, this should make solving your problem easier for me.</p>
+<table width='100%'>
+<form action="$BUG_REPORT_URL" method='post'>
+<table>
+<tr><td><b>Your Name</b></td><td><input type='text' size='50' name='name' /></td></tr>
+<tr><td><b>Email Address</b></td><td><input type='text' size='50' name='email' /></td></tr>
+<tr><td colspan='2'>(You don't need to fill in your address, but if you do I'll be able to mail you for further information, or to let you know when the problem has been resolved).</td></tr>
+<!--  Bug entry space -->
+<tr><td valign='top'><b>Please Describe Your Bug Here</b></td><td><textarea name='problem' cols='50' rows='25'>
+</textarea></td></tr>
+<tr><td colspan='2'><p>&nbsp;The following values have been automatically determined and entered for your convienence.</P>
+<p>&nbsp;If you believe any of the values conpromise your privacy, or reveal any sensitive information, feel free to remove them.  (There are no other hidden variables being used, only the information contained in these public fields will be sent).</p>
+<p>&nbsp;Please note that leaving them in could be genuinely useful to solving your problem though.</p>
+</td></tr>
+<tr><td><b>GNUMP3d release</b></td><td><input type='text' size='50' name='release' value='$RELEASE'/></td></tr>
+<tr><td><b>Current User-Agent</b></td><td><input type='text' size='50' name='user-agent' value='$USER_AGENT'/></td></tr>
+<tr><td><b>Current IP Address</b></td><td><input type='text' size='50' name='ip-address' value='$connected_address'/></td></tr>
+<tr><td><b>Requested URI</b></td><td><input type='text' size='50' name='uri' value='$REQUEST'/></td></tr>
+<tr><td><b>Server-Name</b></td><td><input type='text' size='50' name='server-name' value='http://$host/'/></td></tr>
+<tr><td><b>Perl Version</b></td><td><input type='text' size='50' name='perl-version' value='$]'/></td></tr>
+<tr><td><b>OS Name</b></td><td><input type='text' size='50' name='os-name' value='$OSNAME'/></td></tr>
+<!--  Configuration Options -->
+<tr><td valign='top'><b>Your Server Configuration</b></td><td><textarea name='gnump3d.conf' cols='50' rows='25'>
+$BUG_CONFIG
+</textarea></td></tr>
+
+<tr><td>&nbsp;</td><td><input type='submit' value='Report Bug' /></td></tr>
+</table>
+
+		<br />
+
+
+	</div>
+
+	<div class="boxfooter">
+				
+		<br />	
+		Last modified: <!-- echo="LAST_MODIFIED" --> - <a href="http://www.steve.org.uk/">Steve Kemp</a>
+		<br />
+	</div>
+	<div class="spacer"></div>
+	</body>
+</html>
+

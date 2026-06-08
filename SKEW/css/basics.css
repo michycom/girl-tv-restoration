@@ -1,0 +1,80 @@
+/* hiding the main scrollbars */
+html{
+    overflow: hidden;
+}
+
+body{
+    background-color: black;
+}
+
+#cam {
+}
+#cam img{
+  position: absolute;
+    top: 160px;
+    left: 470px;
+width:32px;
+}
+
+#boy{
+    position: absolute;
+    top: -760px;
+    left: -2170px;
+    width: 4800px;
+    height: 2720px;
+}
+
+#boy img{
+    width: 100%;
+}
+
+.box3 {
+	background-color: #fefefe;
+	position: absolute;
+	top: 15px; right: 15px;
+	-moz-border-radius: 15px;
+	-webkit-border-radius: 15px;
+	border-radius: 15px;
+	behavior: url(http://girl.tv/border-radius.htc);
+}
+
+
+/* onclick auslöser zum testen */
+#action{
+    position: absolute;
+    top: 39px; left: 1213px;
+/*    background-color: #fff; */
+    z-index: 99;
+}
+
+#pxlboy{
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    top: 280px;
+    left: 680px;
+
+}
+
+#pxl2boy{
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    top: 180px;
+    left: 780px;
+
+}
+#pxl3boy{
+    position: absolute;
+    height: 100px;
+    top: 260px;
+    left: 670px;
+}
+
+#girltv{
+    position: absolute;
+    width: 1439px;
+    height: 877px;
+    top: -53px;
+    left: 0px;
+}

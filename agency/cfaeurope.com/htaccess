@@ -1,0 +1,5 @@
+# Beispieldatei fuer .htaccess
+AuthType Basic
+AuthName "hello@cfaeurope.com"
+AuthUserFile /home/inge/.htusers
+Require user we micha

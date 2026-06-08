@@ -1,0 +1,119 @@
+8.14. Wie ersetze ich alle relativen Links in einer HTML-Datei durch absolute?
+
+Keywords: Hyperlink | relativ | absolut
+Antwort von Kerry W. Lothrop
+
+In diesem Beispiel wird die HTML-Datei über den file() -Befehl vom entfernten Server gezogen. Die Funktion absolute() erwartet als ersten Parameter einen Link und als zweiten Parameter die volle URL des Dokuments, in dem sich der Link befindet. Sie kann auch in einem anderen Kontext verwendet werden. Obwohl viele der Anweisungen (z.B. substr() oder strrpos() ) auch über reguläre Ausdrücke gelöst werden können, wurde aus Performance-Gründen bewusst darauf verzichtet.
+
+<?php
+// Datei über HTTP aufrufen
+$url = 'http://www.server.de/test.html';
+$old = implode('', file($url));
+
+// Links suchen und an absolute() weiterleiten
+$new = preg_replace(',<a([^>]+)href="([^>"\s]+)",ie',
+    '"<a\1href=\"" . absolute("\2", $url) . "\""',
+    $old);
+
+// HTML-Code ausgeben
+header('Content-type: text/plain');
+echo $new;
+
+// Funktion, die relative in absolute Links umschreibt
+function absolute ($relative, $absolute) {
+
+    // Link ist schon absolut
+    if (preg_match(',^(https?://|ftp://|mailto:|news:),i', $relative))
+        return $relative;
+
+    // parse_url() nimmt die URL auseinander
+    $url = parse_url($absolute);
+    
+    // dirname() erkennt auf / endende URLs nicht
+    if ($url['path']{strlen($url['path']) - 1} == '/')
+        $dir = substr($url['path'], 0, strlen($url['path']) - 1);
+    else
+        $dir = dirname($url['path']);
+
+    // absoluter Link auf dem gleichen Server
+    if ($relative{0} == '/') {
+        $relative = substr($relative, 1);
+        $dir = '';
+    }
+
+    // Link fängt mit ./ an
+    elseif (substr($relative, 0, 2) == './')
+        $relative = substr($relative, 2);
+
+    // Referenzen auf höher liegende Verzeichnisse auflösen
+    else while (substr($relative, 0, 3) == '../') {
+        $relative = substr($relative, 3);
+        $dir = substr($dir, 0, strrpos($dir, '/'));
+    }
+
+    // volle URL zurückgeben
+    return sprintf('%s://%s%s/%s', $url['scheme'], $url['host'], $dir, $relative);
+}
+?>
+
+
+Formulareingabe speichern:
+Datei: schreibe.php
+
+<?php
+ $name = $_POST["name"]; // Variablen einlesen
+ $alt = $_POST["alt"];
+ $url = $_POST["url"];
+ $datum = date("d.m.Y",time()); // Aktuelles Datum ermitteln
+ $text = "$name ; $alt ; $url ; $datum  \n"; // Textstring zusammensetzen
+
+ $dateiname = "test.txt"; // Name der Datei
+ $fp = fOpen ($dateiname , "a+"); // Datei öffnen
+ fWrite ($fp , $text); // Dateiinhalt in die Datei schreiben
+ fClose ($fp); // Datei schließen
+?>
+So könnte die Datei "test.txt" aussehen:
+Paul ; 16 ; www.meine-seite.de ; 13.11.2007
+Stefanie ; 21 ; www.stefie-seite.at ; 16.04.2005
+Rolf ; 17 ; www.rolfi.ch ; 23.09.2004
+
+
+Dateiinhalt auslesen
+Datei in ein Array einlesen und in einer Tabelle ausgeben.
+In diesem Beispiel wird zusätzlich die URL als Link formatiert.
+Datei: ausgabe.php
+
+<table border=1>
+ <tr>
+  <th>Nr.</th>
+  <th>Name</th>
+  <th>Alter</th>
+  <th>Homepage</th>
+  <th>Datum</th>
+ </tr>
+
+<?php
+ $datei = "test.txt"; // Name der Datei
+ $array = file($datei); // Datei in ein Array einlesen
+
+ for ($zaehler = 0; $zaehler < count($array); $zaehler++) {
+  $array[$zaehler] = explode(";" , $array[$zaehler]);
+  echo "<tr><th>" . ($zaehler+1) . "</th>"; // Zeilennummer
+   for ($a = 0; $a < 4; $a++) { // 4 Tabellenspalten
+    if ($a == 2) {
+     echo "<td><a href=\"" . $array[$zaehler][$a] . "\" target=\"_blank\">" . $array[$zaehler][$a] .
+ "</a></td> \n";
+    }
+    else {
+     echo "<td>" . $array[$zaehler][$a] . "</td> \n";
+    }
+   }
+  echo "</tr> \n";
+ }
+?>
+</table>
+
+
+
+
+

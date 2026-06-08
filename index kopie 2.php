@@ -1,0 +1,507 @@
+<?php declare(strict_types=1); ?>
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>girl.tv — Login</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:#ff3b30;
+    color:#ffe9e5;
+    font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+    display:grid;
+    grid-template-rows:auto 1fr;
+    overflow:hidden;
+    transition:background-color .25s ease;
+  }
+  /* Flash-Animation bei leerer Eingabe */
+  @keyframes flashAnim {
+    0% { background-color:#ff3b30; }
+    50% { background-color: #ff827cff; }
+    100%{ background-color:#ff3b30; }
+  }
+  body.flash { animation:flashAnim 0.3s ease; }
+
+  /* Statusbar */
+  .statusbar{
+    position:fixed; top:8px; right:10px; z-index:20;
+    display:flex; align-items:center; gap:14px; padding:6px 10px;
+    color:#fff; font-weight:700; border-radius:12px;
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18);
+    box-shadow:0 8px 20px rgba(0,0,0,.18);
+  }
+  .statusbar.hidden{ display:none }
+  .iconbtn{
+    display:inline-grid; place-items:center; width:34px; height:28px; border-radius:8px;
+    background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.28);
+    cursor:pointer; user-select:none;
+    transition:transform .08s ease, background .2s ease;
+  }
+  .iconbtn:active{ transform:scale(0.98) }
+
+  /* Datum/Uhrzeit */
+  header{ display:grid; place-items:center; text-align:center; padding-top:26vh; }
+  header.hidden{ display:none }
+  .date{ font-weight:600; letter-spacing:.2px; opacity:.95; text-shadow:0 1px 0 rgba(0,0,0,.06) }
+  .time{ margin-top:10px; font-size:clamp(42px,9vw,120px); font-weight:800; line-height:1; color:#ffd4cc; text-shadow:0 2px 0 rgba(0,0,0,.06) }
+
+  /* Login-Layer */
+  .loginWrap{ display:grid; align-content:end; justify-items:center; padding:0 20px 48px; }
+  .login{
+    display:grid; gap:14px; justify-items:center;
+    opacity:0; transform:translateY(10px);
+    pointer-events:none;
+    transition:opacity .35s ease, transform .35s ease;
+  }
+  .login.show{ opacity:1; transform:none; pointer-events:auto; }
+  .login.hide{ opacity:0; pointer-events:none; }
+
+  .avatar{
+    width:72px; height:72px; border-radius:50%;
+    display:grid; place-items:center;
+    background:rgba(0,0,0,0.18); border:1px solid rgba(255,255,255,0.45);
+    box-shadow:inset 0 8px 22px rgba(0,0,0,.25), 0 8px 22px rgba(0,0,0,.16);
+  }
+  .glyph{
+    font-size:40px; line-height:1; color:#fff;
+    display:inline-block;
+    transition:filter .15s ease, transform .12s ease;
+  }
+  .avatar:hover .glyph{ filter:brightness(1.06); }
+
+  .passwrap{
+    position:relative;
+    height:28px;
+    padding:0 44px 0 14px;
+    border-radius:999px;
+    background:rgba(255,255,255,0.22);
+    border:1px solid rgba(255,255,255,0.55);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 6px 20px rgba(0,0,0,.18);
+    display:flex; align-items:center; justify-content:center;
+    min-width:240px;
+  }
+  #pw{
+    position:absolute; inset:0; width:100%; height:100%;
+    opacity:0; border:0; background:transparent; color:transparent;
+    caret-color:transparent;
+  }
+  .dots{ display:flex; gap:6px; align-items:center; justify-content:center; }
+  .dot{
+    width:6px; height:6px; border-radius:50%;
+    background:rgba(255,255,255,.45);
+    box-shadow:0 1px 0 rgba(0,0,0,.12);
+    opacity:.55;
+  }
+  .dot.filled{ background:#fff; opacity:1; }
+  .lock{
+    position:absolute; right:6px; top:50%; transform:translateY(-50%);
+    width:28px; height:28px; border-radius:50%;
+    display:grid; place-items:center;
+    background:rgba(255,255,255,0.28);
+    border:1px solid rgba(255,255,255,0.55);
+    font-size:14px; color:#fff;
+  }
+  .hint{
+    margin-top:6px; text-align:center; color:#ffe0da;
+    font-size:12px; line-height:1.2; letter-spacing:.2px;
+    text-shadow:0 1px 0 rgba(0,0,0,.06);
+  }
+  #pw:focus-visible + .dots, #pw:focus-visible ~ .lock{
+    outline:0;
+    box-shadow:0 0 0 3px rgba(255,255,255,.35);
+    border-radius:999px;
+  }
+
+  /* Ordner */
+  #folder{
+    position:fixed;
+    width:32px; height:32px;
+    right:110px; top:110px;
+    display:none;
+    z-index:30;
+    font-size:32px;
+    line-height:1;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));
+    cursor:grab;
+    user-select:none;
+  }
+  #folder.show{ display:block; }
+  #folderLabel{
+    position:fixed; z-index:29; display:none;
+    color:#ffffff; font-size:12px; font-weight:600; letter-spacing:.2px;
+    text-shadow:0 1px 2px rgba(0,0,0,.45);
+    background:rgba(255,255,255,0.10);
+    padding:2px 6px; border-radius:6px;
+    pointer-events:none;
+  }
+  #folderLabel.show{ display:block; }
+
+  /* Finder-Modal ohne Blur */
+  #fileModal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:40; }
+  #fileModal.show{ display:flex; }
+  .modalBackdrop{
+    position:absolute; inset:0;
+    background:transparent;
+  }
+  .modalCard{
+    position:relative; z-index:1;
+    min-width:320px;
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:0 24px 80px rgba(0,0,0,.35), 0 2px 0 rgba(255,255,255,.3) inset;
+    background:#f6f7f9; color:#111; border:1px solid rgba(0,0,0,.06);
+    font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  }
+  .modalCard.max{ min-width:70vw; min-height:60vh; }
+  body.green{ background:#28c840; }
+  .titlebar{ cursor:grab; }
+  .titlebar{
+    height:34px;
+    background:linear-gradient(#eceef3,#e7e9ee);
+    border-bottom:1px solid rgba(0,0,0,.08);
+    display:flex; align-items:center; gap:10px;
+    padding:0 12px;
+  }
+  .traffic{ display:flex; gap:8px; }
+  .dotbtn{ width:12px; height:12px; border-radius:50%; }
+  .dot-red{ background:#ff5f57; } .dot-yellow{ background:#ffbd2e; } .dot-green{ background:#28c840; }
+  .title{ margin-left:4px; font-weight:600; font-size:13px; color:#333; }
+  .content{ padding:12px; background:#fff; }
+  .fileRow{ display:flex; align-items:center; gap:10px; padding:10px; border:1px solid #eef0f3; border-radius:8px; }
+
+  /* Embedded landscape background (replaces iframe approach) */
+  .background{
+    position:fixed; top:0; left:0; width:100vw; height:100vh;
+    background:url('https://girl.tv/2024/landscape.png') no-repeat center center;
+    background-size:cover; animation:none; opacity:0; display:none;
+    transition:opacity 30s ease-in-out; z-index:-1;
+  }
+  body.eagle{ background:#000; }
+  body.eagle .background{ display:block; }
+  @keyframes zoom{ 0%{ transform:scale(1) translate(0,0) } 100%{ transform:scale(3) translate(0,25%) } }
+</style>
+</head>
+<body>
+  <div id="background" class="background"></div>
+  <div id="background_two" class="background"></div>
+  <div class="statusbar" id="statusbar">
+    <div class="lang">Deutsch</div>
+    <div class="iconbtn" id="btnKb" title="Tastatur/Fullscreen">⌨️</div>
+    <div class="iconbtn" id="btnNet" title="Verbindung">🔒</div>
+  </div>
+
+  <header>
+    <div class="date" id="date">Dienstag, 12. August</div>
+    <div class="time" id="time">14:29</div>
+  </header>
+
+  <main class="loginWrap">
+    <div class="login" id="login" aria-label="Login-Simulation">
+      <div class="avatar" id="avatar"><span class="glyph" id="glyph">🦢</span></div>
+      <div class="passwrap" role="group">
+        <input id="pw" name="notpassword" type="password"
+               inputmode="text" autocomplete="off" autocapitalize="off"
+               autocorrect="off" spellcheck="false"
+               aria-label="Feld (Simulation)">
+        <div class="dots" id="dots">
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        </div>
+        <div class="lock">🔒</div>
+      </div>
+      <div class="hint">Touch ID oder Passwort<br>eingeben</div>
+    </div>
+  </main>
+
+  <div id="folder" title="Dateien öffnen">📁</div>
+  <div id="folderLabel">girl.tv</div>
+
+  <div id="fileModal" role="dialog" aria-modal="true" aria-label="Files">
+    <div class="modalBackdrop" id="modalBg"></div>
+    <div class="modalCard">
+      <div class="titlebar">
+        <div class="traffic">
+          <div class="dotbtn dot-red"></div>
+          <div class="dotbtn dot-yellow"></div>
+          <div class="dotbtn dot-green"></div>
+        </div>
+        <div class="title">Finder — Dateien</div>
+      </div>
+      <div class="content">
+        <div class="fileRow">
+          <div>📄</div>
+          <div class="fileName">domain.api</div>
+          <div class="fileMeta" id="fileMeta"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const $ = sel => document.querySelector(sel);
+  const dateEl    = $('#date');
+  const timeEl    = $('#time');
+  const statusbar = $('#statusbar');
+  const login     = $('#login');
+  const avatar    = $('#avatar');
+  const glyph     = $('#glyph');
+  const pw        = $('#pw');
+  const dots      = [...$('#dots').querySelectorAll('.dot')];
+  const btnKb     = $('#btnKb');
+  const btnNet    = $('#btnNet');
+  const folder    = $('#folder');
+  const folderLabel = $('#folderLabel');
+  const fileModal = $('#fileModal');
+  const modalBg   = $('#modalBg');
+  const fileMeta  = $('#fileMeta');
+  const fileRow  = document.querySelector('.fileRow');
+  const headerEl  = document.querySelector('header');
+
+  // Landscape-Animation: Startfunktion + Autostart bei Flag (Flag wird nach Start gelöscht)
+  let landscapeStarted = false;
+  function startLandscape(){
+    if (landscapeStarted) return;
+    landscapeStarted = true;
+    document.body.classList.add('eagle');
+    const background = document.getElementById('background');
+    const backgroundTwo = document.getElementById('background_two');
+    function startAnimation(element){ element.style.animation = 'zoom 180s linear'; element.style.opacity = '1'; element.style.zIndex = '-1'; }
+    function stopAnimation(element){ element.style.opacity = '0'; element.style.zIndex = '-1'; setTimeout(()=>{ element.style.animation='none'; void element.offsetWidth; }, 30000); }
+    (function alternateBackgrounds(){
+      let active = background; let inactive = backgroundTwo;
+      function loop(){
+        setTimeout(()=>{ startAnimation(inactive); }, 120000);
+        setTimeout(()=>{ stopAnimation(active); }, 120000);
+        setTimeout(()=>{ [active, inactive] = [inactive, active]; loop(); }, 180000);
+      }
+      startAnimation(active);
+      loop();
+    })();
+  }
+
+  (function enableLandscapeIfEagle(){
+    try{
+      if (sessionStorage.getItem('hasEagle') === '1'){
+        startLandscape();
+        sessionStorage.removeItem('hasEagle');
+      }
+    }catch(e){}
+  })();
+
+  // Wi-Fi bei HTTPS
+  function updateNet(){ btnNet.textContent = (location.protocol === 'https:') ? '🛜' : '🔓'; }
+  updateNet();
+
+  // Fullscreen toggeln
+  btnKb.addEventListener('click', async () => {
+    try {
+      if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+      else await document.exitFullscreen();
+    } catch(e){}
+  });
+
+  // Erste Bewegung → Login erscheinen lassen
+  let revealed = false;
+  function reveal(){
+    if (revealed) return;
+    revealed = true;
+    login.classList.add('show');
+  }
+  document.body.addEventListener('pointermove', reveal, { once:true, passive:true });
+  document.body.addEventListener('touchstart', reveal, { once:true, passive:true });
+
+  // Uhrzeit/Datum aktualisieren
+  const dtfDate = new Intl.DateTimeFormat('de-DE', { weekday:'long', day:'numeric', month:'long' });
+  const dtfTime = new Intl.DateTimeFormat('de-DE', { hour:'2-digit', minute:'2-digit', hour12:false });
+  function updateClock(){
+    const d = new Date();
+    dateEl.textContent = dtfDate.format(d);
+    timeEl.textContent = dtfTime.format(d);
+  }
+  updateClock(); setInterval(updateClock, 30_000);
+
+  // Dots füllen
+  function updateDots(n){
+    const len = Math.min(n, dots.length);
+    dots.forEach((el,i) => el.classList.toggle('filled', i < len));
+  }
+  updateDots(0);
+  let lastDotLen = 0;
+  pw.addEventListener('input', () => {
+    const len = Math.min(pw.value.length, dots.length);
+    if (len !== lastDotLen){ updateDots(len); lastDotLen = len; }
+  });
+  $('.passwrap').addEventListener('click', () => pw.focus(), { passive:true });
+
+  // Jitter nur auf Emoji
+  function jitter(){
+    const rx = (Math.random()*6 - 3).toFixed(1) + 'px';
+    const ry = (Math.random()*6 - 3).toFixed(1) + 'px';
+    const rs = (1 + (Math.random()*0.02 - 0.01)).toFixed(3);
+    glyph.style.transform = `translate(${rx},${ry}) scale(${rs})`;
+    glyph.style.filter = 'brightness(1.06)';
+    setTimeout(() => {
+      glyph.style.transform = 'translate(0,0) scale(1)';
+      glyph.style.filter = '';
+    }, 130);
+  }
+  avatar.addEventListener('mouseenter', jitter);
+
+  // Finder-Modal (Doppelclick)
+  function openFiles(){
+    const now = new Date();
+    const metaFmt = new Intl.DateTimeFormat('de-DE',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    fileMeta.textContent = metaFmt.format(now);
+    fileModal.classList.add('show');
+  }
+  function closeFiles(){ fileModal.classList.remove('show'); }
+  folder.addEventListener('dblclick', openFiles);
+  modalBg.addEventListener('click', closeFiles);
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape' && fileModal.classList.contains('show')) closeFiles();
+  });
+
+  // Klick auf domain.api -> neues Fenster ohne Adress-/Statusleiste
+  if (fileRow) {
+    fileRow.addEventListener('click', () => {
+      const features = 'noopener,noreferrer,toolbar=0,location=0,menubar=0,status=0,personalbar=0,scrollbars=1,resizable=1,width=1280,height=800';
+      window.open('https://domainbird.de', '_blank', features);
+    });
+  }
+
+  // Dragging for modal window via titlebar
+  (function enableModalDrag(){
+    const card = document.querySelector('.modalCard');
+    const bar  = document.querySelector('.titlebar');
+    if (!card || !bar || bar.__dragBound) return; bar.__dragBound = true;
+    let startX=0, startY=0, originLeft=0, originTop=0;
+    bar.addEventListener('pointerdown', e=>{
+      const rect = card.getBoundingClientRect();
+      originLeft = rect.left; originTop = rect.top;
+      startX = e.clientX; startY = e.clientY;
+      function move(ev){
+        const dx = ev.clientX - startX; const dy = ev.clientY - startY;
+        card.style.position = 'fixed';
+        card.style.left = (originLeft + dx) + 'px';
+        card.style.top  = (originTop + dy) + 'px';
+      }
+      function up(){ document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); }
+      document.addEventListener('pointermove', move);
+      document.addEventListener('pointerup', up);
+      e.preventDefault();
+    });
+  })();
+
+  // Traffic light actions
+  (function bindTrafficLights(){
+    const card = document.querySelector('.modalCard');
+    const red   = document.querySelector('.dot-red');
+    const yellow= document.querySelector('.dot-yellow');
+    red.addEventListener('click', ()=> closeFiles());
+    yellow.addEventListener('click', ()=>{
+      card.classList.toggle('max');
+      document.body.classList.toggle('green', card.classList.contains('max'));
+    });
+  })();
+
+  // Dragging für Ordner
+  folder.addEventListener('pointerdown', e => {
+    const rect = folder.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
+    let rafId = 0, nx = 0, ny = 0;
+    function apply(){
+      folder.style.left = nx + 'px';
+      folder.style.top  = ny + 'px';
+      folder.style.right = 'auto';
+      positionFolderLabel();
+      rafId = 0;
+    }
+    function move(ev){
+      nx = (ev.clientX - offsetX);
+      ny = (ev.clientY - offsetY);
+      if (!rafId) rafId = requestAnimationFrame(apply);
+    }
+    function up(){
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', up);
+      folder.style.cursor = 'grab';
+    }
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', up);
+    folder.style.cursor = 'grabbing';
+    e.preventDefault();
+  });
+
+  function positionFolderLabel(){
+    const r = folder.getBoundingClientRect();
+    folderLabel.style.left = (r.left + r.width/2) + 'px';
+    folderLabel.style.top  = (r.top + r.height + 10) + 'px';
+    folderLabel.style.transform = 'translateX(-50%)';
+  }
+  // show label when folder is visible
+  const showFolderUI = () => { folder.classList.add('show'); folderLabel.classList.add('show'); positionFolderLabel(); };
+  window.addEventListener('resize', positionFolderLabel);
+
+  // Hilfsfunktion: alles ausblenden außer Ordner
+  function hideAll(){
+    login.classList.add('hide');
+    statusbar.classList.add('hidden');
+    headerEl.classList.add('hidden');
+    folder.classList.add('show');
+    folderLabel.classList.add('show');
+    positionFolderLabel();
+  }
+
+  // Blitz bei leerem Feld
+  function flashPage(){
+    document.body.classList.add('flash');
+    setTimeout(() => document.body.classList.remove('flash'), 300);
+  }
+
+  // Avatar-Klick: leer → Flash; girl.tv → Adler + Flag; sonst alles ausblenden
+  avatar.addEventListener('click', () => {
+    const v = pw.value.trim().toLowerCase();
+    if (v === '') {
+      flashPage();
+    } else if (v === 'girl.tv') {
+      glyph.textContent = '🦅';
+      try { sessionStorage.setItem('hasEagle','1'); } catch(e){}
+      startLandscape(); // sofort starten, bleibt auch nach Reload (Flag wird dann einmalig gelöscht)
+    } else {
+      hideAll();
+    }
+  });
+
+  // Enter / Blur → bei nicht-leer: alles ausblenden (außer bei girl.tv)
+  pw.addEventListener('keydown', e => {
+    if(e.key === 'Enter'){
+      const v = pw.value.trim().toLowerCase();
+      if (v === '') {
+        flashPage();
+      } else if (v === 'girl.tv') {
+        glyph.textContent = '🦅';
+        try { sessionStorage.setItem('hasEagle','1'); } catch(e){}
+        startLandscape(); // sofort starten, bleibt auch nach Reload (Flag wird dann einmalig gelöscht)
+      } else {
+        hideAll();
+      }
+    }
+  });
+  pw.addEventListener('blur', () => {
+    const v = pw.value.trim().toLowerCase();
+    if (v !== '' && v !== 'girl.tv') {
+      hideAll();
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1358 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tonal Geo Composer — Keyboard + Ton-Kompass Canvas</title>
+  <style>
+    :root{
+      --bg:#0b0d12;
+      --panel:#111522;
+      --panel2:#0f1320;
+      --text:#e9eefc;
+      --muted:#a9b3cf;
+      --line:rgba(255,255,255,.10);
+      --line2:rgba(255,255,255,.18);
+      --accent:#7aa2ff;
+      --accent2:#ff7aa2;
+      --ok:#62e6a5;
+      --warn:#ffcc66;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --r:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:radial-gradient(1000px 700px at 30% 20%, rgba(122,162,255,.15), transparent 55%),
+                 radial-gradient(1000px 700px at 70% 70%, rgba(255,122,162,.10), transparent 60%),
+                 var(--bg);
+      color:var(--text);
+      font: 14px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";
+      overflow:hidden;
+    }
+
+    .app{
+      height:100%;
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:14px;
+      padding:14px;
+    }
+    .panel{
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      min-height:0;
+    }
+    .left{
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+    }
+    header{
+      padding:14px 14px 10px;
+      border-bottom:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(255,255,255,.03), transparent);
+    }
+    header .title{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      font-weight:650;
+      letter-spacing:.2px;
+    }
+    header .subtitle{
+      margin-top:6px;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .section{
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+    }
+    .section:last-child{border-bottom:0}
+    .mini{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+    .row{
+      display:flex; gap:10px; align-items:center; justify-content:space-between;
+      margin:8px 0;
+    }
+    .row label{color:var(--muted); font-size:12px}
+    .btns{display:flex; gap:8px; flex-wrap:wrap}
+    button{
+      appearance:none;
+      border:1px solid var(--line2);
+      background:rgba(255,255,255,.04);
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:12px;
+      cursor:pointer;
+      transition: transform .06s ease, background .12s ease, border-color .12s ease;
+      user-select:none;
+    }
+    button:hover{background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.28)}
+    button:active{transform:translateY(1px)}
+    button.primary{border-color:rgba(122,162,255,.45); background:rgba(122,162,255,.14)}
+    button.danger{border-color:rgba(255,122,162,.45); background:rgba(255,122,162,.10)}
+    button.good{border-color:rgba(98,230,165,.45); background:rgba(98,230,165,.12)}
+    button.ghost{background:transparent}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      color:var(--muted);
+      font-size:12px;
+      background:rgba(0,0,0,.15);
+      white-space:nowrap;
+    }
+    select, input[type="text"]{
+      width:100%;
+      border:1px solid var(--line2);
+      background:rgba(0,0,0,.18);
+      color:var(--text);
+      padding:8px 10px;
+      border-radius:12px;
+      outline:none;
+    }
+    select:focus, input[type="text"]:focus{border-color:rgba(122,162,255,.5)}
+    input[type="range"]{width:180px}
+    .log{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      font-size:12px;
+      color:#cfe1ff;
+      background:rgba(0,0,0,.25);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px;
+      max-height:170px;
+      overflow:auto;
+      white-space:pre-wrap;
+    }
+
+    .right{display:flex; flex-direction:column; min-height:0}
+    .canvasWrap{position:relative; flex:1; min-height:0; border-radius:var(--r); overflow:hidden}
+    canvas{width:100%; height:100%; display:block}
+
+    .hud{
+      position:absolute;
+      top:12px; left:12px; right:12px;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      justify-content:space-between;
+      pointer-events:none;
+    }
+    .hud .card{
+      pointer-events:none;
+      background:rgba(17,21,34,.75);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px 12px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      max-width: 62ch;
+    }
+    .hud .card .h{font-weight:650; margin-bottom:4px}
+    .hud .card .p{color:var(--muted); font-size:12px; margin:0}
+
+    .bottomBar{
+      position:absolute;
+      left:12px; right:12px; bottom:12px;
+      display:grid;
+      grid-template-columns: 1fr auto;
+      gap:10px;
+      align-items:end;
+      pointer-events:none;
+    }
+    .kbWrap{
+      pointer-events:auto;
+      background:rgba(17,21,34,.72);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .kbTitle{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px}
+    .kbTitle .mini{margin:0}
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      color:#d9e6ff;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.20);
+      padding:2px 6px;
+      border-radius:8px;
+      margin:0 4px;
+    }
+    .rightPills{
+      pointer-events:auto;
+      display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;
+    }
+    .smallBtn{padding:7px 10px; border-radius:12px}
+
+    .sr{position:absolute; left:-9999px}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel left">
+    <header>
+      <div class="title">
+        <div>🧭 Tonal Geo Composer</div>
+        <span class="pill">Mode: <b style="color:var(--text)" id="modeLabel">Select</b></span>
+      </div>
+      <div class="subtitle">
+        Overloaded „geografische“ Eingabe: Keyboard + Pitch-Kompass + Nodes + Sound. (Arty, aber funktional.)
+      </div>
+    </header>
+
+    <div class="section">
+      <div class="mini">Werkzeug</div>
+      <div class="btns" style="margin-top:10px">
+        <button class="primary" data-mode="select">Select/Move</button>
+        <button class="primary" data-mode="spray">Spray Notes</button>
+        <button data-mode="connect">Connect</button>
+        <button class="danger" id="clearBtn">Clear</button>
+        <button class="good" id="panicBtn">Audio On</button>
+      </div>
+      <div class="mini" style="margin-top:10px">
+        <span class="kbd">Shift</span> snap • <span class="kbd">Alt</span> duplicate • <span class="kbd">Del</span> delete • Click key = play + drop node
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="mini">Theory Overlay (Root + Mode) — markiert „erlaubte“ Töne (Kompass-Idee)  [oai_citation:1‡Musiker-Kompass](https://www.musiker-kompass.de/musiktheorie-lernen-harmonielehre-endlich-verstehen/?utm_source=chatgpt.com)</div>
+      <div class="row">
+        <label for="rootSel">Root</label>
+        <select id="rootSel"></select>
+      </div>
+      <div class="row">
+        <label for="modeSel">Mode</label>
+        <select id="modeSel"></select>
+      </div>
+      <div class="row">
+        <label for="octSel">Keyboard Octave Start</label>
+        <select id="octSel">
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4" selected>4</option>
+          <option value="5">5</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="snapRange">Grid / Snap</label>
+        <input id="snapRange" type="range" min="8" max="80" value="24" />
+      </div>
+      <div class="row">
+        <label for="sizeRange">Node Size</label>
+        <input id="sizeRange" type="range" min="12" max="72" value="28" />
+      </div>
+      <div class="row">
+        <label for="decayRange">Node Fade (s)</label>
+        <input id="decayRange" type="range" min="0" max="30" value="8" />
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="mini">Sound</div>
+      <div class="row">
+        <label for="waveSel">Wave</label>
+        <select id="waveSel">
+          <option value="sine" selected>sine</option>
+          <option value="triangle">triangle</option>
+          <option value="square">square</option>
+          <option value="sawtooth">sawtooth</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="volRange">Volume</label>
+        <input id="volRange" type="range" min="0" max="100" value="22" />
+      </div>
+      <div class="btns">
+        <button id="droneBtn">Drone</button>
+        <button id="arpBtn">Arp</button>
+        <button class="ghost" id="exportBtn">Export JSON</button>
+      </div>
+    </div>
+
+    <div class="section" style="flex:1; min-height:0">
+      <div class="mini">Event Log</div>
+      <div class="log" id="log"></div>
+    </div>
+  </aside>
+
+  <main class="panel right">
+    <div class="canvasWrap">
+      <canvas id="c"></canvas>
+
+      <div class="hud">
+        <div class="card">
+          <div class="h">Pitch-Kompass + Keyboard Input</div>
+          <p class="p">
+            Außenring = 12 Pitch-Classes (C..B). Root+Mode färben die „Skala“. Keyboard droppt Nodes ins Feld.
+            Connect = Voice-Leading-Pfade. Spray = improvisierendes „Ton-Wetter“.
+          </p>
+        </div>
+        <div class="card" style="text-align:right">
+          <div class="h" id="selInfo">No selection</div>
+          <p class="p" id="selMeta">—</p>
+        </div>
+      </div>
+
+      <div class="bottomBar">
+        <div class="kbWrap">
+          <div class="kbTitle">
+            <div class="mini">Keyboard (2 Oktaven) — click / touch</div>
+            <div class="pill" id="kbInfo">ready</div>
+          </div>
+          <canvas id="kb" aria-label="Keyboard" role="application"></canvas>
+        </div>
+        <div class="rightPills">
+          <span class="pill">Kompass: click Ring-Ton toggelt „Selected Notes“</span>
+          <span class="pill">Connect: click A → click B</span>
+        </div>
+      </div>
+
+      <div class="sr" aria-live="polite" id="sr"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   Tonal Geo Composer — single-file prototype
+   ============================================================ */
+
+const NOTE_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const MODES = [
+  {name:"Ionian (Major)", steps:[0,2,4,5,7,9,11]},
+  {name:"Dorian", steps:[0,2,3,5,7,9,10]},
+  {name:"Phrygian", steps:[0,1,3,5,7,8,10]},
+  {name:"Lydian", steps:[0,2,4,6,7,9,11]},
+  {name:"Mixolydian", steps:[0,2,4,5,7,9,10]},
+  {name:"Aeolian (Minor)", steps:[0,2,3,5,7,8,10]},
+  {name:"Locrian", steps:[0,1,3,5,6,8,10]},
+  {name:"Harmonic Minor", steps:[0,2,3,5,7,8,11]},
+  {name:"Melodic Minor", steps:[0,2,3,5,7,9,11]},
+  {name:"Pentatonic Major", steps:[0,2,4,7,9]},
+  {name:"Pentatonic Minor", steps:[0,3,5,7,10]},
+  {name:"Blues", steps:[0,3,5,6,7,10]},
+  {name:"Chromatic", steps:[0,1,2,3,4,5,6,7,8,9,10,11]},
+];
+
+const $ = (id)=>document.getElementById(id);
+const canvas = $("c");
+const ctx = canvas.getContext("2d");
+
+const kb = $("kb");
+const kx = kb.getContext("2d");
+
+const logEl = $("log");
+const modeLabel = $("modeLabel");
+const selInfo = $("selInfo");
+const selMeta = $("selMeta");
+const kbInfo = $("kbInfo");
+
+const rootSel = $("rootSel");
+const modeSel = $("modeSel");
+const octSel = $("octSel");
+const snapRange = $("snapRange");
+const sizeRange = $("sizeRange");
+const decayRange = $("decayRange");
+
+const waveSel = $("waveSel");
+const volRange = $("volRange");
+
+const clearBtn = $("clearBtn");
+const panicBtn = $("panicBtn");
+const droneBtn = $("droneBtn");
+const arpBtn = $("arpBtn");
+const exportBtn = $("exportBtn");
+
+let mode = "select";         // select | spray | connect
+let nodes = [];              // {id,x,y,r,pc,midi,label,createdAt,fadeS,shape,selected}
+let edges = [];              // {a,b}
+let selection = null;        // node id
+let dragging = null;         // {id,dx,dy}
+let connectFrom = null;      // node id
+let isShift=false, isAlt=false;
+
+let selectedPC = new Set();  // pitch classes toggled on ring
+let lastMouse = {x:0,y:0};
+
+function uid(){ return Math.random().toString(16).slice(2)+"-"+Math.random().toString(16).slice(2); }
+function now(){ return performance.now()/1000; }
+function gridSize(){ return Number(snapRange.value); }
+function snap(v){ const g=gridSize(); return Math.round(v/g)*g; }
+
+function log(msg){
+  const t = new Date().toLocaleTimeString();
+  logEl.textContent = `[${t}] ${msg}\n` + logEl.textContent;
+}
+
+function setMode(m){
+  mode=m;
+  modeLabel.textContent = (m==="select"?"Select/Move":m==="spray"?"Spray Notes":"Connect");
+  connectFrom=null;
+  log(`Mode → ${modeLabel.textContent}`);
+  draw();
+}
+document.querySelectorAll("button[data-mode]").forEach(b=>{
+  b.addEventListener("click", ()=>setMode(b.dataset.mode));
+});
+
+// ---- Theory set
+for(const n of NOTE_NAMES){
+  const o=document.createElement("option");
+  o.value=n; o.textContent=n;
+  rootSel.appendChild(o);
+}
+rootSel.value="C";
+
+for(const m of MODES){
+  const o=document.createElement("option");
+  o.value=m.name; o.textContent=m.name;
+  modeSel.appendChild(o);
+}
+modeSel.value="Ionian (Major)";
+
+function getScalePC(){
+  const root = NOTE_NAMES.indexOf(rootSel.value);
+  const m = MODES.find(x=>x.name===modeSel.value) || MODES[0];
+  const set = new Set(m.steps.map(s => (root + s) % 12));
+  return set;
+}
+
+// ---- Audio
+let audio = {ctx:null, master:null, drone:null, arpTimer:null};
+
+function ensureAudio(){
+  if(audio.ctx) return;
+  const A = window.AudioContext || window.webkitAudioContext;
+  audio.ctx = new A();
+  audio.master = audio.ctx.createGain();
+  audio.master.gain.value = Number(volRange.value)/100;
+  audio.master.connect(audio.ctx.destination);
+  panicBtn.textContent = "Audio Ready";
+  log("AudioContext created");
+}
+
+async function resumeAudio(){
+  ensureAudio();
+  if(audio.ctx.state !== "running"){
+    await audio.ctx.resume();
+    log(`AudioContext state=${audio.ctx.state}`);
+  }
+}
+
+function mtof(m){ return 440 * Math.pow(2,(m-69)/12); }
+
+function playTone(midi, dur=0.35){
+  ensureAudio();
+  const t0 = audio.ctx.currentTime;
+  const osc = audio.ctx.createOscillator();
+  const g = audio.ctx.createGain();
+  osc.type = waveSel.value;
+  osc.frequency.value = mtof(midi);
+
+  const vol = Number(volRange.value)/100;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.0001, vol), t0+0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+
+  osc.connect(g);
+  g.connect(audio.master);
+  osc.start(t0);
+  osc.stop(t0+dur+0.02);
+}
+
+function toggleDrone(){
+  ensureAudio();
+  if(audio.drone){
+    audio.drone.osc.stop();
+    audio.drone=null;
+    droneBtn.textContent="Drone";
+    log("Drone off");
+    return;
+  }
+  const rootPc = NOTE_NAMES.indexOf(rootSel.value);
+  const baseOct = Number(octSel.value);
+  const midi = 12*(baseOct+1) + rootPc; // approx
+  const osc = audio.ctx.createOscillator();
+  const g = audio.ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.value = mtof(midi);
+  g.gain.value = (Number(volRange.value)/100) * 0.35;
+  osc.connect(g); g.connect(audio.master);
+  osc.start();
+  audio.drone = {osc,g,midi};
+  droneBtn.textContent="Drone off";
+  log(`Drone on: ${NOTE_NAMES[rootPc]}${baseOct}`);
+}
+
+function toggleArp(){
+  ensureAudio();
+  if(audio.arpTimer){
+    clearInterval(audio.arpTimer);
+    audio.arpTimer=null;
+    arpBtn.textContent="Arp";
+    log("Arp off");
+    return;
+  }
+  arpBtn.textContent="Arp off";
+  log("Arp on (uses selected PCs or current scale)");
+  let i=0;
+  audio.arpTimer = setInterval(()=>{
+    const rootPc = NOTE_NAMES.indexOf(rootSel.value);
+    const baseOct = Number(octSel.value);
+    const pcs = (selectedPC.size ? [...selectedPC] : [...getScalePC()]);
+    if(!pcs.length) return;
+    const pc = pcs[i % pcs.length];
+    const midi = 12*(baseOct+1) + ((pc + 12) % 12);
+    playTone(midi, 0.18);
+    i++;
+  }, 190);
+}
+
+panicBtn.addEventListener("click", resumeAudio);
+droneBtn.addEventListener("click", async ()=>{ await resumeAudio(); toggleDrone(); });
+arpBtn.addEventListener("click", async ()=>{ await resumeAudio(); toggleArp(); });
+volRange.addEventListener("input", ()=>{
+  if(audio.master) audio.master.gain.value = Number(volRange.value)/100;
+});
+
+// ---- Canvas sizing
+function resize(){
+  const dpr = devicePixelRatio || 1;
+
+  const r = canvas.getBoundingClientRect();
+  canvas.width = Math.max(1, Math.floor(r.width*dpr));
+  canvas.height = Math.max(1, Math.floor(r.height*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+
+  const kr = kb.getBoundingClientRect();
+  kb.width = Math.max(1, Math.floor(kr.width*dpr));
+  kb.height = Math.max(1, Math.floor(kr.height*dpr));
+  kx.setTransform(dpr,0,0,dpr,0,0);
+
+  draw();
+  drawKeyboard();
+}
+addEventListener("resize", resize);
+
+// ---- Geometry / drawing helpers
+function getMouse(e, el){
+  const rect = el.getBoundingClientRect();
+  return {x: e.clientX - rect.left, y: e.clientY - rect.top};
+}
+function dist(a,b){ return Math.hypot(a.x-b.x, a.y-b.y); }
+
+function hueForPC(pc){
+  // 12-tone hue wheel
+  return (pc * 360 / 12);
+}
+function color(pc, a=1){
+  const h = hueForPC(pc);
+  return `hsla(${h}, 85%, 62%, ${a})`;
+}
+
+function nodeAt(x,y){
+  for(let i=nodes.length-1;i>=0;i--){
+    const n = nodes[i];
+    if(Math.hypot(x-n.x,y-n.y) <= n.r+6) return n;
+  }
+  return null;
+}
+
+function addNoteNode(pc, midi, x, y, label){
+  const r = Number(sizeRange.value);
+  const fadeS = Number(decayRange.value);
+  const n = {
+    id: uid(),
+    x: isShift? snap(x): x,
+    y: isShift? snap(y): y,
+    r,
+    pc,
+    midi,
+    label,
+    createdAt: now(),
+    fadeS,
+    shape: (pc===NOTE_NAMES.indexOf(rootSel.value)) ? "octagon" : "circle",
+    selected: false
+  };
+  nodes.push(n);
+  selection = n.id;
+  updateSelectionHud();
+  draw();
+  return n;
+}
+
+function connect(aId,bId){
+  if(!aId || !bId || aId===bId) return;
+  const exists = edges.some(e => (e.a===aId && e.b===bId) || (e.a===bId && e.b===aId));
+  if(exists) return;
+  edges.push({a:aId,b:bId});
+  draw();
+}
+
+function removeSelected(){
+  if(!selection) return;
+  const id = selection;
+  nodes = nodes.filter(n=>n.id!==id);
+  edges = edges.filter(e=>e.a!==id && e.b!==id);
+  selection=null; connectFrom=null;
+  updateSelectionHud();
+  log(`Deleted node ${id.slice(0,6)}`);
+  draw();
+}
+
+function duplicateSelected(){
+  if(!selection) return;
+  const n = nodes.find(n=>n.id===selection);
+  if(!n) return;
+  const c = {...n, id: uid(), x:n.x+18, y:n.y+18, createdAt: now()};
+  nodes.push(c);
+  selection=c.id;
+  updateSelectionHud();
+  log(`Duplicated "${c.label}"`);
+  draw();
+}
+
+// ---- Pitch Compass ring
+function compass(){
+  const w = canvas.getBoundingClientRect().width;
+  const h = canvas.getBoundingClientRect().height;
+  const cx = w*0.64;
+  const cy = h*0.40;
+  const R  = Math.min(w,h)*0.28;
+  return {cx,cy,R};
+}
+
+function pcPoint(pc, comp){
+  const a = -Math.PI/2 + (pc * Math.PI*2 / 12);
+  return {x: comp.cx + Math.cos(a)*comp.R, y: comp.cy + Math.sin(a)*comp.R, a};
+}
+
+function pcHit(x,y){
+  const comp = compass();
+  for(let pc=0; pc<12; pc++){
+    const p = pcPoint(pc, comp);
+    if(Math.hypot(x-p.x, y-p.y) <= 20) return pc;
+  }
+  return null;
+}
+
+// ---- Draw
+function drawBackgroundGrid(){
+  const g = gridSize();
+  const w = canvas.getBoundingClientRect().width;
+  const h = canvas.getBoundingClientRect().height;
+
+  ctx.save();
+  ctx.globalAlpha = 0.50;
+  ctx.strokeStyle = "rgba(255,255,255,0.06)";
+  ctx.lineWidth = 1;
+
+  for(let x=0; x<=w; x+=g){
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
+  }
+  for(let y=0; y<=h; y+=g){
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawCompass(){
+  const comp = compass();
+  const scalePC = getScalePC();
+  const rootPc = NOTE_NAMES.indexOf(rootSel.value);
+
+  // outer ring
+  ctx.save();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "rgba(255,255,255,0.16)";
+  ctx.beginPath();
+  ctx.arc(comp.cx, comp.cy, comp.R, 0, Math.PI*2);
+  ctx.stroke();
+
+  // inner ring
+  ctx.strokeStyle = "rgba(255,255,255,0.10)";
+  ctx.beginPath();
+  ctx.arc(comp.cx, comp.cy, comp.R*0.72, 0, Math.PI*2);
+  ctx.stroke();
+
+  // spokes
+  for(let pc=0; pc<12; pc++){
+    const p = pcPoint(pc, comp);
+    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.beginPath();
+    ctx.moveTo(comp.cx, comp.cy);
+    ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  }
+
+  // selected polygon (PC toggles)
+  const active = (selectedPC.size ? [...selectedPC] : []);
+  if(active.length >= 3){
+    const pts = active
+      .slice()
+      .sort((a,b)=>a-b)
+      .map(pc => pcPoint(pc, comp));
+    ctx.fillStyle = "rgba(122,162,255,0.08)";
+    ctx.strokeStyle = "rgba(122,162,255,0.55)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i].x, pts[i].y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // note bubbles
+  for(let pc=0; pc<12; pc++){
+    const p = pcPoint(pc, comp);
+    const inScale = scalePC.has(pc);
+    const isRoot = pc===rootPc;
+    const isSel = selectedPC.has(pc);
+
+    const rr = isRoot ? 16 : 13;
+    const fill = isSel ? color(pc, 0.28) : inScale ? color(pc, 0.16) : "rgba(255,255,255,0.05)";
+    const stroke = isSel ? color(pc, 0.92) : inScale ? color(pc, 0.55) : "rgba(255,255,255,0.18)";
+
+    ctx.fillStyle = fill;
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = isRoot ? 2.6 : 2;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y, rr, 0, Math.PI*2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(233,238,252,0.92)";
+    ctx.font = "600 12px -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial";
+    ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText(NOTE_NAMES[pc], p.x, p.y);
+  }
+
+  // center label
+  ctx.fillStyle="rgba(233,238,252,0.9)";
+  ctx.font="700 13px -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial";
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.fillText(`${rootSel.value} • ${modeSel.value}`, comp.cx, comp.cy);
+
+  ctx.fillStyle="rgba(169,179,207,0.75)";
+  ctx.font="12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+  ctx.fillText(`PC ring (click)`, comp.cx, comp.cy + 18);
+
+  ctx.restore();
+}
+
+function pathPolygon(x,y,r,sides,rot=0){
+  ctx.beginPath();
+  for(let i=0;i<sides;i++){
+    const a = rot + (i*Math.PI*2/sides);
+    const px = x + Math.cos(a)*r;
+    const py = y + Math.sin(a)*r;
+    if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.closePath();
+}
+
+function drawEdges(){
+  ctx.save();
+  ctx.lineWidth = 2;
+  for(const e of edges){
+    const a = nodes.find(n=>n.id===e.a);
+    const b = nodes.find(n=>n.id===e.b);
+    if(!a || !b) continue;
+
+    const sel = selection && (selection===a.id || selection===b.id);
+    ctx.strokeStyle = sel ? "rgba(122,162,255,0.85)" : "rgba(255,255,255,0.18)";
+    ctx.beginPath();
+    ctx.moveTo(a.x,a.y);
+    ctx.lineTo(b.x,b.y);
+    ctx.stroke();
+  }
+
+  if(mode==="connect" && connectFrom){
+    const a = nodes.find(n=>n.id===connectFrom);
+    if(a){
+      ctx.strokeStyle = "rgba(255,204,102,0.85)";
+      ctx.setLineDash([6,6]);
+      ctx.beginPath();
+      ctx.moveTo(a.x,a.y);
+      ctx.lineTo(lastMouse.x,lastMouse.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }
+  ctx.restore();
+}
+
+function drawNode(n){
+  const t = now();
+  const age = t - n.createdAt;
+  const fadeS = Math.max(0, n.fadeS);
+  const alive = fadeS===0 ? 1 : Math.max(0, 1 - (age/fadeS));
+  if(fadeS>0 && alive<=0){
+    // auto-clean
+    return false;
+  }
+
+  const isSel = (selection===n.id);
+  const scalePC = getScalePC();
+  const inScale = scalePC.has(n.pc);
+  const isRoot = (n.pc === NOTE_NAMES.indexOf(rootSel.value));
+
+  ctx.save();
+
+  // aura
+  const aura = isSel ? 1 : inScale ? 0.8 : 0.55;
+  ctx.shadowColor = color(n.pc, 0.45*alive*aura);
+  ctx.shadowBlur = isSel ? 22 : 14;
+
+  // fill / stroke
+  const fillA = (0.08 + (inScale?0.08:0.02) + (isSel?0.08:0)) * alive;
+  ctx.fillStyle = color(n.pc, fillA);
+  ctx.strokeStyle = isSel ? color(n.pc, 0.95*alive) : color(n.pc, (inScale?0.55:0.30)*alive);
+  ctx.lineWidth = isRoot ? 2.8 : 2;
+
+  // shape
+  if(n.shape==="circle"){
+    ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.closePath();
+  } else if(n.shape==="triangle"){
+    pathPolygon(n.x,n.y,n.r,3,-Math.PI/2);
+  } else if(n.shape==="octagon"){
+    pathPolygon(n.x,n.y,n.r,8,Math.PI/8);
+  } else {
+    ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2); ctx.closePath();
+  }
+
+  ctx.fill();
+  ctx.stroke();
+
+  // label
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = `rgba(233,238,252,${0.92*alive})`;
+  ctx.font = "650 12px -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial";
+  ctx.textAlign="center"; ctx.textBaseline="middle";
+  ctx.fillText(n.label, n.x, n.y);
+
+  // mini pitch class
+  ctx.fillStyle = `rgba(169,179,207,${0.75*alive})`;
+  ctx.font = "11px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+  ctx.fillText(`PC=${n.pc}`, n.x, n.y + n.r + 14);
+
+  ctx.restore();
+  return true;
+}
+
+function cleanupDead(){
+  const t=now();
+  const before = nodes.length;
+  nodes = nodes.filter(n=>{
+    if(n.fadeS===0) return true;
+    return (t - n.createdAt) < n.fadeS;
+  });
+  if(nodes.length!==before){
+    const aliveIds = new Set(nodes.map(n=>n.id));
+    edges = edges.filter(e=>aliveIds.has(e.a) && aliveIds.has(e.b));
+    if(selection && !aliveIds.has(selection)) selection=null;
+  }
+}
+
+function draw(){
+  const w = canvas.getBoundingClientRect().width;
+  const h = canvas.getBoundingClientRect().height;
+  ctx.clearRect(0,0,w,h);
+
+  drawBackgroundGrid();
+
+  // subtle “geo” fields
+  ctx.save();
+  ctx.globalAlpha = 0.25;
+  for(let i=0;i<10;i++){
+    const x = (i*137.5 % 360) / 360 * w;
+    const y = (i*91.7  % 360) / 360 * h;
+    ctx.fillStyle = "rgba(255,255,255,0.03)";
+    ctx.beginPath();
+    ctx.arc(x,y, 70 + (i%3)*35, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  drawEdges();
+  drawCompass();
+
+  cleanupDead();
+
+  // nodes
+  const kept=[];
+  for(const n of nodes){
+    const ok = drawNode(n);
+    if(ok) kept.push(n);
+  }
+  nodes = kept;
+
+  // mode footer
+  ctx.save();
+  ctx.fillStyle="rgba(233,238,252,0.7)";
+  ctx.font="12px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+  ctx.fillText(`mode=${mode} • nodes=${nodes.length} • toggledPC=${selectedPC.size}`, 12, h-16);
+  ctx.restore();
+}
+
+// ---- Selection HUD
+function updateSelectionHud(){
+  if(!selection){
+    selInfo.textContent="No selection";
+    selMeta.textContent="—";
+    return;
+  }
+  const n = nodes.find(n=>n.id===selection);
+  if(!n){
+    selInfo.textContent="No selection";
+    selMeta.textContent="—";
+    return;
+  }
+  selInfo.textContent = n.label;
+  selMeta.textContent = `pc=${NOTE_NAMES[n.pc]} • midi=${n.midi} • fade=${n.fadeS}s`;
+}
+
+// ---- Canvas events
+canvas.addEventListener("mousemove", (e)=>{
+  lastMouse = getMouse(e, canvas);
+
+  if(dragging){
+    const n = nodes.find(n=>n.id===dragging.id);
+    if(n){
+      let nx = lastMouse.x + dragging.dx;
+      let ny = lastMouse.y + dragging.dy;
+      if(isShift){ nx=snap(nx); ny=snap(ny); }
+      n.x=nx; n.y=ny;
+      draw();
+    }
+  } else if(mode==="spray"){
+    // nothing (spray happens on mousedown+move)
+  } else if(mode==="connect" && connectFrom){
+    draw();
+  }
+});
+
+let spraying=false;
+canvas.addEventListener("mousedown", async (e)=>{
+  lastMouse = getMouse(e, canvas);
+  const hit = nodeAt(lastMouse.x, lastMouse.y);
+  const pcHitVal = pcHit(lastMouse.x, lastMouse.y);
+
+  if(pcHitVal !== null){
+    // toggle pitch class on ring
+    if(selectedPC.has(pcHitVal)) selectedPC.delete(pcHitVal); else selectedPC.add(pcHitVal);
+    kbInfo.textContent = selectedPC.size ? `PC: ${[...selectedPC].sort((a,b)=>a-b).map(p=>NOTE_NAMES[p]).join(" ")}` : "PC: (none)";
+    log(`PC toggle: ${NOTE_NAMES[pcHitVal]} (${selectedPC.has(pcHitVal)?"on":"off"})`);
+    draw();
+    return;
+  }
+
+  if(mode==="select"){
+    if(hit){
+      selection=hit.id;
+      updateSelectionHud();
+      dragging = {id: hit.id, dx: hit.x - lastMouse.x, dy: hit.y - lastMouse.y};
+      draw();
+    } else {
+      selection=null; updateSelectionHud(); draw();
+    }
+    return;
+  }
+
+  if(mode==="connect"){
+    if(!hit) return;
+    if(!connectFrom){
+      connectFrom = hit.id;
+      selection = hit.id;
+      updateSelectionHud();
+      log(`Connect from ${hit.label} (click target…)`);
+      draw();
+    } else {
+      const a = connectFrom;
+      const b = hit.id;
+      connectFrom=null;
+      connect(a,b);
+      log("Connected.");
+    }
+    return;
+  }
+
+  if(mode==="spray"){
+    spraying=true;
+    await resumeAudio();
+    sprayAt(lastMouse.x,lastMouse.y);
+    return;
+  }
+});
+window.addEventListener("mouseup", ()=>{
+  dragging=null;
+  spraying=false;
+});
+
+canvas.addEventListener("mousemove", (e)=>{
+  if(!spraying) return;
+  lastMouse = getMouse(e, canvas);
+  sprayAt(lastMouse.x,lastMouse.y);
+});
+
+function sprayAt(x,y){
+  // pick from selected PCs, else from scale
+  const rootPc = NOTE_NAMES.indexOf(rootSel.value);
+  const baseOct = Number(octSel.value);
+  const pcs = (selectedPC.size ? [...selectedPC] : [...getScalePC()]);
+  if(!pcs.length) return;
+
+  const pc = pcs[(Math.random()*pcs.length)|0];
+  const midi = 12*(baseOct+1) + pc + (Math.random()<0.18 ? 12 : 0);
+  playTone(midi, 0.11 + Math.random()*0.12);
+
+  // floaty placement
+  const jitter = 32;
+  const nx = x + (Math.random()*2-1)*jitter;
+  const ny = y + (Math.random()*2-1)*jitter;
+  const label = NOTE_NAMES[pc] + (midi>=72? "5": baseOct);
+  const n = addNoteNode(pc, midi, nx, ny, label);
+  n.shape = (pc===rootPc) ? "octagon" : (Math.random()<0.16 ? "triangle":"circle");
+  // connect lightly to previous node
+  if(nodes.length>1 && Math.random()<0.35){
+    const prev = nodes[nodes.length-2];
+    if(prev) connect(prev.id, n.id);
+  }
+  draw();
+}
+
+// Keyboard keymaps (optional)
+const KEYMAP = {
+  "a":0, "w":1, "s":2, "e":3, "d":4, "f":5, "t":6, "g":7, "y":8, "h":9, "u":10, "j":11,
+  "k":12, "o":13, "l":14, "p":15, ";":16
+};
+
+// modifiers + delete
+window.addEventListener("keydown", async (e)=>{
+  if(e.key==="Shift") isShift=true;
+  if(e.key==="Alt") isAlt=true;
+
+  if(e.key==="Delete" || e.key==="Backspace"){
+    const tag = document.activeElement?.tagName?.toLowerCase();
+    if(tag!=="input" && tag!=="select" && tag!=="textarea"){
+      e.preventDefault();
+      removeSelected();
+    }
+  }
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase()==="d"){
+    e.preventDefault();
+    duplicateSelected();
+  }
+
+  // keyboard playing
+  const k = e.key.toLowerCase();
+  if(KEYMAP[k] !== undefined){
+    await resumeAudio();
+    const baseOct = Number(octSel.value);
+    const baseMidi = 12*(baseOct+1); // C of that octave
+    const midi = baseMidi + KEYMAP[k];
+    const pc = (midi % 12);
+    playTone(midi, 0.22);
+    const w = canvas.getBoundingClientRect().width;
+    const h = canvas.getBoundingClientRect().height;
+    const comp = compass();
+    const p = pcPoint(pc, comp);
+    const label = NOTE_NAMES[pc] + Math.floor(midi/12 - 1);
+    addNoteNode(pc, midi, p.x + (Math.random()*28-14), p.y + (Math.random()*28-14), label);
+    log(`Key ${e.key} → ${label}`);
+    draw();
+  }
+});
+
+window.addEventListener("keyup", (e)=>{
+  if(e.key==="Shift") isShift=false;
+  if(e.key==="Alt") isAlt=false;
+});
+
+// ---- Buttons
+clearBtn.addEventListener("click", ()=>{
+  nodes=[]; edges=[]; selection=null; connectFrom=null; selectedPC.clear();
+  kbInfo.textContent="ready";
+  updateSelectionHud();
+  log("Cleared canvas");
+  draw();
+});
+
+exportBtn.addEventListener("click", ()=>{
+  const payload = {
+    root: rootSel.value,
+    mode: modeSel.value,
+    keyboardOctaveStart: Number(octSel.value),
+    nodes: nodes.map(n=>({
+      id:n.id, x:n.x, y:n.y, r:n.r, pc:n.pc, midi:n.midi, label:n.label, createdAt:n.createdAt, fadeS:n.fadeS, shape:n.shape
+    })),
+    edges: edges.slice(),
+    selectedPC: [...selectedPC].sort((a,b)=>a-b),
+    exportedAt: new Date().toISOString()
+  };
+  const txt = JSON.stringify(payload, null, 2);
+  navigator.clipboard?.writeText(txt).then(()=>{
+    log("Export copied to clipboard (JSON).");
+  }).catch(()=>{
+    log("Export ready (copy from console).");
+    console.log(txt);
+  });
+});
+
+// ---- Keyboard canvas
+let keyRects = []; // {x,y,w,h,isBlack,midi,pc,label}
+
+function drawKeyboard(){
+  const W = kb.getBoundingClientRect().width;
+  const H = 98; // fixed-ish
+  kb.style.height = H+"px";
+
+  kx.clearRect(0,0,W,H);
+
+  // layout: 2 octaves from C
+  const octStart = Number(octSel.value);
+  const baseMidi = 12*(octStart+1); // C
+  const totalKeys = 24; // 2 octaves
+  const whitePattern = [0,2,4,5,7,9,11];
+  const blackSet = new Set([1,3,6,8,10]);
+
+  // create midi list for 24 semitones
+  const mids = Array.from({length: totalKeys}, (_,i)=>baseMidi+i);
+
+  // compute white keys
+  const whiteMidis = mids.filter(m=>!blackSet.has(m%12));
+  const whiteW = W / whiteMidis.length;
+  const whiteH = H;
+  const blackH = H*0.62;
+  const blackW = whiteW*0.64;
+
+  keyRects = [];
+
+  // draw whites
+  let wx = 0;
+  for(const m of whiteMidis){
+    const pc = m%12;
+    const label = NOTE_NAMES[pc] + (Math.floor(m/12)-1);
+    const inScale = getScalePC().has(pc);
+    const isRoot = pc===NOTE_NAMES.indexOf(rootSel.value);
+
+    kx.fillStyle = inScale ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.10)";
+    kx.strokeStyle = "rgba(255,255,255,0.22)";
+    kx.lineWidth = 1.2;
+    kx.beginPath();
+    kx.roundRect(wx,0,whiteW-1,whiteH,8);
+    kx.fill();
+    kx.stroke();
+
+    // tiny color stripe
+    kx.fillStyle = color(pc, isRoot?0.55:0.35);
+    kx.fillRect(wx+8, 8, whiteW-16, 3);
+
+    keyRects.push({x:wx,y:0,w:whiteW-1,h:whiteH,isBlack:false,midi:m,pc,label});
+    wx += whiteW;
+  }
+
+  // map midi->white index x position
+  const whiteIndexByMidi = new Map();
+  for(let i=0;i<keyRects.length;i++){
+    const r = keyRects[i];
+    if(!r.isBlack) whiteIndexByMidi.set(r.midi, r.x);
+  }
+
+  // draw blacks (between whites)
+  for(const m of mids.filter(m=>blackSet.has(m%12))){
+    const pc = m%12;
+    const label = NOTE_NAMES[pc] + (Math.floor(m/12)-1);
+    const inScale = getScalePC().has(pc);
+    const isRoot = pc===NOTE_NAMES.indexOf(rootSel.value);
+
+    // find left white: m-1 is always a white for black keys except between E-F and B-C (where no black exists)
+    const leftWhiteMidi = m-1;
+    const lx = whiteIndexByMidi.get(leftWhiteMidi);
+    if(lx===undefined) continue;
+
+    const bx = lx + whiteW - (blackW/2);
+
+    kx.fillStyle = inScale ? "rgba(0,0,0,0.72)" : "rgba(0,0,0,0.82)";
+    kx.strokeStyle = isRoot ? color(pc,0.75) : "rgba(255,255,255,0.20)";
+    kx.lineWidth = 1.2;
+    kx.beginPath();
+    kx.roundRect(bx,0,blackW,blackH,8);
+    kx.fill();
+    kx.stroke();
+
+    // glow top stripe
+    kx.fillStyle = color(pc, isRoot?0.75:0.45);
+    kx.fillRect(bx+6, 8, blackW-12, 3);
+
+    keyRects.push({x:bx,y:0,w:blackW,h:blackH,isBlack:true,midi:m,pc,label});
+  }
+
+  // top caption
+  kx.fillStyle = "rgba(169,179,207,0.85)";
+  kx.font = "11px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono','Courier New', monospace";
+  kx.textAlign="left"; kx.textBaseline="bottom";
+  kx.fillText(`Oct start: ${octStart} • Click = play+drop`, 10, H-8);
+}
+
+function keyAt(x,y){
+  // prefer black keys first
+  const blacks = keyRects.filter(r=>r.isBlack);
+  for(const r of blacks){
+    if(x>=r.x && x<=r.x+r.w && y>=r.y && y<=r.y+r.h) return r;
+  }
+  for(const r of keyRects.filter(r=>!r.isBlack)){
+    if(x>=r.x && x<=r.x+r.w && y>=r.y && y<=r.y+r.h) return r;
+  }
+  return null;
+}
+
+kb.addEventListener("mousemove", (e)=>{
+  const m = getMouse(e, kb);
+  const r = keyAt(m.x,m.y);
+  kbInfo.textContent = r ? r.label : (selectedPC.size ? `PC: ${[...selectedPC].sort((a,b)=>a-b).map(p=>NOTE_NAMES[p]).join(" ")}` : "ready");
+});
+
+kb.addEventListener("mouseleave", ()=>{
+  kbInfo.textContent = selectedPC.size ? `PC: ${[...selectedPC].sort((a,b)=>a-b).map(p=>NOTE_NAMES[p]).join(" ")}` : "ready";
+});
+
+kb.addEventListener("mousedown", async (e)=>{
+  const m = getMouse(e, kb);
+  const r = keyAt(m.x,m.y);
+  if(!r) return;
+
+  await resumeAudio();
+  playTone(r.midi, 0.28);
+
+  // drop near compass point for that pc (geography)
+  const comp = compass();
+  const p = pcPoint(r.pc, comp);
+  const label = r.label;
+
+  // if Alt held: toggle PC selection instead of dropping
+  if(isAlt){
+    if(selectedPC.has(r.pc)) selectedPC.delete(r.pc); else selectedPC.add(r.pc);
+    log(`PC toggle via keyboard: ${NOTE_NAMES[r.pc]} (${selectedPC.has(r.pc)?"on":"off"})`);
+    kbInfo.textContent = selectedPC.size ? `PC: ${[...selectedPC].sort((a,b)=>a-b).map(p=>NOTE_NAMES[p]).join(" ")}` : "PC: (none)";
+    draw();
+    return;
+  }
+
+  addNoteNode(r.pc, r.midi, p.x + (Math.random()*34-17), p.y + (Math.random()*34-17), label);
+  log(`Keyboard → ${label}`);
+
+  // auto-connect: if we have a selected node, connect to new
+  if(selection && nodes.length>=2){
+    const prev = nodes[nodes.length-2];
+    const cur = nodes[nodes.length-1];
+    if(prev && cur && Math.random()<0.6){
+      connect(prev.id, cur.id);
+    }
+  }
+  draw();
+});
+
+// ---- Canvas click behavior for adding notes via ring selection
+canvas.addEventListener("dblclick", async (e)=>{
+  // double-click canvas: drop a random note from scale at cursor
+  const m = getMouse(e, canvas);
+  await resumeAudio();
+  const pcs = [...getScalePC()];
+  const pc = pcs[(Math.random()*pcs.length)|0];
+  const baseOct = Number(octSel.value);
+  const midi = 12*(baseOct+1) + pc + (Math.random()<0.35?12:0);
+  playTone(midi, 0.18);
+  const label = NOTE_NAMES[pc] + (Math.floor(midi/12)-1);
+  addNoteNode(pc, midi, m.x, m.y, label);
+  log(`Drop random scale note: ${label}`);
+  draw();
+});
+
+// ---- Canvas select/connect logic
+canvas.addEventListener("mousedown", (e)=>{
+  const m = getMouse(e, canvas);
+  const hit = nodeAt(m.x,m.y);
+  if(mode==="select"){
+    if(hit){
+      selection=hit.id; updateSelectionHud();
+      dragging = {id: hit.id, dx: hit.x - m.x, dy: hit.y - m.y};
+      draw();
+    }
+  }
+  if(mode==="connect"){
+    if(!hit) return;
+    if(!connectFrom){
+      connectFrom = hit.id;
+      selection = hit.id; updateSelectionHud();
+      log(`Connect from ${hit.label}...`);
+      draw();
+    } else {
+      connect(connectFrom, hit.id);
+      connectFrom=null;
+      log("Connected.");
+      draw();
+    }
+  }
+});
+
+// ---- Update on theory changes
+rootSel.addEventListener("change", ()=>{ draw(); drawKeyboard(); });
+modeSel.addEventListener("change", ()=>{ draw(); drawKeyboard(); });
+octSel.addEventListener("change", ()=>{ drawKeyboard(); });
+snapRange.addEventListener("input", draw);
+sizeRange.addEventListener("input", ()=>{
+  const n = nodes.find(n=>n.id===selection);
+  if(n){ n.r=Number(sizeRange.value); draw(); }
+});
+decayRange.addEventListener("input", ()=>{
+  // apply to future nodes only (keeps behavior predictable)
+});
+
+// ---- Key modifiers
+window.addEventListener("keydown", (e)=>{
+  if(e.key==="Shift") isShift=true;
+  if(e.key==="Alt") isAlt=true;
+});
+window.addEventListener("keyup", (e)=>{
+  if(e.key==="Shift") isShift=false;
+  if(e.key==="Alt") isAlt=false;
+});
+
+// ---- Init
+log("Ready. Click keyboard to play+drop nodes. Click ring notes to toggle PC-set. Double-click canvas to drop random scale note.");
+setMode("select");
+updateSelectionHud();
+resize();
+
+// Polyfill for roundRect on some older canvases
+if(!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+    const rr = Math.min(r, w/2, h/2);
+    this.beginPath();
+    this.moveTo(x+rr,y);
+    this.arcTo(x+w,y, x+w,y+h, rr);
+    this.arcTo(x+w,y+h, x,y+h, rr);
+    this.arcTo(x,y+h, x,y, rr);
+    this.arcTo(x,y, x+w,y, rr);
+    this.closePath();
+    return this;
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<HTML>
+<HEAD>
+<LINK REL="SHORTCUT ICON" HREF="http://www.girl.tv/music/favicon-music-monki.ico">
+
+<TITLE>girl.tv / music D7monkey©</TITLE>
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+
+<SCRIPT TYPE="text/javascript">
+<!--
+
+function newImage(arg) {
+	if (document.images) {
+		rslt = new Image();
+		rslt.src = arg;
+		return rslt;
+	}
+}
+
+function changeImages() {
+	if (document.images && (preloadFlag == true)) {
+		for (var i=0; i<changeImages.arguments.length; i+=2) {
+			document[changeImages.arguments[i]].src = changeImages.arguments[i+1];
+		}
+	}
+}
+
+var preloadFlag = false;
+function preloadImages() {
+	if (document.images) {
+		musik_monkey_pop_01_down = newImage("images/musik-monkey-pop_01-down.gif");
+		musik_monkey_pop_01_out = newImage("images/musik-monkey-pop_01-out.gif");
+		musik_monkey_pop_01_over = newImage("images/musik-monkey-pop_01-over.gif");
+		preloadFlag = true;
+	}
+}
+
+// -->
+</SCRIPT>
+
+</HEAD>
+
+<BODY BGCOLOR=#FFFFFF LEFTMARGIN=0 TOPMARGIN=0 MARGINWIDTH=0 MARGINHEIGHT=0 ONLOAD="preloadImages();">
+
+<NOEMBED>your browser doesnt supports this shit</NOEMBED>
+<EMBED SRC="tititita2.mov" loop="false"  hidden="true" width=49>
+
+
+    
+<A HREF="mailto:music@girl.tv"
+	ONMOUSEOVER="changeImages('musik_monkey_pop_01', 'images/musik-monkey-pop_01-over.gif'); return true;"
+	ONMOUSEOUT="changeImages('musik_monkey_pop_01', 'images/musik-monkey-pop_01-out.gif'); return true;"
+	ONMOUSEDOWN="changeImages('musik_monkey_pop_01', 'images/musik-monkey-pop_01-down.gif'); return true;"
+	ONMOUSEUP="changeImages('musik_monkey_pop_01', 'images/musik-monkey-pop_01-over.gif'); return true;">
+	<IMG NAME="musik_monkey_pop_01" SRC="images/musik-monkey-pop_01.gif" WIDTH=100 HEIGHT=100 BORDER=0 ALT=""></A>
+
+</BODY>
+</HTML>

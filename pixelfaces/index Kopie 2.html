@@ -1,0 +1,83 @@
+function makeHeadMask(params){
+  const { headW, headH, jaw, chin, cheek } = params.shape;
+  const profile = params.ui.profile; // 0..1
+  const tilt = params.ui.tilt|0;
+
+  const cx = 16 + params.micro.asymX + tilt;
+  const cy = 15 + params.micro.asymY;
+
+  // 3/4: wir wollen:
+  // - rechte Gesichtskante etwas "eingezogen" (damit Nase raussteht)
+  // - Nase als eigener "Bump" nach rechts
+  // - Kinn weiter nach rechts (profilierter)
+
+  const nearShrink = lerp(0.10, 0.30, profile); // rechte Seite weniger
+  const farExpand  = lerp(0.02, 0.10, profile); // linke Seite minimal mehr (führt Haar/Umrahmung besser)
+
+  function rxAtY(y){
+    const t = clamp((y-(cy-8))/18, 0, 1);
+    const forehead = headW * lerp(1.00, 0.92, t);
+    const cheeks   = headW * lerp(1.02, 1.12*cheek, Math.sin(t*Math.PI));
+    const jawW     = headW * lerp(0.90, 1.10*jaw, Math.pow(t,1.6));
+    const chinW    = headW * lerp(0.55, 0.90*chin, Math.pow(t,3.0));
+    let rx = forehead;
+    rx = lerp(rx, cheeks, clamp(t*1.2,0,1));
+    rx = lerp(rx, jawW, clamp((t-0.45)*2.0,0,1));
+    rx = lerp(rx, chinW, clamp((t-0.78)*4.0,0,1));
+    return rx;
+  }
+
+  // dynamisches Center-X: Kinn weiter rechts (ab unterer Gesichtshälfte)
+  function centerXAtY(y){
+    const t = clamp((y-(cy+6))/10, 0, 1);           // 0 oberhalb, 1 unten
+    const chinShift = lerp(0.0, 2.0, profile) * t;  // bis +2px nach rechts
+    return cx + chinShift;
+  }
+
+  function ellipseSDF(x,y,rx,ry){
+    const ccx = centerXAtY(y);
+    const dx = (x-ccx)/rx;
+    const dy = (y-cy)/ry;
+    return (dx*dx + dy*dy) - 1;
+  }
+
+  function profileOffset(x,y){
+    const ccx = centerXAtY(y);
+    const side = (x-ccx);
+    const t = clamp((y-(cy-8))/20, 0, 1);
+    const shrink = nearShrink * lerp(0.2, 1.0, t);
+    const expand = farExpand  * lerp(0.2, 1.0, t);
+    if(side >= 0) return +shrink;  // rechts: SDF größer => INNEN kleiner
+    return -expand;                // links: SDF kleiner => INNEN etwas größer
+  }
+
+  // Nase: stärker + weiter nach rechts + leicht nach vorn (Bump)
+  const noseBumpY = params.layout.noseY + params.micro.asymY;
+  function noseBump(x,y){
+    const nx = centerXAtY(y) + 7; // weiter rechts
+    const dx = (x-nx) / 3.2;
+    const dy = (y-noseBumpY) / 2.6;
+    const g = Math.exp(-(dx*dx+dy*dy)*1.15);
+    return -g * lerp(0.00, 0.34, profile); // mehr Bump => Nase steht raus
+  }
+
+  return function insideHead(x,y){
+    if(y<2 || y>29) return false;
+
+    const rx = rxAtY(y);
+    const ry = headH;
+
+    let sdf = ellipseSDF(x,y,rx,ry);
+    sdf += profileOffset(x,y);
+    sdf += noseBump(x,y);
+
+    // Halsöffnung
+    if(y>25){
+      const ccx = centerXAtY(y);
+      const dx = (x-ccx)/6.0;
+      const dy = (y-28)/3.0;
+      sdf += (dx*dx + dy*dy) * 0.22;
+    }
+    return sdf < 0;
+  };
+}
